@@ -10,6 +10,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.DoSenk" />
+        android:name=".DoSenkApp"
+        android:theme="@style/Theme.DoSenk.Purple"
 
 </manifest>

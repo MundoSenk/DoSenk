@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="doSkinStart" format="color"/>
+    <attr name="doSkinEnd" format="color"/>
+    <attr name="doSkinButton" format="color"/>
+</resources>
