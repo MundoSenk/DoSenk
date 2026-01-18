@@ -44,6 +44,7 @@
             android:padding="32dp">
 
             <TextView
+                android:id="@+id/tvTitle"
                 android:text="Iniciar Sesión"
                 android:textSize="28sp"
                 android:fontFamily="@font/poppins_bold"
@@ -89,6 +90,7 @@
                 android:layout_marginBottom="8dp"/>
 
             <TextView
+                android:id="@+id/tvForgot"
                 android:text="¿Olvidaste tu contraseña?"
                 android:textColor="?attr/doSkinButton"
                 android:textSize="12sp"
@@ -99,6 +101,7 @@
                 android:layout_height="wrap_content"/>
 
             <Button
+                android:id="@+id/btnLogin"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:text="Iniciar!"
@@ -110,6 +113,7 @@
                 android:layout_marginBottom="16dp"/>
 
             <TextView
+                android:id="@+id/tvRegister"
                 android:text="¿Aún no tienes cuenta?\nREGÍSTRATE AQUÍ"
                 android:gravity="center"
                 android:textColor="#5B5B5B"
