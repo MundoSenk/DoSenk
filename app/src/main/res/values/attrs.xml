@@ -3,4 +3,6 @@
     <attr name="doSkinStart" format="color"/>
     <attr name="doSkinEnd" format="color"/>
     <attr name="doSkinButton" format="color"/>
+
+    <attr name="doSkinLogo" format="reference"/>
 </resources>

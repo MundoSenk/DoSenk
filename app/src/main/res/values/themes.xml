@@ -9,12 +9,16 @@
         <item name="doSkinStart">@color/purple_start</item>
         <item name="doSkinEnd">@color/purple_end</item>
         <item name="doSkinButton">@color/purple_end</item>
+
+        <item name="doSkinLogo">@drawable/logo_purple</item>
     </style>
 
     <style name="Theme.DoSenk.Red" parent="Base.Theme.DoSenk">
         <item name="doSkinStart">@color/red_start</item>
         <item name="doSkinEnd">@color/red_end</item>
         <item name="doSkinButton">@color/red_start</item>
+
+        <item name="doSkinLogo">@drawable/logo_red</item>
     </style>
 
     <style name="Theme.DoSenk.Dark" parent="Base.Theme.DoSenk">
@@ -22,11 +26,15 @@
         <item name="doSkinEnd">@color/dark_bg</item>
         <item name="doSkinButton">@color/dark_btn</item>
         <item name="android:windowLightStatusBar">false</item>
+
+        <item name="doSkinLogo">@drawable/logo_dark</item>
     </style>
 
     <style name="Theme.DoSenk.Teal" parent="Base.Theme.DoSenk">
         <item name="doSkinStart">@color/teal_start</item>
         <item name="doSkinEnd">@color/teal_end</item>
         <item name="doSkinButton">@color/teal_end</item>
+
+        <item name="doSkinLogo">@drawable/logo_teal</item>
     </style>
 </resources>

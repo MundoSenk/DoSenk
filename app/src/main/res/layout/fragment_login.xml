@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <View
+        android:id="@+id/background_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_gradient_skin" />
+
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="432dp"
+        android:layout_height="443dp"
+        android:layout_marginTop="16dp"
+        android:contentDescription="Logo Do Senk"
+        android:scaleType="fitCenter"
+        android:src="?attr/doSkinLogo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="12dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.65"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="32dp">
+
+            <TextView
+                android:text="Iniciar Sesión"
+                android:textSize="28sp"
+                android:fontFamily="@font/poppins_bold"
+                android:textColor="?attr/doSkinButton"
+                android:layout_gravity="center"
+                android:layout_marginBottom="32dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/etUser"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:background="@drawable/bg_input_rounded"
+                android:hint="Usuario:"
+                android:textColorHint="#898E9C"
+                android:textColor="@color/black"
+                android:fontFamily="@font/poppins_medium"
+                android:textSize="14sp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+
+                android:drawablePadding="12dp"
+                android:inputType="textEmailAddress"
+                android:maxLines="1"
+                android:layout_marginBottom="16dp"/>
+            <EditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:background="@drawable/bg_input_rounded"
+                android:hint="Contraseña:"
+                android:textColorHint="#898E9C"
+                android:textColor="@color/black"
+                android:fontFamily="@font/poppins_medium"
+                android:textSize="14sp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+
+                android:drawablePadding="12dp"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:text="¿Olvidaste tu contraseña?"
+                android:textColor="?attr/doSkinButton"
+                android:textSize="12sp"
+                android:fontFamily="@font/poppins_medium"
+                android:layout_gravity="end"
+                android:layout_marginBottom="24dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Iniciar!"
+                android:fontFamily="@font/poppins_semibold"
+                android:backgroundTint="?attr/doSkinButton"
+                android:textColor="@color/white"
+                android:textSize="25sp"
+                app:cornerRadius="30dp"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:text="¿Aún no tienes cuenta?\nREGÍSTRATE AQUÍ"
+                android:gravity="center"
+                android:textColor="#5B5B5B"
+                android:textSize="12sp"
+                android:fontFamily="@font/poppins_regular"
+                android:layout_gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
