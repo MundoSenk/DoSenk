@@ -18,6 +18,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+import androidx.navigation.fragment.findNavController //Pa la navegacion
+
+import androidx.fragment.app.activityViewModels // pa paserle l datp
+
 class LoginFragment : Fragment() {
 
     // Variables para controlar el carrusel
@@ -26,6 +30,9 @@ class LoginFragment : Fragment() {
 
     // Variable para recordar el color de acento actual y poder animar desde él
     private var currentAccentColor: Int = 0
+
+
+    private val registerViewModel: RegistrationViewModel by activityViewModels()
 
     // Referencias a las vistas (Views)
     private lateinit var backgroundView: View
@@ -187,8 +194,10 @@ class LoginFragment : Fragment() {
         // Cuando el usuario toca el de registro le detenemos el carrusel.
         stopCarousel()
 
+        //Se guarda el color del tema!
+        registerViewModel.setSkin(currentSkinIndex)
         // Para que la siguiente Activity sepa qué tema usar (R.style.Theme_DoSenk_Red, etc).
-
+        findNavController().navigate(R.id.action_login_to_register)
 
     }
 }

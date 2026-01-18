@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
+
+
 class RegistrationViewModel : ViewModel() {
 
     // Aquí guardamos el Skin que eligió el usuario en el carrusel

@@ -9,5 +9,54 @@
         android:id="@+id/loginFragment"
         android:name="host.senk.dosenk.ui.auth.LoginFragment"
         android:label="LoginFragment"
-        tools:layout="@layout/fragment_login" />
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_login_to_register"
+            app:destination="@id/registerPersonalFragment"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerPersonalFragment"
+        android:name="host.senk.dosenk.ui.auth.RegisterPersonalFragment"
+        android:label="RegisterPersonalFragment"
+        tools:layout="@layout/fragment_register_personal">
+
+        <action
+            android:id="@+id/action_personal_to_account"
+            app:destination="@id/registerAccountFragment"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerAccountFragment"
+        android:name="host.senk.dosenk.ui.auth.RegisterAccountFragment"
+        android:label="RegisterAccountFragment" >
+        <action
+            android:id="@+id/action_account_to_verification"
+            app:destination="@id/registerVerificationFragment"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerVerificationFragment"
+        android:name="host.senk.dosenk.ui.auth.RegisterVerificationFragment"
+        android:label="RegisterVerificationFragment">
+        <action
+            android:id="@+id/action_verification_to_ready"
+            app:destination="@id/registerReadyFragment"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/registerReadyFragment"
+        android:name="host.senk.dosenk.ui.auth.RegisterReadyFragment"
+        android:label="RegisterReadyFragment"
+        tools:layout="@layout/fragment_register_ready" />
 </navigation>
