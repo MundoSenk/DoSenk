@@ -4,5 +4,9 @@
     <attr name="doSkinEnd" format="color"/>
     <attr name="doSkinButton" format="color"/>
 
+    <attr name="doSkinSubtitle" format="color"/>
+
     <attr name="doSkinLogo" format="reference"/>
+    <attr name="doSkinLogoSquare" format="reference"/>
+    <attr name="doSkinCardBg" format="reference"/>
 </resources>

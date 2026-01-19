@@ -46,10 +46,17 @@ class RegisterReadyFragment : Fragment(R.layout.fragment_register_ready) {
         }
 
         btnFinish.setOnClickListener {
+
+            // Guardar en DataStore
+            viewModel.completeRegistration()
             // AQUÍ TERMINA EL REGISTRO
             // TODO: Enviar datos al backend
             Toast.makeText(context, "¡Bienvenido al infierno de la productividad!", Toast.LENGTH_LONG).show()
 
+
+
+            findNavController().navigate(R.id.action_ready_to_dashboard)
+            requireActivity().recreate()
 
         }
     }

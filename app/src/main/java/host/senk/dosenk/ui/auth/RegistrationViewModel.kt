@@ -1,12 +1,18 @@
 package host.senk.dosenk.ui.auth
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope // Importante para lanzar corrutinas
+import dagger.hilt.android.lifecycle.HiltViewModel
+import host.senk.dosenk.data.local.UserPreferences
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-
-
-class RegistrationViewModel : ViewModel() {
+@HiltViewModel //Anotación clave para Hilt
+class RegistrationViewModel @Inject constructor(
+    private val userPreferences: UserPreferences // Inyectamos la memoria
+) : ViewModel() {
 
     // Aquí guardamos el Skin que eligió el usuario en el carrusel
     private val _userSkinIndex = MutableLiveData<Int>(0) // 0 por defecto
@@ -26,5 +32,17 @@ class RegistrationViewModel : ViewModel() {
 
     fun setSkin(index: Int) {
         _userSkinIndex.value = index
+    }
+
+
+    fun completeRegistration() {
+        viewModelScope.launch {
+            // Guardamos el tema seleccionado permanentemente
+            val skin = _userSkinIndex.value ?: 0
+            userPreferences.saveTheme(skin)
+
+            // Simulamos guardar una sesión (luego vendrá del backend real)
+            userPreferences.saveUserSession("dummy_token_123", "@${firstName.ifEmpty { "User" }}")
+        }
     }
 }

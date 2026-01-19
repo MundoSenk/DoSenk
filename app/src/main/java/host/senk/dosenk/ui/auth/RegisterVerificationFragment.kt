@@ -38,7 +38,7 @@ class RegisterVerificationFragment : Fragment(R.layout.fragment_register_verific
         val context = requireContext()
         val config = getSkinConfig(skinIndex)
 
-        // --- 1. FONDO GRADIENTE ROOT ---
+        //  GRADIENTE
         val startColor = ContextCompat.getColor(context, config.startColor)
         val endColor = ContextCompat.getColor(context, config.endColor)
         val gradient = GradientDrawable(
@@ -47,16 +47,16 @@ class RegisterVerificationFragment : Fragment(R.layout.fragment_register_verific
         )
         view.findViewById<View>(R.id.rootLayout).background = gradient
 
-        // --- 2. LOGO ---
+        // LOGO
         view.findViewById<ImageView>(R.id.ivHeaderLogo).setImageResource(config.logoRes)
 
-        // --- 3. COLOR DE ACENTO ---
+
         val accentColor = if(config.isDark) ContextCompat.getColor(context, R.color.dark_btn) else endColor
 
         view.findViewById<TextView>(R.id.tvSectionTitle).setTextColor(accentColor)
         view.findViewById<Button>(R.id.btnNext).backgroundTintList = ColorStateList.valueOf(accentColor)
 
-        // --- 4. STEPPER (1, 2 y 3) ---
+        // los 4 pasos
         view.findViewById<View>(R.id.step1).setBackgroundColor(accentColor)
         view.findViewById<View>(R.id.step2).setBackgroundColor(accentColor)
         view.findViewById<View>(R.id.step3).setBackgroundColor(accentColor)

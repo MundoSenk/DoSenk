@@ -1,40 +1,44 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.DoSenk" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:forceDarkAllowed">false</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="colorPrimary">@color/purple_end</item>
     </style>
 
     <style name="Theme.DoSenk.Purple" parent="Base.Theme.DoSenk">
         <item name="doSkinStart">@color/purple_start</item>
         <item name="doSkinEnd">@color/purple_end</item>
         <item name="doSkinButton">@color/purple_end</item>
-
+        <item name="doSkinSubtitle">@color/purple_start</item>
         <item name="doSkinLogo">@drawable/logo_purple</item>
+        <item name="doSkinLogoSquare">@drawable/ic_logo_square_purple</item>
     </style>
 
     <style name="Theme.DoSenk.Red" parent="Base.Theme.DoSenk">
         <item name="doSkinStart">@color/red_start</item>
         <item name="doSkinEnd">@color/red_end</item>
-        <item name="doSkinButton">@color/red_start</item>
+        <item name="doSkinButton">@color/red_end</item>
+        <item name="doSkinSubtitle">@color/red_start</item>
 
         <item name="doSkinLogo">@drawable/logo_red</item>
+        <item name="doSkinLogoSquare">@drawable/ic_logo_square_red</item>
     </style>
 
     <style name="Theme.DoSenk.Dark" parent="Base.Theme.DoSenk">
         <item name="doSkinStart">@color/dark_bg</item>
         <item name="doSkinEnd">@color/dark_bg</item>
         <item name="doSkinButton">@color/dark_btn</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="doSkinSubtitle">@color/dark_btn</item>
 
         <item name="doSkinLogo">@drawable/logo_dark</item>
+        <item name="doSkinLogoSquare">@drawable/ic_logo_square_dark</item>
     </style>
 
     <style name="Theme.DoSenk.Teal" parent="Base.Theme.DoSenk">
         <item name="doSkinStart">@color/teal_start</item>
         <item name="doSkinEnd">@color/teal_end</item>
         <item name="doSkinButton">@color/teal_end</item>
+        <item name="doSkinSubtitle">@color/teal_end</item>
 
         <item name="doSkinLogo">@drawable/logo_teal</item>
+        <item name="doSkinLogoSquare">@drawable/ic_logo_square_teal</item>
     </style>
 </resources>

@@ -22,7 +22,6 @@
         android:name="host.senk.dosenk.ui.auth.RegisterPersonalFragment"
         android:label="RegisterPersonalFragment"
         tools:layout="@layout/fragment_register_personal">
-
         <action
             android:id="@+id/action_personal_to_account"
             app:destination="@id/registerAccountFragment"
@@ -39,7 +38,6 @@
             app:destination="@id/registerVerificationFragment"
             app:enterAnim="@android:anim/fade_in"
             app:exitAnim="@android:anim/fade_out" />
-
     </fragment>
 
     <fragment
@@ -53,10 +51,54 @@
             app:exitAnim="@android:anim/fade_out" />
     </fragment>
 
-
     <fragment
         android:id="@+id/registerReadyFragment"
         android:name="host.senk.dosenk.ui.auth.RegisterReadyFragment"
         android:label="RegisterReadyFragment"
-        tools:layout="@layout/fragment_register_ready" />
+        tools:layout="@layout/fragment_register_ready">
+        <action
+            android:id="@+id/action_ready_to_dashboard"
+            app:destination="@id/setupWizardFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/setupWizardFragment"
+        android:name="host.senk.dosenk.ui.dashboard.SetupWizardFragment"
+        android:label="Wizard"
+        tools:layout="@layout/fragment_setup_wizard">
+
+        <action android:id="@+id/action_wizard_to_school" app:destination="@id/setupSchoolFragment" app:enterAnim="@android:anim/slide_in_left"/>
+        <action android:id="@+id/action_wizard_to_work" app:destination="@id/setupWorkFragment" app:enterAnim="@android:anim/slide_in_left"/>
+        <action android:id="@+id/action_wizard_to_business" app:destination="@id/setupBusinessFragment" app:enterAnim="@android:anim/slide_in_left"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/setupSchoolFragment"
+        android:name="host.senk.dosenk.ui.dashboard.SetupSchoolFragment"
+        android:label="School"
+        tools:layout="@layout/fragment_setup_grid">
+
+        <action android:id="@+id/action_school_to_work" app:destination="@id/setupWorkFragment" app:enterAnim="@android:anim/slide_in_left"/>
+        <action android:id="@+id/action_school_to_business" app:destination="@id/setupBusinessFragment" app:enterAnim="@android:anim/slide_in_left"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/setupWorkFragment"
+        android:name="host.senk.dosenk.ui.dashboard.SetupWorkFragment"
+        android:label="Work"
+        tools:layout="@layout/fragment_setup_grid">
+
+        <action android:id="@+id/action_work_to_business" app:destination="@id/setupBusinessFragment" app:enterAnim="@android:anim/slide_in_left"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/setupBusinessFragment"
+        android:name="host.senk.dosenk.ui.dashboard.SetupBusinessFragment"
+        android:label="Business"
+        tools:layout="@layout/fragment_setup_grid" />
+
 </navigation>
