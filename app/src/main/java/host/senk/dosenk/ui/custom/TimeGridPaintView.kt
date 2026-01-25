@@ -126,6 +126,8 @@ class TimeGridPaintView @JvmOverloads constructor(
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
 
+                parent.requestDisallowInterceptTouchEvent(true)
+
                 // Si toco algo vacío (0)
                 // Si toco algo lleno (1)
                 // Si está bloqueado (2)

@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
+import host.senk.dosenk.util.applyDoSenkGradient
 
 @AndroidEntryPoint
 class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
@@ -18,6 +19,23 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Pintar Fondo de Estadísticas (Panel Superior)
+        view.findViewById<View>(R.id.stats)
+            ?.findViewById<View>(R.id.layoutStatsGradient)
+            ?.applyDoSenkGradient(cornerRadius = 20f) // Radio opcional si el XML no lo recorta
+
+        // Pintar Fondo de Preguntas
+        view.findViewById<View>(R.id.layoutWizardGradient)
+            ?.applyDoSenkGradient(
+                orientation = android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                cornerRadius = 0f // El CardView ya recorta las esquinas
+            )
+
+        // Pintar Barra Inferior (Bottom Nav)
+        view.findViewById<View>(R.id.bottomNav)
+            ?.findViewById<View>(R.id.layoutBottomGradient)
+            ?.applyDoSenkGradient()
 
         view.findViewById<Button>(R.id.btnStartPainting).setOnClickListener {
             // 1. Guardamos la selección en la mochila

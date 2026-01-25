@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"  ?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="DayHeaderStyle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:fontFamily">@font/poppins_bold</item>
+        <item name="android:textSize">20dp</item>
+        <item name="android:textColor">?attr/doSkinButton</item>
+    </style>
+
+    <style name="TimeLabelStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">40dp</item>
+
+        <item name="android:gravity">center_vertical|end</item>
+        <item name="android:paddingEnd">8dp</item>
+
+        <item name="android:fontFamily">@font/poppins_semibold</item>
+        <item name="android:textColor">?attr/doSkinButton</item>
+
+        <item name="android:lines">1</item>
+        <item name="android:autoSizeTextType" tools:targetApi="o">uniform</item>
+        <item name="android:autoSizeMinTextSize" tools:targetApi="o">7sp</item>
+        <item name="android:autoSizeMaxTextSize" tools:targetApi="o">12sp</item>
+        <item name="android:textSize">10sp</item>
+    </style>
+</resources>

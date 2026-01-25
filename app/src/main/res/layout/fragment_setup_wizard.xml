@@ -32,8 +32,8 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="80dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="100dp"
             android:gravity="center_horizontal">
 
             <TextView
@@ -46,12 +46,13 @@
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:text="Perfecto! Ya era hora, @User.\nPermíteme conocer a mi nueva víctima..."
-                android:textSize="12sp"
+                android:text="Perfecto! Ya era hora, @User.\nPermíteme conocer a mi nueva víctima...\n ¡DIGO! A mi nuevo jefe"
+                android:textSize="13sp"
                 android:gravity="center"
                 android:textColor="#666"
                 android:fontFamily="@font/poppins_medium"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="24dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
@@ -59,7 +60,7 @@
                 android:id="@+id/cardWizardQuestion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="24dp"
                 app:cardElevation="8dp">
 
                 <LinearLayout
@@ -67,73 +68,84 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp"
-                    android:background="?attr/doSkinStart"> <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:background="@drawable/bg_capsule_white"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="20dp"
-                    android:layout_marginBottom="16dp">
-                    <TextView
-                        android:text="¿A qué te dedicas?"
-                        android:textSize="16sp"
-                        android:textColor="#999"
-                        android:layout_weight="1"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"/>
-                    <ImageView
-                        android:src="@android:drawable/arrow_down_float"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        app:tint="#999"/>
-                </LinearLayout>
+                    android:padding="24dp"
+                    android:background="?attr/doSkinStart">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:background="@drawable/bg_capsule_white"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="20dp"
+                        android:layout_marginBottom="20dp">
+                        <TextView
+                            android:text="¿A qué te dedicas?"
+                            android:textSize="16sp"
+                            android:textColor="#808080"
+                            android:fontFamily="@font/poppins_medium"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"/>
+                        <ImageView
+                            android:src="@android:drawable/arrow_down_float"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            app:tint="#808080"/>
+                    </LinearLayout>
 
                     <CheckBox
                         android:id="@+id/cbStudent"
                         android:text="Estudiante"
                         android:textColor="#555"
-                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textSize="15sp"
+                        android:button="@drawable/selector_round_check"
                         android:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="12dp"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="50dp"
                         android:paddingStart="16dp"/>
 
                     <CheckBox
                         android:id="@+id/cbEmployee"
                         android:text="Empleado"
                         android:textColor="#555"
-                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textSize="15sp"
+                        android:button="@drawable/selector_round_check"
                         android:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="12dp"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="50dp"
                         android:paddingStart="16dp"/>
 
                     <CheckBox
                         android:id="@+id/cbBusiness"
                         android:text="Negocio Propio"
                         android:textColor="#555"
-                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textSize="15sp"
+                        android:button="@drawable/selector_round_check"
                         android:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="12dp"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="50dp"
                         android:paddingStart="16dp"/>
 
                     <CheckBox
                         android:id="@+id/cbNone"
                         android:text="Nada de nada"
                         android:textColor="#555"
-                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textSize="15sp"
+                        android:button="@drawable/selector_round_check"
                         android:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="50dp"
                         android:paddingStart="16dp"/>
 
                 </LinearLayout>

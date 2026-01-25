@@ -1,45 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="#F8F8F8">
 
-    <TextView
-        android:id="@+id/tvPhaseTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="TÍTULO DINÁMICO"
-        android:textSize="22sp"
-        android:fontFamily="@font/poppins_bold"
-        android:textColor="?attr/doSkinSubtitle"
-        android:layout_margin="24dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
-
-    <ScrollView
+    <include
+        android:id="@+id/header"
+        layout="@layout/include_dashboard_header"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="80dp"
-        app:layout_constraintTop_toBottomOf="@id/tvPhaseTitle"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"/>
 
-        <host.senk.dosenk.ui.custom.TimeGridPaintView
-            android:id="@+id/timeGrid"
+    <include
+        android:id="@+id/stats"
+        layout="@layout/include_dashboard_stats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/header"/>
+
+    <LinearLayout
+        android:id="@+id/layoutIntroTexts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/stats">
+
+        <TextView
+            android:id="@+id/btnBackPhase"
+            android:text="← Atrás"
+            android:textColor="?attr/doSkinButton"
+            android:fontFamily="@font/poppins_bold"
+            android:layout_marginBottom="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:text="Hay cosas que no cambian..."
+            android:textSize="16sp"
+            android:fontFamily="@font/poppins_bold"
+            android:textColor="?attr/doSkinSubtitle"
+            android:gravity="center"
             android:layout_width="match_parent"
-            android:layout_height="1000dp"
-            android:layout_marginHorizontal="16dp"/>
-    </ScrollView>
+            android:layout_height="wrap_content"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:text="Tu horario "
+                android:textSize="12sp"
+                android:textColor="#666"
+                android:fontFamily="@font/poppins_medium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/tvPhaseTitle"
+                android:text="Escolar"
+                android:textSize="12sp"
+                android:textColor="?attr/doSkinButton"
+                android:fontFamily="@font/poppins_bold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text=" es:"
+                android:textSize="12sp"
+                android:textColor="#666"
+                android:fontFamily="@font/poppins_medium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="#EAEAEA"
+        app:layout_constraintTop_toBottomOf="@id/layoutIntroTexts"
+        app:layout_constraintBottom_toTopOf="@id/btnNextPhase"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingVertical="12dp"
+                android:paddingEnd="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="60dp"> <TextView android:text="L" style="@style/DayHeaderStyle"/>
+                    <TextView android:text="M" style="@style/DayHeaderStyle"/>
+                    <TextView android:text="M" style="@style/DayHeaderStyle"/>
+                    <TextView android:text="J" style="@style/DayHeaderStyle"/>
+                    <TextView android:text="V" style="@style/DayHeaderStyle"/>
+                    <TextView android:text="S" style="@style/DayHeaderStyle"/>
+                    <TextView android:text="D" style="@style/DayHeaderStyle"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView android:text="12:00-01:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="01:00-02:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="02:00-03:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="03:00-04:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="04:00-05:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="05:00-06:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="06:00-07:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="07:00-08:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="08:00-09:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="09:00-10:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="10:00-11:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="11:00-12:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="12:00-13:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="13:00-14:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="14:00-15:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="15:00-16:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="16:00-17:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="17:00-18:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="18:00-19:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="19:00-20:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="20:00-21:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="21:00-22:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="22:00-23:00" style="@style/TimeLabelStyle"/>
+                        <TextView android:text="23:00-00:00" style="@style/TimeLabelStyle"/>
+                    </LinearLayout>
+
+                    <host.senk.dosenk.ui.custom.TimeGridPaintView
+                        android:id="@+id/timeGrid"
+                        android:layout_width="match_parent"
+                        android:layout_height="960dp"
+                        android:layout_marginStart="4dp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </androidx.cardview.widget.CardView>
 
     <Button
         android:id="@+id/btnNextPhase"
-        android:text="Siguiente"
+        android:text="Siguiente!"
+        android:layout_marginBottom="16dp"
+        android:layout_marginHorizontal="40dp"
+        android:textSize="18sp"
+        android:fontFamily="@font/poppins_bold"
+        android:textColor="@color/white"
+        android:backgroundTint="?attr/doSkinButton"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_margin="24dp"
         app:cornerRadius="30dp"
-        android:backgroundTint="?attr/doSkinButton"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <include
+        android:id="@+id/bottomNav"
+        layout="@layout/include_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
