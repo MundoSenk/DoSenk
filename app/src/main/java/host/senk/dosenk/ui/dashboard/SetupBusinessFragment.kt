@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.ui.custom.TimeGridPaintView
+import host.senk.dosenk.util.applyDoSenkGradient
 
 @AndroidEntryPoint
 class SetupBusinessFragment : Fragment(R.layout.fragment_setup_grid) { // Reutilizamos el layout del Grid
@@ -20,6 +21,22 @@ class SetupBusinessFragment : Fragment(R.layout.fragment_setup_grid) { // Reutil
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
+        // Pintamos del gradiante que venga desde el registro
+        view.findViewById<View>(R.id.stats)
+            ?.findViewById<View>(R.id.layoutStatsGradient)
+            ?.applyDoSenkGradient(cornerRadius = 20f)
+
+        view.findViewById<View>(R.id.layoutWizardGradient)
+            ?.applyDoSenkGradient(
+                orientation = android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                cornerRadius = 0f
+            )
+
+        view.findViewById<View>(R.id.bottomNav)
+            ?.findViewById<View>(R.id.layoutBottomGradient)
+            ?.applyDoSenkGradient()
 
         val paintView = view.findViewById<TimeGridPaintView>(R.id.timeGrid)
 

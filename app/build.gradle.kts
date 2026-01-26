@@ -60,6 +60,8 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion")
 
+    implementation("com.google.code.gson:gson:2.10.1")///grid a json
+
     // DataStore (Preferencias)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
