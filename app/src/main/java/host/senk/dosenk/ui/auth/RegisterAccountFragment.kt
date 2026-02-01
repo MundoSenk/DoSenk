@@ -5,8 +5,10 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -28,9 +30,49 @@ class RegisterAccountFragment : Fragment(R.layout.fragment_register_account) {
             findNavController().popBackStack()
         }
 
-        view.findViewById<Button>(R.id.btnNext).setOnClickListener {
+        val btnNext = view.findViewById<Button>(R.id.btnNext)
 
-            findNavController().navigate(R.id.action_account_to_verification)
+        btnNext.setOnClickListener {
+            //  CAPTURAR DATOS
+            val user = view.findViewById<EditText>(R.id.etUsername).text.toString().trim()
+            val pass = view.findViewById<EditText>(R.id.etPassword).text.toString().trim()
+            val confirm = view.findViewById<EditText>(R.id.etConfirmPassword).text.toString().trim()
+            val email = view.findViewById<EditText>(R.id.etEmail).text.toString().trim()
+
+            //  VALIDACIONES LOCALES (Lo básico)
+            if (user.isEmpty() || pass.isEmpty() || email.isEmpty()) {
+                Toast.makeText(context, "Faltan datos clave", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (pass != confirm) {
+                Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            //  VALIDACIÓN REMOTA
+
+            // Bloqueamos el botón para que no le piquen 20 veces
+            btnNext.isEnabled = false
+            btnNext.text = "Verificando..."
+
+            //  Llamamos al ViewModel (que llama al Repo -> PHP -> MySQL)
+            viewModel.validateAccountAvailability(user, email) { isAvailable, message ->
+
+                // Ya respondió el server, reactivamos botón
+                btnNext.isEnabled = true
+                btnNext.text = "Siguiente!"
+
+                if (isAvailable) {
+                    // Guardamos la contraseña en la mochila (el user y mail ya se guardaron en el VM)
+                    viewModel.password = pass
+
+                    // Avanzamos a la siguiente pantalla
+                    findNavController().navigate(R.id.action_account_to_verification)
+                } else {
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    // MAS TARDE LO marcamos en rojo
+                }
+            }
         }
     }
 

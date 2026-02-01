@@ -11,7 +11,7 @@ import host.senk.dosenk.data.local.entity.UserEntity
 @Dao
 interface UserDao {
 
-    // --- USUARIOS ---
+    // USUARIOS
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity): Long // Devuelve el ID del nuevo usuario
@@ -19,7 +19,7 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE email = :identifier OR username = :identifier LIMIT 1")
     suspend fun getUserByEmailOrUsername(identifier: String): UserEntity?
 
-    // --- HORARIOS ---
+    // HORARIOS -
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSchedule(schedule: ScheduleEntity)

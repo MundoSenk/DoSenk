@@ -31,7 +31,6 @@ class RegisterReadyFragment : Fragment(R.layout.fragment_register_ready) {
         val cbTerms = view.findViewById<CheckBox>(R.id.cbTerms)
         val cbMental = view.findViewById<CheckBox>(R.id.cbMental)
 
-        // Lógica de validación: Ambos deben estar marcados
         val checkListener = {
             val isReady = cbTerms.isChecked && cbMental.isChecked
             btnFinish.isEnabled = isReady
@@ -46,18 +45,26 @@ class RegisterReadyFragment : Fragment(R.layout.fragment_register_ready) {
         }
 
         btnFinish.setOnClickListener {
+            btnFinish.isEnabled = false // Evitar doble click
+            btnFinish.text = "Conectando con Do..."
 
-            // Guardar en DataStore
-            viewModel.completeRegistration()
-            // AQUÍ TERMINA EL REGISTRO
-            // TODO: Enviar datos al backend
-            Toast.makeText(context, "¡Bienvenido al infierno de la productividad!", Toast.LENGTH_LONG).show()
+            // LLAMADA AL SERVIDOR + BD LOCAL
+            viewModel.registerUser(
+                onSuccess = {
+                    // ¡SI LLEGAMOS AQUI, YA ESTAS EN MYSQL Y EN ROOM!
+                    Toast.makeText(context, "¡Bienvenido al infierno de la productividad!", Toast.LENGTH_LONG).show()
 
-
-
-            findNavController().navigate(R.id.action_ready_to_dashboard)
-            requireActivity().recreate()
-
+                    // Reiniciar para aplicar tema y entrar al Dashboard
+                    findNavController().navigate(R.id.action_ready_to_dashboard)
+                    requireActivity().recreate()
+                },
+                onError = { mensajeError ->
+                    // Si falló (ej: usuario duplicado, sin internet)
+                    btnFinish.isEnabled = true
+                    btnFinish.text = "¡Estoy listo!"
+                    Toast.makeText(context, "Error: $mensajeError", Toast.LENGTH_LONG).show()
+                }
+            )
         }
     }
 
