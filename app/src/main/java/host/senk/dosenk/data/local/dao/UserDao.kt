@@ -16,8 +16,8 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity): Long // Devuelve el ID del nuevo usuario
 
-    @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
-    suspend fun getUserByEmail(email: String): UserEntity?
+    @Query("SELECT * FROM users WHERE email = :identifier OR username = :identifier LIMIT 1")
+    suspend fun getUserByEmailOrUsername(identifier: String): UserEntity?
 
     // --- HORARIOS ---
 

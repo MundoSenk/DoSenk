@@ -34,10 +34,10 @@ class AuthRepository @Inject constructor(
 
     suspend fun login(email: String, pass: String): Boolean {
         //  Buscar usuario por email
-        val user = userDao.getUserByEmail(email) ?: return false // No existe
+        val user = userDao.getUserByEmailOrUsername(email) ?: return false // No existe
 
         //  Checar password
-        if (user.passwordHash == pass) {
+        if (user.password == pass) {
 
             userPreferences.saveUserSession(
                 token = "dummy_token_${user.id}",

@@ -31,6 +31,11 @@ class RegisterPersonalFragment : Fragment(R.layout.fragment_register_personal) {
         view.findViewById<Button>(R.id.btnNext).setOnClickListener {
             findNavController().navigate(R.id.action_personal_to_account)
         }
+
+
+
+
+
     }
 
     private fun applySkin(view: View, skinIndex: Int) {

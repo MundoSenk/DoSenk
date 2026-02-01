@@ -7,11 +7,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -22,6 +26,7 @@ import androidx.navigation.fragment.findNavController //Pa la navegacion
 
 import androidx.fragment.app.activityViewModels // pa paserle l datp
 
+@AndroidEntryPoint // ¡NECESARIO PARA HILT!
 class LoginFragment : Fragment() {
 
     // Variables para controlar el carrusel
@@ -31,8 +36,11 @@ class LoginFragment : Fragment() {
     // Variable para recordar el color de acento actual y poder animar desde él
     private var currentAccentColor: Int = 0
 
-
+    // ViewModel compartido para el registro
     private val registerViewModel: RegistrationViewModel by activityViewModels()
+
+    // ViewModel propio para el Login (Logica de BD)
+    private val loginViewModel: LoginViewModel by viewModels()
 
     // Referencias a las vistas (Views)
     private lateinit var backgroundView: View
@@ -41,6 +49,10 @@ class LoginFragment : Fragment() {
     private lateinit var tvForgot: TextView
     private lateinit var btnLogin: Button
     private lateinit var tvRegister: TextView
+
+    // Inputs de texto
+    private lateinit var etUser: EditText
+    private lateinit var etPassword: EditText
 
     // Definimos los colores de las skin, aqui el pintado debe ser manual si o si
     // Estructura: [StartColor, EndColor, LogoRes, TextColor]
@@ -78,6 +90,10 @@ class LoginFragment : Fragment() {
         btnLogin = view.findViewById(R.id.btnLogin)
         tvRegister = view.findViewById(R.id.tvRegister)
 
+        // Inicializamos los campos de texto
+        etUser = view.findViewById(R.id.etUser)
+        etPassword = view.findViewById(R.id.etPassword)
+
         // Pa capturar el color con el que se quedara para el registro
         tvRegister.setOnClickListener {
             saveCurrentThemeAndContinue()
@@ -85,10 +101,38 @@ class LoginFragment : Fragment() {
 
         // boton para el login
         btnLogin.setOnClickListener {
+            val user = etUser.text.toString()
+            val pass = etPassword.text.toString()
 
+            // Llamamos a la lógica de BD
+            loginViewModel.onLoginClicked(user, pass)
         }
 
         return view
+    }
+
+    // Escuchamos los eventos del ViewModel
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            loginViewModel.loginEvent.collect { event ->
+                when(event) {
+                    is LoginViewModel.LoginEvent.Success -> {
+                        stopCarousel()
+
+                        // findNavController().navigate(R.id.action_login_to_setupWizardFragment)
+
+                        // Si no tienes la acción directa, usa la que tengas a mano para probar:
+                        findNavController().navigate(R.id.action_login_to_register)
+                    }
+                    is LoginViewModel.LoginEvent.Error -> {
+                        // Error (Usuario no encontrado o pass mal)
+                        Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {
