@@ -26,7 +26,7 @@ import androidx.navigation.fragment.findNavController //Pa la navegacion
 
 import androidx.fragment.app.activityViewModels // pa paserle l datp
 
-@AndroidEntryPoint // ¡NECESARIO PARA HILT!
+@AndroidEntryPoint // NECESARIO PARA HILT
 class LoginFragment : Fragment() {
 
     // Variables para controlar el carrusel
@@ -121,19 +121,28 @@ class LoginFragment : Fragment() {
                     is LoginViewModel.LoginEvent.Success -> {
                         stopCarousel()
 
-                        // findNavController().navigate(R.id.action_login_to_setupWizardFragment)
+                        // pregunta si ya hizo el tutorial
+                        val isVeteran = loginViewModel.isSetupFinished()
 
-                        // Si no tienes la acción directa, usa la que tengas a mano para probar:
-                        findNavController().navigate(R.id.action_login_to_register)
+                        if (isVeteran) {
+
+                            findNavController().navigate(R.id.action_login_to_homeFragment)
+                        } else {
+                            // Es nuevo -> A configurar horarios
+                            findNavController().navigate(R.id.action_login_to_setupWizardFragment)
+                        }
+
+                        // Reiniciar para que se aplique el tema de color
+                        requireActivity().recreate()
                     }
                     is LoginViewModel.LoginEvent.Error -> {
-                        // Error (Usuario no encontrado o pass mal)
                         Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
     }
+
 
     override fun onResume() {
         super.onResume()
@@ -238,9 +247,9 @@ class LoginFragment : Fragment() {
         // Cuando el usuario toca el de registro le detenemos el carrusel.
         stopCarousel()
 
-        //Se guarda el color del tema!
+        //Se guarda el color del tema
         registerViewModel.setSkin(currentSkinIndex)
-        // Para que la siguiente Activity sepa qué tema usar (R.style.Theme_DoSenk_Red, etc).
+        // Para que la siguiente Activity sepa qué tema usar
         findNavController().navigate(R.id.action_login_to_register)
 
     }

@@ -28,6 +28,8 @@ class UserPreferences @Inject constructor(
         val USER_TOKEN = stringPreferencesKey("user_token") // "abc-123-uuid"
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in") // true/false
         val USER_NAME_ALIAS = stringPreferencesKey("user_alias") // "@User"
+
+        val SETUP_FINISHED = booleanPreferencesKey("setup_finished")  /// Si ya hizo el tutorial
     }
 
     // --- GUARDAR DATOS (Escritura) ---
@@ -67,4 +69,21 @@ class UserPreferences @Inject constructor(
         .map { preferences ->
             preferences[USER_NAME_ALIAS] ?: "@User"
         }
+
+    // Función para guardar
+    suspend fun saveSetupFinished(isFinished: Boolean) {
+        context.dataStore.edit { it[SETUP_FINISHED] = isFinished }
+    }
+
+    // Flow para leer
+    val isSetupFinished: Flow<Boolean> = context.dataStore.data
+        .map { it[SETUP_FINISHED] ?: false }
+
+
+    val userToken: Flow<String> = context.dataStore.data
+        .map { preferences ->
+            preferences[USER_TOKEN] ?: "" // Si no hay, devuelve vacío
+        }
+
+
 }

@@ -23,6 +23,10 @@ class SetupSchoolFragment : Fragment(R.layout.fragment_setup_grid) {
         super.onViewCreated(view, savedInstanceState)
 
 
+        view.findViewById<View>(R.id.stats)?.visibility = View.GONE
+        view.findViewById<View>(R.id.bottomNav)?.visibility = View.GONE
+
+
         // Pintamos del gradiante que venga desde el registro
         view.findViewById<View>(R.id.stats)
             ?.findViewById<View>(R.id.layoutStatsGradient)
@@ -38,6 +42,11 @@ class SetupSchoolFragment : Fragment(R.layout.fragment_setup_grid) {
             ?.findViewById<View>(R.id.layoutBottomGradient)
             ?.applyDoSenkGradient()
 
+        //header
+        view.findViewById<View>(R.id.header)
+            ?.findViewById<View>(R.id.layoutLogoGradient)
+            ?.applyDoSenkGradient(cornerRadius = 12f)
+
         val paintView = view.findViewById<TimeGridPaintView>(R.id.timeGrid)
         view.findViewById<TextView>(R.id.tvPhaseTitle).text = "Horario ESCOLAR"
 
@@ -47,15 +56,30 @@ class SetupSchoolFragment : Fragment(R.layout.fragment_setup_grid) {
         paintView.setThemeColor(typedValue.data)
 
         view.findViewById<Button>(R.id.btnNextPhase).setOnClickListener {
-            // Guardamos el dibujo de la escuela
             viewModel.schoolGrid = paintView.getCurrentSelection()
 
-            //pa ir a la siguiente seleccion
             when {
                 viewModel.isEmployee -> findNavController().navigate(R.id.action_school_to_work)
                 viewModel.isBusiness -> findNavController().navigate(R.id.action_school_to_business)
-                else -> Toast.makeText(context, "¡Terminaste!", Toast.LENGTH_SHORT).show()
+                else -> {
+                    // ES EL ÚLTIMO PASO -> GUARDAR
+                    saveAndFinish()
+                }
             }
         }
+    }
+
+
+
+
+    private fun saveAndFinish() {
+        // Bloquear botón o mostrar loading...
+        viewModel.finalSave(
+            onSuccess = {
+                Toast.makeText(context, "¡Listo gallo!", Toast.LENGTH_SHORT).show()
+                findNavController().navigate(R.id.action_global_homeFragment)
+            },
+            onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+        )
     }
 }

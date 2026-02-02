@@ -31,6 +31,11 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
                 cornerRadius = 0f
             )
 
+        //header
+        view.findViewById<View>(R.id.header)
+            ?.findViewById<View>(R.id.layoutLogoGradient)
+            ?.applyDoSenkGradient(cornerRadius = 12f)
+
         view.findViewById<View>(R.id.bottomNav)
             ?.findViewById<View>(R.id.layoutBottomGradient)
             ?.applyDoSenkGradient()
@@ -77,10 +82,14 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
 
             // DECISIÓN DE RUTA
             if (isNone) {
-                // Se va directo al home
-                skipTutorial()
+                // Guardar vacío (para que marque setup_finished = true)
+                viewModel.finalSave(
+                    onSuccess = {
+                        findNavController().navigate(R.id.action_global_homeFragment)
+                    },
+                    onError = { Toast.makeText(context, "Error al saltar", Toast.LENGTH_SHORT).show() }
+                )
             } else {
-                // RUTA NORMAL: Ir pintando paso a paso
                 navigateToFirstPaintingStep()
             }
         }
@@ -94,9 +103,6 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
         }
     }
 
-    private fun skipTutorial() {
-        Toast.makeText(context, "¡Eres libre como el viento! Configurando Dashboard...", Toast.LENGTH_SHORT).show()
-        // AQUÍ ES DONDE MANDAREMOS AL HOME REAL
-        // findNavController().navigate(R.id.action_wizard_to_homeFragment)
-    }
+
+
 }

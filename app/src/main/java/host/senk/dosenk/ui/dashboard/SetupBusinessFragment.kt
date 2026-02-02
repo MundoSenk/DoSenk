@@ -23,6 +23,10 @@ class SetupBusinessFragment : Fragment(R.layout.fragment_setup_grid) { // Reutil
         super.onViewCreated(view, savedInstanceState)
 
 
+        view.findViewById<View>(R.id.stats)?.visibility = View.GONE
+        view.findViewById<View>(R.id.bottomNav)?.visibility = View.GONE
+
+
         // Pintamos del gradiante que venga desde el registro
         view.findViewById<View>(R.id.stats)
             ?.findViewById<View>(R.id.layoutStatsGradient)
@@ -37,6 +41,12 @@ class SetupBusinessFragment : Fragment(R.layout.fragment_setup_grid) { // Reutil
         view.findViewById<View>(R.id.bottomNav)
             ?.findViewById<View>(R.id.layoutBottomGradient)
             ?.applyDoSenkGradient()
+
+
+        //header
+        view.findViewById<View>(R.id.header)
+            ?.findViewById<View>(R.id.layoutLogoGradient)
+            ?.applyDoSenkGradient(cornerRadius = 12f)
 
         val paintView = view.findViewById<TimeGridPaintView>(R.id.timeGrid)
 
@@ -54,14 +64,30 @@ class SetupBusinessFragment : Fragment(R.layout.fragment_setup_grid) { // Reutil
         btnNext.text = "Finalizar"
 
         btnNext.setOnClickListener {
-            // Guardamos el último grid
             viewModel.businessGrid = paintView.getCurrentSelection()
 
-
-            Toast.makeText(context, "¡Configuración guardada con éxito!", Toast.LENGTH_LONG).show()
-
-
-            // findNavController().navigate(R.id.action_global_homeFragment)
+            // GUARDAR DEFINITIVO
+            viewModel.finalSave(
+                onSuccess = {
+                    Toast.makeText(context, "¡A darle átomos!", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_global_homeFragment)
+                },
+                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+            )
         }
     }
+
+
+
+    private fun saveAndFinish() {
+        // Bloquear botón o mostrar loading...
+        viewModel.finalSave(
+            onSuccess = {
+                Toast.makeText(context, "¡Listo gallo!", Toast.LENGTH_SHORT).show()
+                findNavController().navigate(R.id.action_global_homeFragment)
+            },
+            onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+        )
+    }
+
 }
