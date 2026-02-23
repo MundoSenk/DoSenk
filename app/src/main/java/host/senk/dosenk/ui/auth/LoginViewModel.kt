@@ -14,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val repository: AuthRepository,
-    private val userPreferences: UserPreferences // <--- ¡ESTO FALTABA!
+    private val userPreferences: UserPreferences //
 ) : ViewModel() {
 
     // Canal para mandar eventos a la vista

@@ -30,6 +30,9 @@ class UserPreferences @Inject constructor(
         val USER_NAME_ALIAS = stringPreferencesKey("user_alias") // "@User"
 
         val SETUP_FINISHED = booleanPreferencesKey("setup_finished")  /// Si ya hizo el tutorial
+
+        val IS_EMERGENCY_ACTIVE = booleanPreferencesKey("is_emergency_active") //Detectar el modo activado
+
     }
 
     // --- GUARDAR DATOS (Escritura) ---
@@ -50,6 +53,10 @@ class UserPreferences @Inject constructor(
 
     suspend fun clearSession() {
         context.dataStore.edit { it.clear() }
+    }
+
+    suspend fun saveEmergencyMode(isActive: Boolean) {
+        context.dataStore.edit { it[IS_EMERGENCY_ACTIVE] = isActive }
     }
 
     // --- LEER DATOS (Lectura reactiva con Flow) ---
@@ -84,6 +91,10 @@ class UserPreferences @Inject constructor(
         .map { preferences ->
             preferences[USER_TOKEN] ?: "" // Si no hay, devuelve vacío
         }
+
+
+    val isEmergencyActive: Flow<Boolean> = context.dataStore.data
+        .map { it[IS_EMERGENCY_ACTIVE] ?: false }
 
 
 }

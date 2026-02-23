@@ -70,7 +70,7 @@ class SetupBusinessFragment : Fragment(R.layout.fragment_setup_grid) { // Reutil
             viewModel.finalSave(
                 onSuccess = {
                     Toast.makeText(context, "¡A darle átomos!", Toast.LENGTH_SHORT).show()
-                    findNavController().navigate(R.id.action_global_homeFragment)
+                    findNavController().navigate(R.id.action_global_statsFragment)
                 },
                 onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
             )
@@ -84,7 +84,7 @@ class SetupBusinessFragment : Fragment(R.layout.fragment_setup_grid) { // Reutil
         viewModel.finalSave(
             onSuccess = {
                 Toast.makeText(context, "¡Listo gallo!", Toast.LENGTH_SHORT).show()
-                findNavController().navigate(R.id.action_global_homeFragment)
+                findNavController().navigate(R.id.action_global_statsFragment)
             },
             onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
         )

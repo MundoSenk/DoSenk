@@ -1,5 +1,8 @@
 package host.senk.dosenk.ui.dashboard
 
+import android.content.Intent
+import android.provider.Settings
+import androidx.appcompat.app.AlertDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -16,6 +19,9 @@ import java.util.Locale
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import host.senk.dosenk.util.AccessibilityUtils // PA LLEVARLO A AL ACCESIBILIDAD
+
+
 
 
 @AndroidEntryPoint
@@ -57,6 +63,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val tvTime = view.findViewById<View>(R.id.stats).findViewById<TextView>(R.id.tvTime)
         val tvUser = view.findViewById<View>(R.id.header).findViewById<TextView>(R.id.tvUsername)
 
+
+
         // FECHA (Lunes 2 Febrero...)
         val sdfDate = SimpleDateFormat("EEEE d MMMM yyyy", Locale.getDefault())
         tvDate.text = sdfDate.format(Date()).capitalize()
@@ -77,6 +85,46 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             // Ejemplo: "harold" -> "HAROLD"
             tvUser.text = "Bienvenido, @${alias.uppercase()}"
         }
+
+
+
+        //REFERENCIAS AL card
+        val cardsGrid = view.findViewById<View>(R.id.cards_grid)
+        val cardEmergency = cardsGrid.findViewById<View>(R.id.cardEmergency)
+        val layoutEmergency = cardsGrid.findViewById<View>(R.id.layoutEmergencyGradient)
+        val tvStatus = cardsGrid.findViewById<TextView>(R.id.tvEmergencyTitle)
+
+        //pintado del boton de emergencia
+        layoutEmergency.applyDoSenkGradient(cornerRadius = 20f)
+
+        //ESCUCHAR EL CLICK del boton de emergencia
+        cardEmergency.setOnClickListener {
+
+            // A. Verificamos si tiene el permiso
+            if (AccessibilityUtils.isServiceEnabled(requireContext())) {
+                // TIENE PERMISO ACTIVAMOS Y DESACTIVAMOS
+                viewModel.toggleEmergencyMode()
+            } else {
+                // NO TIENE PERMISO -> Lo mandamos a configurar
+                showPermissionDialog()
+            }
+        }
+
+        // OBSERVAR EL CAMBIO DE ESTADO (REACTIVO)
+        viewModel.isEmergencyActive.observe(viewLifecycleOwner) { isActive ->
+            if (isActive) {
+
+                tvStatus.text = "¡ACTIVADO!\nSOLO LLAMADAS"
+                cardEmergency.alpha = 1.0f
+
+                // AQUÍ DISPARAREMOS EL SERVICIO DE ACCESIBILIDAD DESPUÉS
+            } else {
+                // MODO NORMAL 😌
+                tvStatus.text = "¡BLOQUEO DE\nEMERGENCIA!"
+                cardEmergency.alpha = 0.9f // Un poco apagado si quieres
+            }
+        }
+
     }
 
     override fun onDestroyView() {
@@ -86,5 +134,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun String.capitalize(): String {
         return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+
+
+    private fun showPermissionDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permiso Requerido ")
+            .setMessage("Para bloquear aplicaciones y que te concentres de verdad, necesito permiso de Accesibilidad.\n\nBusca 'Do Senk' en la lista y actívalo.")
+            .setPositiveButton("IR A ACTIVAR") { _, _ ->
+                // INTENT MÁGICO: Lo lleva directo a la configuración
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 }

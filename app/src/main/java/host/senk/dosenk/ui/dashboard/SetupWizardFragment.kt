@@ -85,7 +85,7 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
                 // Guardar vacío (para que marque setup_finished = true)
                 viewModel.finalSave(
                     onSuccess = {
-                        findNavController().navigate(R.id.action_global_homeFragment)
+                        findNavController().navigate(R.id.action_global_statsFragment)
                     },
                     onError = { Toast.makeText(context, "Error al saltar", Toast.LENGTH_SHORT).show() }
                 )

@@ -77,7 +77,7 @@ class SetupSchoolFragment : Fragment(R.layout.fragment_setup_grid) {
         viewModel.finalSave(
             onSuccess = {
                 Toast.makeText(context, "¡Listo gallo!", Toast.LENGTH_SHORT).show()
-                findNavController().navigate(R.id.action_global_homeFragment)
+                findNavController().navigate(R.id.action_global_statsFragment)
             },
             onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
         )

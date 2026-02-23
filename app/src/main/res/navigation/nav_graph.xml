@@ -6,34 +6,34 @@
     app:startDestination="@id/splashFragment">
     <fragment
 
-    android:id="@+id/splashFragment"
-    android:name="host.senk.dosenk.ui.auth.SplashFragment"
-    android:label="Splash">
+        android:id="@+id/splashFragment"
+        android:name="host.senk.dosenk.ui.auth.SplashFragment"
+        android:label="Splash">
 
-    <action
-        android:id="@+id/action_splash_to_login"
-        app:destination="@id/loginFragment"
-        app:popUpTo="@id/nav_graph"
-        app:popUpToInclusive="true"
-        app:enterAnim="@android:anim/fade_in"
-        app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_splash_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
 
-    <action
-        android:id="@+id/action_splash_to_home"
-        app:destination="@id/homeFragment"
-        app:popUpTo="@id/nav_graph"
-        app:popUpToInclusive="true"
-        app:enterAnim="@android:anim/fade_in"
-        app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_splash_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
 
-    <action
-        android:id="@+id/action_splash_to_wizard"
-        app:destination="@id/setupWizardFragment"
-        app:popUpTo="@id/nav_graph"
-        app:popUpToInclusive="true"
-        app:enterAnim="@android:anim/fade_in"
-        app:exitAnim="@android:anim/fade_out"/>
-</fragment>
+        <action
+            android:id="@+id/action_splash_to_wizard"
+            app:destination="@id/setupWizardFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
 
     <fragment
         android:id="@+id/loginFragment"
@@ -118,8 +118,8 @@
         <action android:id="@+id/action_wizard_to_business" app:destination="@id/setupBusinessFragment" app:enterAnim="@android:anim/slide_in_left"/>
 
         <action
-            android:id="@+id/action_global_homeFragment"
-            app:destination="@id/homeFragment"
+            android:id="@+id/action_global_statsFragment"
+            app:destination="@id/setupStatsFragment"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
@@ -133,7 +133,8 @@
         tools:layout="@layout/fragment_setup_grid">
         <action android:id="@+id/action_school_to_work" app:destination="@id/setupWorkFragment" app:enterAnim="@android:anim/slide_in_left"/>
         <action android:id="@+id/action_school_to_business" app:destination="@id/setupBusinessFragment" app:enterAnim="@android:anim/slide_in_left"/>
-        <action android:id="@+id/action_global_homeFragment" app:destination="@id/homeFragment" app:popUpTo="@id/nav_graph" app:popUpToInclusive="true"/>
+
+        <action android:id="@+id/action_global_statsFragment" app:destination="@id/setupStatsFragment" app:popUpTo="@id/nav_graph" app:popUpToInclusive="true"/>
     </fragment>
 
     <fragment
@@ -142,7 +143,8 @@
         android:label="Work"
         tools:layout="@layout/fragment_setup_grid">
         <action android:id="@+id/action_work_to_business" app:destination="@id/setupBusinessFragment" app:enterAnim="@android:anim/slide_in_left"/>
-        <action android:id="@+id/action_global_homeFragment" app:destination="@id/homeFragment" app:popUpTo="@id/nav_graph" app:popUpToInclusive="true"/>
+
+        <action android:id="@+id/action_global_statsFragment" app:destination="@id/setupStatsFragment" app:popUpTo="@id/nav_graph" app:popUpToInclusive="true"/>
     </fragment>
 
     <fragment
@@ -150,7 +152,23 @@
         android:name="host.senk.dosenk.ui.dashboard.SetupBusinessFragment"
         android:label="Business"
         tools:layout="@layout/fragment_setup_grid" >
-        <action android:id="@+id/action_global_homeFragment" app:destination="@id/homeFragment" app:popUpTo="@id/nav_graph" app:popUpToInclusive="true"/>
+
+        <action android:id="@+id/action_global_statsFragment" app:destination="@id/setupStatsFragment" app:popUpTo="@id/nav_graph" app:popUpToInclusive="true"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/setupStatsFragment"
+        android:name="host.senk.dosenk.ui.dashboard.SetupStatsFragment"
+        android:label="Stats"
+        tools:layout="@layout/fragment_setup_stats">
+
+        <action
+            android:id="@+id/action_global_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
     </fragment>
 
     <fragment
