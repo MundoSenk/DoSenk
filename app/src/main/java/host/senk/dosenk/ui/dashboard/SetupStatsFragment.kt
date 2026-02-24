@@ -93,7 +93,7 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
 
     private fun showPermissionState() {
         tvStatsTitle.text = "Analizando tu personalidad..."
-        tvStatsSubtitle.text = "Para ser tu sargento, necesito ver tus trapos sucios. Dame acceso a tu tiempo de uso de la pantallita."
+        tvStatsSubtitle.text = "Para ser tu jefe, necesito ver tus trapos sucios. Dame acceso a tu tiempo de uso de tu pantallita."
         cardPermission.visibility = View.VISIBLE
         cardVices.visibility = View.GONE
         btnAcceptPunishment.visibility = View.GONE
@@ -110,7 +110,7 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
     private fun loadVices() {
         // Lanzamos una corrutina en IO porque getTopVices consulta al sistema y puede ser pesado
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            // Obtenemos el top 3 de peores vicios
+            // Obtenemos el top 5 de peores vicios
             val topVices = AppUsageManager.getTopVices(requireContext(), daysToLookBack = 3, topCount = 5)
 
             // Volvemos al hilo principal (Main) para actualizar la UI
