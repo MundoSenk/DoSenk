@@ -12,6 +12,13 @@ import java.util.Calendar
 import android.util.Log
 
 
+
+// COn el que guardamos la suma y la lista de apps nas usadas
+data class UsageReport(
+    val topVices: List<AppUsageInfo>,
+    val totalTimeMs: Long
+)
+
 // Estructura para guardar la info del vicio
 data class AppUsageInfo(
     val packageName: String,
@@ -47,7 +54,7 @@ object AppUsageManager {
     }
 
     // Extrae los vicios
-    fun getTopVices(context: Context, daysToLookBack: Int = 3, topCount: Int = 3): List<AppUsageInfo> {
+    fun getTopVices(context: Context, daysToLookBack: Int = 7, topCount: Int = 5): UsageReport {
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val packageManager = context.packageManager
 
@@ -76,44 +83,43 @@ object AppUsageManager {
             }
         }
 
+        // Filtramos para obtener SOLO apps lanzables (sin basura del sistema)
         val launchableApps = packageManager.getInstalledPackages(PackageManager.MATCH_ALL)
             .filter { packageManager.getLaunchIntentForPackage(it.packageName) != null }
             .map { it.packageName }
             .toSet()
 
+        // Filtramos el mapa para quedarnos solo con las apps que son lanchaubles
+        val validAppsMap = aggregatedStats.filter { it.value > 0 && launchableApps.contains(it.key) }
 
-        Log.d("DoSenkStats", "========== APLICANDO FILTRO DE APPS 'LANZABLES' ==========")
+        //  Sumamos  el tiempo de todas las apps válidas
+        val trueTotalTimeMs = validAppsMap.values.sum()
 
-        val finalResult = aggregatedStats
-            .filter { it.value > 0 && launchableApps.contains(it.key) }
-            .mapNotNull { entry ->
-                try {
-                    val packageName = entry.key
-                    val totalTime = entry.value
+        // Ahora sí, armamos la lista para sacar el top 5
+        val vicesList = validAppsMap.mapNotNull { entry ->
+            try {
+                val packageName = entry.key
+                val totalTime = entry.value
 
-                    val appInfo = packageManager.getApplicationInfo(packageName, 0)
-                    val appName = packageManager.getApplicationLabel(appInfo).toString()
-                    val icon = packageManager.getApplicationIcon(appInfo)
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                val appName = packageManager.getApplicationLabel(appInfo).toString()
+                val icon = packageManager.getApplicationIcon(appInfo)
 
-                    AppUsageInfo(
-                        packageName = packageName,
-                        appName = appName,
-                        timeInForegroundMillis = totalTime,
-                        icon = icon
-                    )
-                } catch (e: PackageManager.NameNotFoundException) {
-                    Log.e("DoSenkStats", "ERROR -> No se encontró la app: ${entry.key}")
-                    null
-                }
+                AppUsageInfo(
+                    packageName = packageName,
+                    appName = appName,
+                    timeInForegroundMillis = totalTime,
+                    icon = icon
+                )
+            } catch (e: PackageManager.NameNotFoundException) {
+                null
             }
-            .sortedByDescending { it.timeInForegroundMillis }
-
-        Log.d("DoSenkStats", "========== RANKING FINAL (ANTES DEL TOP $topCount) ==========")
-        for (vice in finalResult) {
-            Log.d("DoSenkStats", "RANKING -> App: ${vice.appName} (${vice.packageName}) | Tiempo: ${formatTime(vice.timeInForegroundMillis)}")
         }
+            .sortedByDescending { it.timeInForegroundMillis }
+            .take(topCount)
 
-        return finalResult.take(topCount)
+        // Devolvemos ambos datos
+        return UsageReport(topVices = vicesList, totalTimeMs = trueTotalTimeMs)
     }
 
     // Formatear tiempo para el humano

@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,12 +17,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.util.AppUsageManager
 import host.senk.dosenk.util.applyDoSenkGradient
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
+
+    // Conectamos con el ViewModel
+    private val sharedViewModel: SetupViewModel by activityViewModels()
 
     private lateinit var rvTopVices: RecyclerView
     private lateinit var tvStatsTitle: TextView
@@ -32,18 +34,16 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
     private lateinit var btnAcceptPunishment: Button
     private lateinit var tvVerdict: TextView
 
-    // Contrato para pedir el permiso y saber cuándo el usuario regresa a la app
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        // Cuando regrese de los ajustes, verificamos si ya nos dio el permiso
         checkPermissionAndLoadStats()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // xml
+        // Referencias XML
         rvTopVices = view.findViewById(R.id.rvTopVices)
         tvStatsTitle = view.findViewById(R.id.tvStatsTitle)
         tvStatsSubtitle = view.findViewById(R.id.tvStatsSubtitle)
@@ -53,7 +53,7 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
         btnAcceptPunishment = view.findViewById(R.id.btnAcceptPunishment)
         tvVerdict = view.findViewById(R.id.tvVerdict)
 
-        //  gradientes
+        // Gradientes
         view.findViewById<View>(R.id.header)
             ?.findViewById<View>(R.id.layoutLogoGradient)
             ?.applyDoSenkGradient(cornerRadius = 12f)
@@ -62,31 +62,26 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
             ?.findViewById<View>(R.id.layoutStatsGradient)
             ?.applyDoSenkGradient(cornerRadius = 24f)
 
-        // Configurar RecyclerView
         rvTopVices.layoutManager = LinearLayoutManager(requireContext())
 
-        // Botón para ir a los ajustes a dar el permiso
         btnGrantPermission.setOnClickListener {
             val intent = AppUsageManager.getPermissionSettingsIntent()
             requestPermissionLauncher.launch(intent)
         }
 
-        // Botón final para ir al Home
         btnAcceptPunishment.setOnClickListener {
+            // para mandarlo sl a TutorialDashboardFragment
             findNavController().navigate(R.id.action_global_homeFragment)
         }
 
-        // verificamos el permiso
         checkPermissionAndLoadStats()
     }
 
     private fun checkPermissionAndLoadStats() {
         if (AppUsageManager.hasUsageStatsPermission(requireContext())) {
-            // Ya tenemos el permiso, cambiamos la UI y cargamos las stats
             showLoadingState()
             loadVices()
         } else {
-            // No hay permiso, mostramos la tarjeta para pedirlo
             showPermissionState()
         }
     }
@@ -104,38 +99,38 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
         tvStatsTitle.text = "Calculando tu nivel de perdición..."
         tvStatsSubtitle.text = "Dame un segundo..."
         cardPermission.visibility = View.GONE
-        // Mantenemos lo demás oculto mientras carga
     }
 
     private fun loadVices() {
-        // Lanzamos una corrutina en IO porque getTopVices consulta al sistema y puede ser pesado
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            // Obtenemos el top 5 de peores vicios
-            val topVices = AppUsageManager.getTopVices(requireContext(), daysToLookBack = 3, topCount = 5)
+        // Le ordenamos al ViewModel que haga el cálculo pesado
+        sharedViewModel.loadUsageStats(requireContext())
 
-            // Volvemos al hilo principal (Main) para actualizar la UI
-            withContext(Dispatchers.Main) {
-                if (topVices.isNotEmpty()) {
-                    // Actualizamos la UI con los resultados
-                    tvStatsTitle.text = "Resultados del Análisis"
-                    tvStatsSubtitle.text = "Los números no mienten."
+        // Nos sentamos a observar los resultados
+        viewLifecycleOwner.lifecycleScope.launch {
+            sharedViewModel.usageReport.collect { report ->
+                // Si el reporte ya no es nulo, significa que ya terminó de calcular
+                if (report != null) {
+                    // Sacamos las 5 apps de la caja
+                    val topVicesList = report.topVices
 
-                    // Llenamos el RecyclerView con nuestro nuevo Adapter
-                    rvTopVices.adapter = TopVicesAdapter(topVices)
+                    if (topVicesList.isNotEmpty()) {
+                        tvStatsTitle.text = "Resultados del Análisis"
+                        tvStatsSubtitle.text = "Los números no mienten."
 
-                    // Mostramos la tarjeta y el botón de castigo
-                    cardVices.visibility = View.VISIBLE
-                    btnAcceptPunishment.visibility = View.VISIBLE
+                        // Le pasamos la LISTA pura al Adapter
+                        rvTopVices.adapter = TopVicesAdapter(topVicesList)
 
-                    // Texto del sargento
-                    tvVerdict.visibility = View.VISIBLE
-                    val worstApp = topVices[0]
-                    tvVerdict.text = "¿${AppUsageManager.formatTime(worstApp.timeInForegroundMillis)} en ${worstApp.appName}? Y así querías conquistar el mundo. Te voy a destruir esos vicios."
-                } else {
-                    // Caso raro: No usó el celular hoy
-                    tvStatsTitle.text = "Vaya, vaya..."
-                    tvStatsSubtitle.text = "Parece que eres un monje y no usaste apps hoy. Aún así, seré tu sargento."
-                    btnAcceptPunishment.visibility = View.VISIBLE
+                        cardVices.visibility = View.VISIBLE
+                        btnAcceptPunishment.visibility = View.VISIBLE
+                        tvVerdict.visibility = View.VISIBLE
+
+                        val worstApp = topVicesList[0]
+                        tvVerdict.text = "¿${AppUsageManager.formatTime(worstApp.timeInForegroundMillis)} en ${worstApp.appName}?, Y así querías conquistar el mundo? Ay, pues a comenzar!"
+                    } else {
+                        tvStatsTitle.text = "Vaya, vaya..."
+                        tvStatsSubtitle.text = "Parece que eres un monje y no usaste apps hoy."
+                        btnAcceptPunishment.visibility = View.VISIBLE
+                    }
                 }
             }
         }

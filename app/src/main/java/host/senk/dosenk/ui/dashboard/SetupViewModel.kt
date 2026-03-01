@@ -1,11 +1,19 @@
 package host.senk.dosenk.ui.dashboard
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import host.senk.dosenk.data.remote.model.ScheduleData
 import host.senk.dosenk.data.repository.AuthRepository
+import host.senk.dosenk.util.AppUsageInfo
+import host.senk.dosenk.util.AppUsageManager
+import host.senk.dosenk.util.UsageReport
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -14,26 +22,24 @@ class SetupViewModel @Inject constructor(
     private val repository: AuthRepository
 ) : ViewModel() {
 
-    // ESTADOS (Qué seleccionó)
+
+    // ESTADOS DE LOS HORARIOS TIME PAINTING ////////////////////////////
+
     var isStudent = false
     var isEmployee = false
     var isBusiness = false
 
-    // DATOS (Los dibujos) - Array<IntArray> de 7x24
     var schoolGrid: Array<IntArray>? = null
     var workGrid: Array<IntArray>? = null
     var businessGrid: Array<IntArray>? = null
 
-    // COMBINAR BLOQUEOS (Para que en Trabajo se vea gris lo de Escuela)
     fun getCombinedBlockedGrid(): Array<IntArray> {
         val combined = Array(7) { IntArray(24) { 0 } }
 
-        // Sumamos Escuela
         schoolGrid?.let { grid ->
             for (d in 0..6) for (h in 0..23) if (grid[d][h] == 1) combined[d][h] = 1
         }
 
-        // Sumamos Trabajo (solo si estamos en la fase de negocio)
         workGrid?.let { grid ->
             for (d in 0..6) for (h in 0..23) if (grid[d][h] == 1) combined[d][h] = 1
         }
@@ -41,13 +47,11 @@ class SetupViewModel @Inject constructor(
         return combined
     }
 
-    // --- GUARDAR TODO EN LA NUBE ---
     fun finalSave(onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             val list = mutableListOf<ScheduleData>()
             val gson = Gson()
 
-            // Convertimos los grids a JSON String para mandarlos
             if (isStudent && schoolGrid != null) {
                 list.add(ScheduleData("SCHOOL", gson.toJson(schoolGrid)))
             }
@@ -58,7 +62,6 @@ class SetupViewModel @Inject constructor(
                 list.add(ScheduleData("BUSINESS", gson.toJson(businessGrid)))
             }
 
-            // Llamamos al repo
             val success = repository.saveSchedules(list)
 
             if (success) {
@@ -66,6 +69,36 @@ class SetupViewModel @Inject constructor(
             } else {
                 onError("No se pudo guardar la configuración.")
             }
+        }
+    }
+
+//////////////////////////////////////////////////////////////////
+
+
+
+    // ESTADOS DE LAS ESTADÍSTICAS /////////////////
+
+
+    // Aquí guardamos los datos para que el TutorialDashboard (
+    var trueTotalTimeMs: Long = 0L
+    var worstAppsList: List<AppUsageInfo> = emptyList()
+
+    // Estado observable para que el Fragment sepa cuándo ya cargaron las stats
+    private val _usageReport = MutableStateFlow<UsageReport?>(null)
+    val usageReport: StateFlow<UsageReport?> = _usageReport.asStateFlow()
+
+    // La función que hace el trabajo sucio en segundo plano
+    fun loadUsageStats(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Pedimos el reporte de 7 días y top 5
+            val report = AppUsageManager.getTopVices(context, daysToLookBack = 7, topCount = 5)
+
+            // Guardamos en memoria para la siguiente pantalla
+            trueTotalTimeMs = report.totalTimeMs
+            worstAppsList = report.topVices
+
+            // Avisamos a la Vista  que ya tenemos los datos
+            _usageReport.value = report
         }
     }
 }
