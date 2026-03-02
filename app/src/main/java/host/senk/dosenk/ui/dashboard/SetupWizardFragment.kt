@@ -93,7 +93,7 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
 
             // DECISIÓN DE RUTA
             if (isNone) {
-                // Va directo a sacar las estadísticas (Asegúrate de que este ID coincida con tu nav_graph)
+                // Va directo a sacar las estadísticas
                 findNavController().navigate(R.id.setupStatsFragment)
             } else {
                 navigateToFirstPaintingStep()

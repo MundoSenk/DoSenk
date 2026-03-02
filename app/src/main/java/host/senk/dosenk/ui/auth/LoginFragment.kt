@@ -127,11 +127,8 @@ class LoginFragment : Fragment() {
                         when (isVeteran) {
                             0 -> findNavController().navigate(R.id.action_login_to_setupWizardFragment) // No ha hecho Time Painting
                             1 -> findNavController().navigate(R.id.action_login_to_setupStatsFragment) // No ha obtenido su nivel
-                            2 -> {
-                                // TODO la pagian del tutorial de misiones, mientras al home
-                                // findNavController().navigate(R.id.action_splash_to_fire_tutorial)
-                                findNavController().navigate(R.id.action_login_to_homeFragment)
-                            }
+                            2 -> findNavController().navigate(R.id.action_login_to_MissionFragment)
+
                             else -> findNavController().navigate(R.id.action_login_to_homeFragment)
                         }
 

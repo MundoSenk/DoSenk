@@ -21,6 +21,8 @@ import android.view.animation.DecelerateInterpolator
 import android.view.ViewGroup
 import android.widget.LinearLayout
 
+import androidx.navigation.fragment.findNavController
+
 
 @AndroidEntryPoint
 class TutorialDashboardFragment : Fragment(R.layout.fragment_tutorial_dashboard) {
@@ -143,7 +145,7 @@ class TutorialDashboardFragment : Fragment(R.layout.fragment_tutorial_dashboard)
                 totalTimeMs = sharedSetupViewModel.trueTotalTimeMs,
                 vicesList = sharedSetupViewModel.worstAppsList,
                 onSuccess = {
-                    //findNavController().navigate(R.id.action_global_homeFragment)
+                    findNavController().navigate(R.id.action_tutorialDashboard_to_MissionFragment)
                 },
                 onError = {
                     btnAcceptRank.isEnabled = true

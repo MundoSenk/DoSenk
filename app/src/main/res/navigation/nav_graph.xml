@@ -39,7 +39,14 @@
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
-            app:exitAnim="@android:anim/fade_out"/>/>
+            app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_splashFragment_to_MissionFragment"
+            app:destination="@id/MissionFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
     </fragment>
 
     <fragment
@@ -71,6 +78,13 @@
         <action
             android:id="@+id/action_login_to_setupStatsFragment"
             app:destination="@id/setupStatsFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_login_to_MissionFragment"
+            app:destination="@id/MissionFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
@@ -193,12 +207,41 @@
         android:id="@+id/tutorialDashboardFragment"
         android:name="host.senk.dosenk.ui.onboarding.TutorialDashboardFragment"
         android:label="Tutorial"
-        tools:layout="@layout/fragment_tutorial_dashboard" />
+        tools:layout="@layout/fragment_tutorial_dashboard" >
+        <action
+            android:id="@+id/action_tutorialDashboard_to_MissionFragment"
+            app:destination="@id/MissionFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
 
     <fragment
         android:id="@+id/homeFragment"
         android:name="host.senk.dosenk.ui.dashboard.HomeFragment"
         android:label="Dashboard"
         tools:layout="@layout/fragment_home" />
+
+
+    <fragment
+        android:id="@+id/MissionFragment"
+        android:name="host.senk.dosenk.ui.onboarding.TutorialMissionFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_tutorial_mission" >
+        <action
+            android:id="@+id/action_Tuto_Mission_to_CreateMission"
+            app:destination="@id/CreateMissionFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/CreateMissionFragment"
+        android:name="host.senk.dosenk.ui.onboarding.TutorialCreateMissionFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_tutorial_create_mission" />
 
 </navigation>

@@ -43,21 +43,23 @@
 
 
     <ImageView
-    android:id="@+id/ivMascot"
-    android:layout_width="339dp"
-    android:layout_height="374dp"
-    android:layout_marginBottom="-40dp"
-    android:elevation="6dp"
-    android:src="@drawable/perro_tutorial"
-    app:layout_constraintBottom_toTopOf="@id/cardDialogContainer"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintHorizontal_bias="1.0"
-    app:layout_constraintStart_toStartOf="parent" />
+        android:id="@+id/ivMascot"
+        android:layout_width="339dp"
+        android:layout_height="374dp"
+        android:layout_marginBottom="4dp"
+        android:elevation="6dp"
+        android:src="@drawable/perro_tutorial"
+        app:layout_constraintBottom_toTopOf="@id/cardDialogContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tvMascotLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/bg_gradient_skin"
         android:elevation="8dp"
         android:fontFamily="@font/anton_regular"
@@ -81,7 +83,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical"
             android:padding="24dp"
             android:paddingTop="32dp">
@@ -100,7 +102,7 @@
                     android:fontFamily="@font/poppins_regular"
                     android:text="¿Eh? Así hola, @User! Me ha enviado >Do para que te sientas cómodo en tu nueva prisión.\n¿Te parece si determinamos tu nivel de disciplina?"
                     android:textColor="#333333"
-                    android:textSize="14sp" />
+                    android:textSize="17sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -140,7 +142,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppins_bold"
+                    android:fontFamily="@font/anton_regular"
                     android:text="Calculando..."
                     android:textColor="?attr/doSkinButton"
                     android:textSize="28sp" />
@@ -153,7 +155,7 @@
                     android:fontFamily="@font/poppins_medium"
                     android:text="Mientras te doy un tip, @User.\nNo hagas enojar al jefe, es... odioso."
                     android:textColor="#404040"
-                    android:textSize="14sp" />
+                    android:textSize="17sp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
