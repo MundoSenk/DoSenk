@@ -242,6 +242,35 @@
         android:id="@+id/CreateMissionFragment"
         android:name="host.senk.dosenk.ui.onboarding.TutorialCreateMissionFragment"
         android:label="Dashboard"
-        tools:layout="@layout/fragment_tutorial_create_mission" />
+        tools:layout="@layout/fragment_tutorial_create_mission" >
+        <action
+            android:id="@+id/action_Create_to_BlockZoneTuto"
+            app:destination="@id/BlockZoneTutoFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/BlockZoneTutoFragment"
+        android:name="host.senk.dosenk.ui.onboarding.TutorialBlockSelectionFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_tutorial_block_selection" >
+        <action
+            android:id="@+id/action_BlockZoneTuto_to_TutoHome"
+            app:destination="@id/TutoHome"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/TutoHome"
+        android:name="host.senk.dosenk.ui.onboarding.TutorialActiveMissionFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_tutorial_active_mission" />
 
 </navigation>

@@ -204,7 +204,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Te mostraré la belleza de esta aplicación.\nEl jefe es un arrogante de ello\n¡PRESIONA EL BOTÓN DEL MÁS!"
+                    android:text="Vas a crear una misión cof cof prueba.\nConocerás que no bromeo con los bloqueos\n¡VAMOS A ELLO!"
                     android:textColor="#333"
                     android:fontFamily="@font/poppins_bold"
                     android:textSize="15sp"

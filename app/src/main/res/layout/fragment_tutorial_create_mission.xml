@@ -138,7 +138,7 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_gradient_skin"
                         android:gravity="center"
-                        android:text="2:30 hrs"
+                        android:text="2:30 min"
                         android:fontFamily="@font/poppins_bold"
                         android:textColor="@color/white" />
                 </LinearLayout>

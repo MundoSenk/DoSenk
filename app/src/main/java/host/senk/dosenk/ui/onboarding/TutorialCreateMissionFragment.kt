@@ -56,7 +56,7 @@ class TutorialCreateMissionFragment : Fragment(R.layout.fragment_tutorial_create
         val btnAssignBlock = view.findViewById<Button>(R.id.btnAssignBlock)
 
         btnAssignBlock.setOnClickListener {
-            
+            findNavController().navigate(R.id.action_Create_to_BlockZoneTuto)
         }
     }
 }
