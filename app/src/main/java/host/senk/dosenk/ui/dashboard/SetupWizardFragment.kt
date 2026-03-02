@@ -4,13 +4,16 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.util.applyDoSenkGradient
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
@@ -20,7 +23,7 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Pintamos del gradiante que venga desde el registro
+        //  PINTADO DE GRADIENTES
         view.findViewById<View>(R.id.stats)
             ?.findViewById<View>(R.id.layoutStatsGradient)
             ?.applyDoSenkGradient(cornerRadius = 20f)
@@ -31,7 +34,6 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
                 cornerRadius = 0f
             )
 
-        //header
         view.findViewById<View>(R.id.header)
             ?.findViewById<View>(R.id.layoutLogoGradient)
             ?.applyDoSenkGradient(cornerRadius = 12f)
@@ -40,14 +42,26 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
             ?.findViewById<View>(R.id.layoutBottomGradient)
             ?.applyDoSenkGradient()
 
+        //  INYECCIÓN DEL NOMBRE REAL
+        val tvHeaderUsername = view.findViewById<View>(R.id.header)?.findViewById<TextView>(R.id.tvUsername)
+        val tvGreetingSubtitle = view.findViewById<TextView>(R.id.tvGreetingSubtitle)
 
-        // LÓGICA DE CHECKBOXES (Exclusión Mutua)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.userAlias.collect { realName ->
+                // Actualizamos el Header
+                tvHeaderUsername?.text = "Bienvenido, $realName"
+
+                // Actualizamos el texto insultante del tutorial
+                tvGreetingSubtitle?.text = "Perfecto! Ya era hora, $realName.\nPermíteme conocer a mi nueva víctima...\n ¡DIGO! A mi nuevo jefe"
+            }
+        }
+
+        // LÓGICA DE CHECKBOXES
         val cbStudent = view.findViewById<CheckBox>(R.id.cbStudent)
         val cbEmployee = view.findViewById<CheckBox>(R.id.cbEmployee)
         val cbBusiness = view.findViewById<CheckBox>(R.id.cbBusiness)
         val cbNone = view.findViewById<CheckBox>(R.id.cbNone)
 
-        //  Si marcas "Nada de nada", limpia los demás
         cbNone.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 cbStudent.isChecked = false
@@ -56,7 +70,6 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
             }
         }
 
-        //  Si marcas cualquier rol, limpia "Nada de nada"
         val roleListener = { _: View, isChecked: Boolean ->
             if (isChecked) cbNone.isChecked = false
         }
@@ -64,17 +77,15 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
         cbEmployee.setOnCheckedChangeListener(roleListener)
         cbBusiness.setOnCheckedChangeListener(roleListener)
 
-
-        // NAVEGACIÓN INTELIGENTE
+        //  NAVEGACIÓN INTELIGENTE Y GUARDADO
         view.findViewById<Button>(R.id.btnStartPainting).setOnClickListener {
 
-            // Guardamos estado en ViewModel
             viewModel.isStudent = cbStudent.isChecked
             viewModel.isEmployee = cbEmployee.isChecked
             viewModel.isBusiness = cbBusiness.isChecked
             val isNone = cbNone.isChecked
 
-            // VALIDACIÓN: ¿Seleccionó algo?
+            // VALIDACIÓN
             if (!viewModel.isStudent && !viewModel.isEmployee && !viewModel.isBusiness && !isNone) {
                 Toast.makeText(context, "¡Selecciona al menos una opción, gallo!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -82,13 +93,8 @@ class SetupWizardFragment : Fragment(R.layout.fragment_setup_wizard) {
 
             // DECISIÓN DE RUTA
             if (isNone) {
-                // Guardar vacío (para que marque setup_finished = true)
-                viewModel.finalSave(
-                    onSuccess = {
-                        findNavController().navigate(R.id.action_global_statsFragment)
-                    },
-                    onError = { Toast.makeText(context, "Error al saltar", Toast.LENGTH_SHORT).show() }
-                )
+                // Va directo a sacar las estadísticas (Asegúrate de que este ID coincida con tu nav_graph)
+                findNavController().navigate(R.id.setupStatsFragment)
             } else {
                 navigateToFirstPaintingStep()
             }

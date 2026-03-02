@@ -3,12 +3,15 @@ package host.senk.dosenk.ui.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.repository.AuthRepository
 import host.senk.dosenk.util.AppUsageInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+
+
 
 @HiltViewModel
 class TutorialViewModel @Inject constructor(

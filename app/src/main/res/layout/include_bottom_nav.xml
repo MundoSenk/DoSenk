@@ -18,21 +18,11 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:paddingBottom="10dp"
-        android:background="?attr/doSkinEnd"> <ImageView
-        android:src="@drawable/ic_logo_square_purple"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginEnd="60dp"
-        app:tint="@color/white"/>
+        android:background="?attr/doSkinEnd">
 
         <View android:layout_width="40dp" android:layout_height="1dp"/>
 
-        <ImageView
-            android:src="@drawable/ic_logo_square_purple"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="60dp"
-            app:tint="@color/white"/>
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>
 

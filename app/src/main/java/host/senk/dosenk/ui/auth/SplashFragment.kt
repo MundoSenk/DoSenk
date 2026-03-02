@@ -13,25 +13,27 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class SplashFragment : Fragment(R.layout.fragment_login) { // Usamos el layout de login de fondo para que no se vea feo el parpadeo
+class SplashFragment : Fragment(R.layout.fragment_login) {
 
     @Inject lateinit var userPreferences: UserPreferences
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Decidimos el destino inmediatamente
         lifecycleScope.launch {
             val isLoggedIn = userPreferences.isUserLoggedIn.first()
-            val isSetupFinished = userPreferences.isSetupFinished.first()
+            val currentStage = userPreferences.setupFinished.first()
 
             if (isLoggedIn) {
-                if (isSetupFinished) {
-                    // iniciado al home
-                    findNavController().navigate(R.id.action_splash_to_home)
-                } else {
-                    // Registrado pero no terminó al Wizard
-                    findNavController().navigate(R.id.action_splash_to_wizard)
+                when (currentStage) {
+                    0 -> findNavController().navigate(R.id.action_splash_to_wizard) // No ha hecho Time Painting
+                    1 -> findNavController().navigate(R.id.action_splash_to_stats) // No ha obtenido su nivel
+                    2 -> {
+                        // TODO la pagian del tutorial de misiones, mientras al home
+                        // findNavController().navigate(R.id.action_splash_to_fire_tutorial)
+                        findNavController().navigate(R.id.action_splash_to_home)
+                    }
+                    else -> findNavController().navigate(R.id.action_splash_to_home)
                 }
             } else {
                 // Nuevo al Login

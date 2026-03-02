@@ -48,8 +48,7 @@ class LoginViewModel @Inject constructor(
     }
 
 
-    suspend fun isSetupFinished(): Boolean {
-
-        return userPreferences.isSetupFinished.first()
+    suspend fun getSetupStage(): Int {
+        return userPreferences.setupFinished.first()
     }
 }

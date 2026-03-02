@@ -1,5 +1,6 @@
 package host.senk.dosenk.data.local.entity
 
+import android.content.IntentSender
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -22,5 +23,6 @@ data class UserEntity(
 
     // Rangos
     val rankName: String= "Desconocido",
-    val dailyWastedHours: Float? = 0f
+    val dailyWastedHours: Float? = 0f,
+    val setupFinished: Int? = 0
 )

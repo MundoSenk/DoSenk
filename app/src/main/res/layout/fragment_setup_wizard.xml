@@ -46,6 +46,7 @@
                 android:layout_height="wrap_content"/>
 
             <TextView
+                android:id="@+id/tvGreetingSubtitle"
                 android:text="Perfecto! Ya era hora, @User.\nPermíteme conocer a mi nueva víctima...\n ¡DIGO! A mi nuevo jefe"
                 android:textSize="13sp"
                 android:gravity="center"
@@ -78,6 +79,7 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="20dp"
                         android:layout_marginBottom="20dp">
+
                         <TextView
                             android:text="¿A qué te dedicas?"
                             android:textSize="16sp"
@@ -86,6 +88,7 @@
                             android:layout_weight="1"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"/>
+
                         <ImageView
                             android:src="@android:drawable/arrow_down_float"
                             android:layout_width="24dp"
@@ -100,12 +103,13 @@
                         android:fontFamily="@font/poppins_semibold"
                         android:textSize="15sp"
                         android:button="@drawable/selector_round_check"
-                        android:buttonTint="?attr/doSkinButton"
+                        app:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
                         android:layout_marginBottom="12dp"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:paddingStart="16dp"/>
+                        android:layout_height="56dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp" />
 
                     <CheckBox
                         android:id="@+id/cbEmployee"
@@ -114,12 +118,13 @@
                         android:fontFamily="@font/poppins_semibold"
                         android:textSize="15sp"
                         android:button="@drawable/selector_round_check"
-                        android:buttonTint="?attr/doSkinButton"
+                        app:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
                         android:layout_marginBottom="12dp"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:paddingStart="16dp"/>
+                        android:layout_height="56dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp"/>
 
                     <CheckBox
                         android:id="@+id/cbBusiness"
@@ -128,12 +133,13 @@
                         android:fontFamily="@font/poppins_semibold"
                         android:textSize="15sp"
                         android:button="@drawable/selector_round_check"
-                        android:buttonTint="?attr/doSkinButton"
+                        app:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
                         android:layout_marginBottom="12dp"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:paddingStart="16dp"/>
+                        android:layout_height="56dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp"/>
 
                     <CheckBox
                         android:id="@+id/cbNone"
@@ -142,18 +148,19 @@
                         android:fontFamily="@font/poppins_semibold"
                         android:textSize="15sp"
                         android:button="@drawable/selector_round_check"
-                        android:buttonTint="?attr/doSkinButton"
+                        app:buttonTint="?attr/doSkinButton"
                         android:background="@drawable/bg_capsule_white"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:paddingStart="16dp"/>
+                        android:layout_height="56dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp"/>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
             <Button
                 android:id="@+id/btnStartPainting"
-                android:text="Siguiente!"
+                android:text="¡Siguiente!"
                 android:layout_marginTop="32dp"
                 android:textSize="18sp"
                 android:fontFamily="@font/poppins_bold"

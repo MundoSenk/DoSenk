@@ -90,8 +90,8 @@ class TutorialDashboardFragment : Fragment(R.layout.fragment_tutorial_dashboard)
                     // Si encontramos el rango del usuario, guardamos el índice y pintamos el texto del color del tema
                     if (rankName.equals(userRank, ignoreCase = true)) {
                         targetIndex = index
-                        // Pintar el texto del rango ganador
-                        itemNode.findViewById<TextView>(R.id.tvRankName).setTextColor(theme)
+                        // TODO CORREGIR EL PINTADO DEL RANGO
+                        //itemNode.findViewById<TextView>(R.id.tvRankName).setTextColor(themeColor)
                     }
                     llRanks.addView(itemNode)
                 }
@@ -142,7 +142,7 @@ class TutorialDashboardFragment : Fragment(R.layout.fragment_tutorial_dashboard)
             tutorialViewModel.saveToDatabase(
                 totalTimeMs = sharedSetupViewModel.trueTotalTimeMs,
                 vicesList = sharedSetupViewModel.worstAppsList,
-                onSuccess = { 
+                onSuccess = {
                     //findNavController().navigate(R.id.action_global_homeFragment)
                 },
                 onError = {

@@ -29,7 +29,8 @@ class UserPreferences @Inject constructor(
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in") // true/false
         val USER_NAME_ALIAS = stringPreferencesKey("user_alias") // "@User"
 
-        val SETUP_FINISHED = booleanPreferencesKey("setup_finished")  /// Si ya hizo el tutorial
+        // 0 = Nada, 1 = Acabó Horarios, 3 = Acabó Stats/Rango, 4 = Acabó Tutorial/Libre
+        val SETUP_STAGE = intPreferencesKey("setup_stage")
 
         val IS_EMERGENCY_ACTIVE = booleanPreferencesKey("is_emergency_active") //Detectar el modo activado
 
@@ -78,13 +79,13 @@ class UserPreferences @Inject constructor(
         }
 
     // Función para guardar
-    suspend fun saveSetupFinished(isFinished: Boolean) {
-        context.dataStore.edit { it[SETUP_FINISHED] = isFinished }
+    suspend fun saveSetupFinished(stage: Int) {
+        context.dataStore.edit { it[SETUP_STAGE] = stage }
     }
 
     // Flow para leer
-    val isSetupFinished: Flow<Boolean> = context.dataStore.data
-        .map { it[SETUP_FINISHED] ?: false }
+    val setupFinished: Flow<Int> = context.dataStore.data
+        .map { it[SETUP_STAGE] ?: 0 }
 
 
     val userToken: Flow<String> = context.dataStore.data

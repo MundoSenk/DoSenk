@@ -122,14 +122,17 @@ class LoginFragment : Fragment() {
                         stopCarousel()
 
                         // pregunta si ya hizo el tutorial
-                        val isVeteran = loginViewModel.isSetupFinished()
+                        val isVeteran = loginViewModel.getSetupStage()
 
-                        if (isVeteran) {
-
-                            findNavController().navigate(R.id.action_login_to_homeFragment)
-                        } else {
-                            // Es nuevo -> A configurar horarios
-                            findNavController().navigate(R.id.action_login_to_setupWizardFragment)
+                        when (isVeteran) {
+                            0 -> findNavController().navigate(R.id.action_login_to_setupWizardFragment) // No ha hecho Time Painting
+                            1 -> findNavController().navigate(R.id.action_login_to_setupStatsFragment) // No ha obtenido su nivel
+                            2 -> {
+                                // TODO la pagian del tutorial de misiones, mientras al home
+                                // findNavController().navigate(R.id.action_splash_to_fire_tutorial)
+                                findNavController().navigate(R.id.action_login_to_homeFragment)
+                            }
+                            else -> findNavController().navigate(R.id.action_login_to_homeFragment)
                         }
 
                         // Reiniciar para que se aplique el tema de color

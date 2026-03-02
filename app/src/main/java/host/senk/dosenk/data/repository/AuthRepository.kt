@@ -143,8 +143,8 @@ class AuthRepository @Inject constructor(
             val response = api.saveSchedules(request)
 
             if (response.isSuccessful && response.body()?.success == true) {
-               // Marcamos localmente que ya acabó el tutorial
-                userPreferences.saveSetupFinished(true)
+                //Primera parte del registro
+                userPreferences.saveSetupFinished(1)
                 return true
             }
             return false
@@ -190,21 +190,22 @@ class AuthRepository @Inject constructor(
             val response = api.saveVicesAndRank(request)
 
             if (response.isSuccessful && response.body()?.success == true) {
-                // Como no tienes getUserByUuid, lo buscamos por el alias/username que tenemos en DataStore
+
                 val currentUser = userDao.getUserByEmailOrUsername(usernameAlias)
 
                 if (currentUser != null) {
                     // Copiamos el usuario actual pero le inyectamos los nuevos datos
                     val updatedUser = currentUser.copy(
                         rankName = rankName,
-                        dailyWastedHours = dailyHours
+                        dailyWastedHours = dailyHours,
+                        setupFinished = 2
                     )
                     // Guardamos la actualización
                     userDao.updateUser(updatedUser)
                 }
 
                 // Guardamos en preferencias que ya terminó el Onboarding
-                userPreferences.saveSetupFinished(true)
+                userPreferences.saveSetupFinished(2)
 
                 return true
             } else {

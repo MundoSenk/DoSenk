@@ -16,15 +16,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+import host.senk.dosenk.data.local.UserPreferences
 @HiltViewModel
 class SetupViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
 
     // ESTADOS DE LOS HORARIOS TIME PAINTING ////////////////////////////
 
+
+    val userAlias = userPreferences.userAlias
     var isStudent = false
     var isEmployee = false
     var isBusiness = false

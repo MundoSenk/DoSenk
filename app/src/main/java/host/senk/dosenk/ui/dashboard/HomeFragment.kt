@@ -83,7 +83,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         viewModel.currentUserAlias.observe(viewLifecycleOwner) { alias ->
 
             // Ejemplo: "harold" -> "HAROLD"
-            tvUser.text = "Bienvenido, @${alias.uppercase()}"
+            tvUser.text = "Bienvenido, @${alias}"
         }
 
 

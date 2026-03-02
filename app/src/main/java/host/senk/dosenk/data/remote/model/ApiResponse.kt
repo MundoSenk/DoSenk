@@ -9,6 +9,6 @@ data class ApiResponse(
     @SerializedName("theme_color")
     val themeColor: String? = null,
     @SerializedName("setup_finished")
-    val setupFinished: Boolean = false // Por defecto false
+    val setupFinished: Int = 0// Por defecto false
 
 )

@@ -8,11 +8,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.ui.custom.TimeGridPaintView
 import host.senk.dosenk.util.applyDoSenkGradient
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SetupSchoolFragment : Fragment(R.layout.fragment_setup_grid) {
@@ -46,6 +48,17 @@ class SetupSchoolFragment : Fragment(R.layout.fragment_setup_grid) {
         view.findViewById<View>(R.id.header)
             ?.findViewById<View>(R.id.layoutLogoGradient)
             ?.applyDoSenkGradient(cornerRadius = 12f)
+
+
+        val tvHeaderUsername = view.findViewById<View>(R.id.header)?.findViewById<TextView>(R.id.tvUsername)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.userAlias.collect { realName ->
+                // Actualizamos el Header
+                tvHeaderUsername?.text = "Bienvenido, $realName"
+
+            }
+        }
 
         val paintView = view.findViewById<TimeGridPaintView>(R.id.timeGrid)
         view.findViewById<TextView>(R.id.tvPhaseTitle).text = "Horario ESCOLAR"
