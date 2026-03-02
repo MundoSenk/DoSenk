@@ -47,6 +47,12 @@
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
             app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_splashFragment_to_TutoConclusion"
+            app:destination="@id/TutoConclusion"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
     </fragment>
 
     <fragment
@@ -85,6 +91,13 @@
         <action
             android:id="@+id/action_login_to_MissionFragment"
             app:destination="@id/MissionFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_login_to_TutoConclusion"
+            app:destination="@id/TutoConclusion"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
@@ -285,6 +298,14 @@
         android:id="@+id/TutoConclusion"
         android:name="host.senk.dosenk.ui.onboarding.TutorialConclusionFragment"
         android:label="Dashboard"
-        tools:layout="@layout/fragment_tutorial_conclusion" />
+        tools:layout="@layout/fragment_tutorial_conclusion" >
+        <action
+            android:id="@+id/action_TutoConclusion_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
 
 </navigation>

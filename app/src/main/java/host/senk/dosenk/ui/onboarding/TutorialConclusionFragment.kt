@@ -1,6 +1,7 @@
 package host.senk.dosenk.ui.onboarding
 
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -10,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.service.BlockerEngineService
+import host.senk.dosenk.util.applyDoSenkGradient
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -20,39 +22,95 @@ class TutorialConclusionFragment : Fragment(R.layout.fragment_tutorial_conclusio
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val tvFinalCountdown = view.findViewById<TextView>(R.id.tvFinalCountdown)
-        val tvDogMessage = view.findViewById<TextView>(R.id.tvDogMessage)
-        val btnFinalAction = view.findViewById<TextView>(R.id.btnFinalAction)
 
-        val layoutTimerWait = view.findViewById<View>(R.id.layoutTimerWait)
-        val layoutThemeSelection = view.findViewById<View>(R.id.layoutThemeSelection)
+        val layoutLogoGradient = view.findViewById<View>(R.id.header)?.findViewById<View>(R.id.layoutLogoGradient)
+        val layoutStatsGradient = view.findViewById<View>(R.id.cardStats)?.findViewById<View>(R.id.layoutStatsGradient)
+        val tvDogBadge = view.findViewById<TextView>(R.id.tvDogBadge)
+        val tvGoodbyeTitle = view.findViewById<TextView>(R.id.tvGoodbyeTitle)
+        val btnEnterHome = view.findViewById<TextView>(R.id.btnEnterHome)
 
-        // ¡AQUÍ NOS CONECTAMOS AL RELOJ DEL SERVICIO!
+        //
+        layoutLogoGradient?.applyDoSenkGradient(cornerRadius = 12f)
+        layoutStatsGradient?.applyDoSenkGradient(cornerRadius = 24f)
+        tvDogBadge?.applyDoSenkGradient(cornerRadius = 50f)
+
+
+        val tvHeaderUsername = view.findViewById<View>(R.id.header)?.findViewById<TextView>(R.id.tvUsername)
+        val tvRankStat = view.findViewById<View>(R.id.cardStats)?.findViewById<TextView>(R.id.tvDisciplinaStatus)
+        val tvTimerCountdown = view.findViewById<TextView>(R.id.tvTimerCountdown)
+        val cardTimerFloating = view.findViewById<View>(R.id.cardTimerFloating)
+
+        val layoutStateMocking = view.findViewById<View>(R.id.layoutStateMocking)
+        val layoutStateTheme = view.findViewById<View>(R.id.layoutStateTheme)
+        val layoutStateGoodbye = view.findViewById<View>(R.id.layoutStateGoodbye)
+
+        cardTimerFloating.translationZ = 100f
+
+        // Cargar datos
+        viewLifecycleOwner.lifecycleScope.launch { viewModel.realAlias.collect { tvHeaderUsername?.text = "Bienvenido, $it" } }
+        viewLifecycleOwner.lifecycleScope.launch { viewModel.realRankName.collect { tvRankStat?.text = it } }
+
+        //  CONECTARSE AL RELOJ DEL JEFE
         viewLifecycleOwner.lifecycleScope.launch {
             BlockerEngineService.timeLeftFlow.collect { secondsLeft ->
                 val minutes = secondsLeft / 60
                 val seconds = secondsLeft % 60
-                tvFinalCountdown.text = String.format("00:%02d:%02d", minutes, seconds)
+                tvTimerCountdown.text = String.format("00:%02d:%02d", minutes, seconds)
 
-                // ¿SE ACABÓ EL TIEMPO?
+                // TIEMPO CUMPLIDO
                 if (secondsLeft <= 0) {
-                    // Cambiamos al Estado 2 (Temas)
-                    layoutTimerWait.visibility = View.GONE
-                    layoutThemeSelection.visibility = View.VISIBLE
-
-                    tvDogMessage.text = "¡SOBREVIVISTE!\nEspero que hayas aprendido la lección.\nAhora sí, escoge tu color favorito y te libero."
-
-                    btnFinalAction.text = "¡Ir a mi Dashboard!"
-                    btnFinalAction.setTextColor(requireContext().getColor(R.color.black)) // O usa el color primario
-
-                    // Activamos el botón para graduarse
-                    btnFinalAction.setOnClickListener {
-                        viewModel.finishOnboarding {
-                            // TODO: Mandarlo al HOME REAL (El Dashboard chingón)
-                            // findNavController().navigate(R.id.action_tutorialConclusion_to_realHome)
-                        }
-                    }
+                    layoutStateMocking.visibility = View.GONE
+                    layoutStateTheme.visibility = View.VISIBLE
+                    cardTimerFloating.visibility = View.GONE
                 }
+            }
+        }
+
+
+        val themeClickListener = View.OnClickListener { v ->
+
+            // Determinamos qué tema eligió según el botón que tocó
+            val (chosenThemeResId, themeNameStr) = when(v.id) {
+                R.id.btnThemeTeal -> Pair(R.style.Theme_DoSenk_Teal, "Teal") // Asegúrate de que los nombres de los themes coincidan con los de tu app
+                R.id.btnThemeRed -> Pair(R.style.Theme_DoSenk_Red, "Red")
+                R.id.btnThemePurple -> Pair(R.style.Theme_DoSenk_Purple, "Purple")
+                else -> Pair(R.style.Theme_DoSenk_Teal, "Teal")
+            }
+
+            // LE CAMBIAMOS EL TEMA A LA ACTIVIDAD EN CALIENTE
+            requireActivity().setTheme(chosenThemeResId)
+
+            // USAMOS TU FUNCIÓN EXTENSION PARA REPINTAR LOS GRADIENTES
+            layoutLogoGradient?.applyDoSenkGradient(cornerRadius = 12f)
+            layoutStatsGradient?.applyDoSenkGradient(cornerRadius = 24f)
+            tvDogBadge?.applyDoSenkGradient(cornerRadius = 50f)
+
+            // SACAMOS EL COLOR PURO (doSkinButton) PARA PINTAR TEXTOS
+            val typedValue = TypedValue()
+            requireActivity().theme.resolveAttribute(R.attr.doSkinButton, typedValue, true)
+            val buttonColor = typedValue.data
+
+            tvGoodbyeTitle.setTextColor(buttonColor)
+            btnEnterHome.setTextColor(buttonColor)
+
+            // GUARDAMOS SU DECISIÓN EN LA BASE DE DATOS
+
+            viewModel.saveAppTheme(themeNameStr)
+
+            // AVANZAMOS A LA DESPEDIDA
+            layoutStateTheme.visibility = View.GONE
+            layoutStateGoodbye.visibility = View.VISIBLE
+        }
+
+        view.findViewById<View>(R.id.btnThemeTeal).setOnClickListener(themeClickListener)
+        view.findViewById<View>(R.id.btnThemeRed).setOnClickListener(themeClickListener)
+        view.findViewById<View>(R.id.btnThemePurple).setOnClickListener(themeClickListener)
+
+        // GRADUACIÓN AL HOME REAL
+        btnEnterHome.setOnClickListener {
+            // Pasamos al Estado 4 y lo mandamos al Dashboard real
+            viewModel.finishOnboarding {
+                findNavController().navigate(R.id.action_TutoConclusion_to_home)
             }
         }
     }

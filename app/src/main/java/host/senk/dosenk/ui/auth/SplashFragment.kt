@@ -29,6 +29,7 @@ class SplashFragment : Fragment(R.layout.fragment_login) {
                     0 -> findNavController().navigate(R.id.action_splash_to_wizard) // No ha hecho Time Painting
                     1 -> findNavController().navigate(R.id.action_splash_to_stats) // No ha obtenido su nivel
                     2 ->findNavController().navigate(R.id.action_splashFragment_to_MissionFragment) ///nO HA VIVIDO EL bloqueo
+                    3 ->findNavController().navigate(R.id.action_splashFragment_to_TutoConclusion)
 
                     else -> findNavController().navigate(R.id.action_splash_to_home)
                 }

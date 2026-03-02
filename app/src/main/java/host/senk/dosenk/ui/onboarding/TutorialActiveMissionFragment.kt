@@ -23,8 +23,6 @@ class TutorialActiveMissionFragment : Fragment(R.layout.fragment_tutorial_active
 
     private val viewModel: TutorialMissionViewModel by viewModels()
     private var countdownJob: Job? = null
-
-
     private var kickOutJob: Job? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -91,7 +89,7 @@ class TutorialActiveMissionFragment : Fragment(R.layout.fragment_tutorial_active
                 .setDuration(400)
                 .start()
 
-            // ¡AQUÍ ESTÁ LA MAGIA DEL AUTO-AVANCE!
+            //  AUTO-AVANCE
             startDynamicCountdown(tvTimerCountdown, 15) {
                 // Si esta función se ejecuta, significa que el contador llegó a cero.
                 if (layoutState2.visibility == View.VISIBLE) {
@@ -136,20 +134,24 @@ class TutorialActiveMissionFragment : Fragment(R.layout.fragment_tutorial_active
     // EXPULSIÓN
     private fun executeKickOutProtocol() {
 
-        viewModel.finishOnboarding{
-            findNavController().navigate(R.id.action_TutoHome_to_TutoConclusion)
-            val serviceIntent = Intent(requireContext(), BlockerEngineService::class.java)
-            requireContext().startForegroundService(serviceIntent)
+        // Asegúrate de que el ID del action coincida con tu nav_graph.xml
+        findNavController().navigate(R.id.action_TutoHome_to_TutoConclusion)
 
-            // LO EXPULSAMOS AL HOME DE ANDROID DE INMEDIATO
-            val homeIntent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_HOME)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            startActivity(homeIntent)
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.saveSetupStage(3)
         }
 
+        //  INICIAMOS EL SERVICIO DEL JEFE
+        val serviceIntent = Intent(requireContext(), BlockerEngineService::class.java)
+        requireContext().startForegroundService(serviceIntent)
+
+        //  LO EXPULSAMOS AL HOME
+        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        startActivity(homeIntent)
     }
 
     // En caso de que el usuario no presione el "entiendo"
@@ -186,6 +188,6 @@ class TutorialActiveMissionFragment : Fragment(R.layout.fragment_tutorial_active
     override fun onDestroyView() {
         super.onDestroyView()
         countdownJob?.cancel()
-        kickOutJob?.cancel() // Matamos el contador de expulsión si sale del fragmento
+        kickOutJob?.cancel() // Matamos el contador de expulsión si sale
     }
 }

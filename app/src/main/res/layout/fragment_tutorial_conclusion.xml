@@ -3,93 +3,104 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1A1A1A"> <LinearLayout
-    android:id="@+id/layoutTimerWait"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:gravity="center"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toTopOf="@id/layoutBottomDialogs"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent">
+    android:background="#F5F5F5">
 
-    <ImageView
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:src="@android:drawable/ic_lock_idle_alarm"
-        app:tint="?attr/doSkinButton"/>
-
-    <TextView
-        android:id="@+id/tvFinalCountdown"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:fontFamily="@font/anton_regular"
-        android:text="00:02:30"
-        android:textColor="?attr/doSkinButton"
-        android:textSize="56sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/poppins_medium"
-        android:text="Castigo en curso..."
-        android:textColor="#888888"
-        android:textSize="16sp" />
-</LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutThemeSelection"
+    <include
+        android:id="@+id/header"
+        layout="@layout/include_dashboard_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/layoutBottomDialogs">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/anton_regular"
-            android:text="EL COLOR DE TU CELDA"
-            android:textColor="@color/white"
-            android:textSize="28sp" />
+    <include
+        android:id="@+id/cardStats"
+        layout="@layout/include_dashboard_stats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/header" />
+
+    <TextView
+        android:id="@+id/tvEmptyState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/poppins_bold"
+        android:text="¡Muy vacío todo por aquí!"
+        android:textColor="#3D3D5C"
+        android:textSize="22sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cardStats" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#D9000000"
+        android:elevation="15dp" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardTimerFloating"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="24dp"
+        app:cardElevation="25dp"
+        app:cardCornerRadius="24dp"
+        app:cardBackgroundColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvEmptyState">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="16dp">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="30dp"
-                app:cardBackgroundColor="#00BCD4"/>
-            <androidx.cardview.widget.CardView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="30dp"
-                app:cardBackgroundColor="#E53935"/>
-            <androidx.cardview.widget.CardView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="30dp"
-                app:cardBackgroundColor="#8E24AA"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¡MISIÓN\nACTIVA!"
+                android:textAlignment="center"
+                android:textColor="?attr/doSkinButton"
+                android:fontFamily="@font/anton_regular"
+                android:textSize="18sp"/>
+
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:src="@android:drawable/ic_lock_idle_alarm"
+                app:tint="?attr/doSkinButton"/>
+
+            <TextView
+                android:id="@+id/tvTimerCountdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="00:02:30"
+                android:textColor="?attr/doSkinButton"
+                android:fontFamily="@font/anton_regular"
+                android:textSize="28sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="TIEMPO RESTANTE"
+                android:textAlignment="center"
+                android:textColor="#333333"
+                android:fontFamily="@font/poppins_semibold"
+                android:textSize="10sp"/>
         </LinearLayout>
-    </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layoutBottomDialogs"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_height="match_parent"
+        android:elevation="20dp">
 
         <ImageView
             android:layout_width="280dp"
@@ -130,25 +141,118 @@
                 android:padding="24dp"
                 android:paddingTop="32dp">
 
-                <TextView
-                    android:id="@+id/tvDogMessage"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/layoutStateMocking"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppins_semibold"
-                    android:text="¿Ya tuviste el gusto de conocer al jefe? ¿Da miedo, verdad? Jajaja.\nNi modo, ponte cómodo porque de aquí no sales hasta que el tiempo acabe."
-                    android:textColor="#333333"
-                    android:textSize="15sp" />
+                    android:orientation="vertical"
+                    android:visibility="visible">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="¿Ya tuviste el gusto de conocer al jefe?\nQué carácter, ¿verdad? Jajaja.\nPonte cómodo, la carta de arriba te dirá cuándo eres libre de nuevo."
+                        android:textColor="#333333"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/btnFinalAction"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/layoutStateTheme"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginTop="16dp"
-                    android:fontFamily="@font/poppins_bold"
-                    android:text="Esperando..."
-                    android:textColor="#999999"
-                    android:textSize="18sp" />
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="Esos dos minutos fueron eternos, cierto?.\nComo premio, puedes elegir el color de tu interfaz:"
+                        android:textColor="#333333"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btnThemeTeal"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:layout_marginHorizontal="8dp"
+                            app:cardCornerRadius="25dp"
+                            app:cardBackgroundColor="#00BCD4" />
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btnThemeRed"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:layout_marginHorizontal="8dp"
+                            app:cardCornerRadius="25dp"
+                            app:cardBackgroundColor="#E53935" />
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btnThemePurple"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:layout_marginHorizontal="8dp"
+                            app:cardCornerRadius="25dp"
+                            app:cardBackgroundColor="#8E24AA" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutStateGoodbye"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <TextView
+                        android:id="@+id/tvDogBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_gradient_skin"
+                        android:fontFamily="@font/anton_regular"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="4dp"
+                        android:text="Asistente de >Do"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:elevation="6dp"
+                        android:translationY="12dp"
+                        app:layout_constraintBottom_toTopOf="@id/cardDialogBottom"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvGoodbyeTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:text="¡Excelente elección!"
+                        android:textColor="?attr/doSkinButton"
+                        android:textSize="18sp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="Estás listo. Ahora sí, te dejo en tu nuevo hogar.\n¡Nos veremos más pronto que tarde!"
+                        android:textColor="#333333"
+                        android:textSize="14sp" />
+                    <TextView
+                        android:id="@+id/btnEnterHome"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:layout_marginTop="16dp"
+                        android:fontFamily="@font/poppins_bold"
+                        android:text="¡Entrar a >Do!"
+                        android:textColor="?attr/doSkinButton"
+                        android:textSize="18sp" />
+                </LinearLayout>
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </androidx.constraintlayout.widget.ConstraintLayout>

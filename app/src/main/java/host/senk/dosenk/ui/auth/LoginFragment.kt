@@ -128,6 +128,7 @@ class LoginFragment : Fragment() {
                             0 -> findNavController().navigate(R.id.action_login_to_setupWizardFragment) // No ha hecho Time Painting
                             1 -> findNavController().navigate(R.id.action_login_to_setupStatsFragment) // No ha obtenido su nivel
                             2 -> findNavController().navigate(R.id.action_login_to_MissionFragment)
+                            3 -> findNavController().navigate(R.id.action_login_to_TutoConclusion)
 
                             else -> findNavController().navigate(R.id.action_login_to_homeFragment)
                         }

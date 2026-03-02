@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import host.senk.dosenk.data.local.entity.ScheduleEntity
 import host.senk.dosenk.data.local.entity.UserEntity
 
@@ -33,4 +34,7 @@ interface UserDao {
     // Borrar todo (útil para cerrar sesión limpia)
     @Query("DELETE FROM users")
     suspend fun deleteAllUsers()
+
+
+
 }

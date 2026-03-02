@@ -16,6 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TutorialViewModel @Inject constructor(
     private val repository: AuthRepository
+
 ) : ViewModel() {
 
     var calculatedRank: String = "Desconocido"
