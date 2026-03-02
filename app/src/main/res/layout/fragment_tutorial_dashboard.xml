@@ -18,6 +18,7 @@
         layout="@layout/include_dashboard_stats"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@id/header" />
 
     <TextView
@@ -27,35 +28,44 @@
         android:layout_marginTop="24dp"
         android:fontFamily="@font/poppins_bold"
         android:text="¡Muy vacío todo por aquí!"
-        android:textColor="#3D3D5C"
+        android:textColor="#803D3D5C"
         android:textSize="22sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cardStats" />
 
+    <View
+        android:id="@+id/dimOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#A6000000"
+        android:elevation="4dp" />
+
+
     <ImageView
-        android:id="@+id/ivMascot"
-        android:layout_width="280dp"
-        android:layout_height="280dp"
-        android:layout_marginBottom="-40dp"
-        android:src="@drawable/ic_launcher_background"
-        app:layout_constraintBottom_toTopOf="@id/cardDialogContainer"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:src="@tools:sample/avatars" />
+    android:id="@+id/ivMascot"
+    android:layout_width="339dp"
+    android:layout_height="374dp"
+    android:layout_marginBottom="-40dp"
+    android:elevation="6dp"
+    android:src="@drawable/perro_tutorial"
+    app:layout_constraintBottom_toTopOf="@id/cardDialogContainer"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="1.0"
+    app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tvMascotLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_gradient_skin"
+        android:elevation="8dp"
         android:fontFamily="@font/anton_regular"
         android:paddingHorizontal="16dp"
         android:paddingVertical="4dp"
         android:text="Asistente de >Do"
         android:textColor="@color/white"
         android:textSize="18sp"
-        android:elevation="6dp"
         android:translationY="12dp"
         app:layout_constraintBottom_toTopOf="@id/cardDialogContainer"
         app:layout_constraintStart_toStartOf="parent" />
@@ -84,6 +94,7 @@
                 android:visibility="visible">
 
                 <TextView
+                    android:id="@+id/tvMascotGreeting"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/poppins_regular"
@@ -95,18 +106,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:orientation="horizontal"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/btnYes"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="24dp"
                         android:fontFamily="@font/poppins_bold"
                         android:text="¡Sí, por favor!"
                         android:textColor="?attr/doSkinButton"
-                        android:textSize="18sp"
-                        android:layout_marginEnd="24dp"/>
+                        android:textSize="18sp" />
 
                     <TextView
                         android:id="@+id/btnWhatever"
@@ -131,15 +142,16 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/poppins_bold"
                     android:text="Calculando..."
-                    android:textColor="#5C6BC0"
+                    android:textColor="?attr/doSkinButton"
                     android:textSize="28sp" />
 
                 <TextView
+                    android:id="@+id/tvTip"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:fontFamily="@font/poppins_medium"
-                    android:text="Mientras te doy un tip, @user.\nNo hagas enojar al jefe, es... odioso."
+                    android:text="Mientras te doy un tip, @User.\nNo hagas enojar al jefe, es... odioso."
                     android:textColor="#404040"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -158,22 +170,23 @@
             android:id="@+id/tvRankTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tu rango es:\n\'OLVIDABLE'"
-        android:textAlignment="center"
-        android:textColor="?attr/doSkinButton"
-        android:fontFamily="@font/anton_regular"
-        android:textSize="40sp"
-        android:layout_marginTop="64dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+            android:layout_marginTop="64dp"
+            android:fontFamily="@font/anton_regular"
+            android:text="Tu rango es:\n'DESCONOCIDO'"
+            android:textAlignment="center"
+            android:textColor="?attr/doSkinButton"
+            android:textSize="40sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:layout_width="200dp"
-            android:layout_height="300dp"
+        <include
+            android:id="@+id/layoutRankList"
+            layout="@layout/layout_rank_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
             android:layout_marginTop="24dp"
-            android:src="@drawable/tu_imagen_de_la_lista_de_rangos"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvRankTitle" />
 
@@ -183,13 +196,13 @@
             android:layout_height="60dp"
             android:layout_marginHorizontal="32dp"
             android:layout_marginBottom="32dp"
-            android:text="ACEPTAR!"
-            android:fontFamily="@font/poppins_bold"
-            android:textSize="18sp"
             android:backgroundTint="?attr/doSkinButton"
+            android:fontFamily="@font/poppins_bold"
+            android:text="ACEPTAR!"
+            android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

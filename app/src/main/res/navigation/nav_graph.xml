@@ -163,13 +163,19 @@
         tools:layout="@layout/fragment_setup_stats">
 
         <action
-            android:id="@+id/action_global_homeFragment"
-            app:destination="@id/homeFragment"
+            android:id="@+id/action_global_to_tutorialDashboardFragment"
+            app:destination="@id/tutorialDashboardFragment"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
             app:exitAnim="@android:anim/fade_out"/>
     </fragment>
+
+    <fragment
+        android:id="@+id/tutorialDashboardFragment"
+        android:name="host.senk.dosenk.ui.onboarding.TutorialDashboardFragment"
+        android:label="Tutorial"
+        tools:layout="@layout/fragment_tutorial_dashboard" />
 
     <fragment
         android:id="@+id/homeFragment"

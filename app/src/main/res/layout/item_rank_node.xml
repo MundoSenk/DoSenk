@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="10dp">
+
+    <View
+        android:id="@+id/nodeCircle"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/bg_circle_white"
+        android:elevation="4dp"/>
+
+    <TextView
+        android:id="@+id/tvRankName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textColor="@color/white"
+        android:textSize="26sp"
+        android:fontFamily="@font/anton_regular"
+        android:includeFontPadding="false"
+        android:text="RANGO"/>
+</LinearLayout>

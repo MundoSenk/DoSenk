@@ -155,4 +155,66 @@ class AuthRepository @Inject constructor(
     }
 
 
+
+    suspend fun saveDisciplineLevel(
+        dailyHours: Float,
+        rankName: String,
+        vices: List<host.senk.dosenk.util.AppUsageInfo>
+    ): Boolean {
+        try {
+            // Obtener UUID y Username del DataStore
+            val uuid = userPreferences.userToken.first()
+            val usernameAlias = userPreferences.userAlias.first()
+
+            // Si no hay token, no podemos guardar en la nube
+            if (uuid.isEmpty()) return false
+
+            //  Convertir las apps locales al formato del servidor
+            val vicesDtoList = vices.map { app ->
+                host.senk.dosenk.data.remote.model.ViceDto(
+                    package_name = app.packageName,
+                    app_name = app.appName,
+                    time_spent_ms = app.timeInForegroundMillis
+                )
+            }
+
+            // Armar petición para Retrofit
+            val request = host.senk.dosenk.data.remote.model.SaveVicesRequest(
+                uuid = uuid,
+                daily_wasted_hours = dailyHours,
+                rank_name = rankName,
+                vices = vicesDtoList
+            )
+
+            //  Mandar a la API de PHP (Usando tu variable 'api')
+            val response = api.saveVicesAndRank(request)
+
+            if (response.isSuccessful && response.body()?.success == true) {
+                // Como no tienes getUserByUuid, lo buscamos por el alias/username que tenemos en DataStore
+                val currentUser = userDao.getUserByEmailOrUsername(usernameAlias)
+
+                if (currentUser != null) {
+                    // Copiamos el usuario actual pero le inyectamos los nuevos datos
+                    val updatedUser = currentUser.copy(
+                        rankName = rankName,
+                        dailyWastedHours = dailyHours
+                    )
+                    // Guardamos la actualización
+                    userDao.updateUser(updatedUser)
+                }
+
+                // Guardamos en preferencias que ya terminó el Onboarding
+                userPreferences.saveSetupFinished(true)
+
+                return true
+            } else {
+                return false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+
 }

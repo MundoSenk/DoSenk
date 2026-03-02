@@ -18,5 +18,9 @@ data class UserEntity(
     val password: String, // En local, por ahora texto plano.
 
     // Configuración
-    val themeColor: String = "purple" // Por defecto
+    val themeColor: String = "purple", // Por defecto
+
+    // Rangos
+    val rankName: String= "Desconocido",
+    val dailyWastedHours: Float? = 0f
 )

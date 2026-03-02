@@ -5,6 +5,7 @@ import host.senk.dosenk.data.remote.model.RegisterRequest
 import host.senk.dosenk.data.remote.model.CheckRequest
 import host.senk.dosenk.data.remote.model.LoginRequest
 import host.senk.dosenk.data.remote.model.ScheduleBatchRequest
+import host.senk.dosenk.data.remote.model.SaveVicesRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -28,6 +29,9 @@ interface ApiService {
 
     @POST("schedule/save_batch.php")
     suspend fun saveSchedules(@Body request: ScheduleBatchRequest): Response<ApiResponse>
+
+    @POST("user/save_vices.php")
+    suspend fun saveVicesAndRank(@Body request: SaveVicesRequest): Response<ApiResponse>
 
 
 }

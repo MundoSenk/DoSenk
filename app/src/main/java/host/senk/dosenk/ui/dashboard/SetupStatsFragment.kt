@@ -18,6 +18,7 @@ import host.senk.dosenk.R
 import host.senk.dosenk.util.AppUsageManager
 import host.senk.dosenk.util.applyDoSenkGradient
 import kotlinx.coroutines.launch
+import host.senk.dosenk.ui.onboarding.TutorialDashboardFragment
 
 @AndroidEntryPoint
 class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
@@ -71,7 +72,7 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
 
         btnAcceptPunishment.setOnClickListener {
             // para mandarlo sl a TutorialDashboardFragment
-            findNavController().navigate(R.id.action_global_homeFragment)
+            findNavController().navigate(R.id.action_global_to_tutorialDashboardFragment)
         }
 
         checkPermissionAndLoadStats()
