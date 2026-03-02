@@ -271,6 +271,20 @@
         android:id="@+id/TutoHome"
         android:name="host.senk.dosenk.ui.onboarding.TutorialActiveMissionFragment"
         android:label="Dashboard"
-        tools:layout="@layout/fragment_tutorial_active_mission" />
+        tools:layout="@layout/fragment_tutorial_active_mission" >
+        <action
+            android:id="@+id/action_TutoHome_to_TutoConclusion"
+            app:destination="@id/TutoConclusion"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/TutoConclusion"
+        android:name="host.senk.dosenk.ui.onboarding.TutorialConclusionFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_tutorial_conclusion" />
 
 </navigation>

@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
-
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application
         android:name=".DoSenkApp"
@@ -28,17 +31,12 @@
             </intent-filter>
         </activity>
 
+
         <service
-            android:name=".service.BlockerService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true"
-            android:directBootAware="true"  android:foregroundServiceType="specialUse"> <intent-filter>
-            <action android:name="android.accessibilityservice.AccessibilityService" />
-        </intent-filter>
+            android:name=".service.BlockerEngineService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_config" />
-        </service>
-
-    </application> </manifest>
+    </application>
+</manifest>

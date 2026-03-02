@@ -19,7 +19,7 @@ import java.util.Locale
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import host.senk.dosenk.util.AccessibilityUtils // PA LLEVARLO A AL ACCESIBILIDAD
+
 
 
 
@@ -97,18 +97,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         //pintado del boton de emergencia
         layoutEmergency.applyDoSenkGradient(cornerRadius = 20f)
 
-        //ESCUCHAR EL CLICK del boton de emergencia
-        cardEmergency.setOnClickListener {
 
-            // A. Verificamos si tiene el permiso
-            if (AccessibilityUtils.isServiceEnabled(requireContext())) {
-                // TIENE PERMISO ACTIVAMOS Y DESACTIVAMOS
-                viewModel.toggleEmergencyMode()
-            } else {
-                // NO TIENE PERMISO -> Lo mandamos a configurar
-                showPermissionDialog()
-            }
-        }
 
         // OBSERVAR EL CAMBIO DE ESTADO (REACTIVO)
         viewModel.isEmergencyActive.observe(viewLifecycleOwner) { isActive ->
@@ -119,7 +108,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                 // AQUÍ DISPARAREMOS EL SERVICIO DE ACCESIBILIDAD DESPUÉS
             } else {
-                // MODO NORMAL 😌
+                // MODO NORMAL
                 tvStatus.text = "¡BLOQUEO DE\nEMERGENCIA!"
                 cardEmergency.alpha = 0.9f // Un poco apagado si quieres
             }

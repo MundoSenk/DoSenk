@@ -1,10 +1,12 @@
 package host.senk.dosenk.ui.onboarding
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
@@ -14,11 +16,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+import host.senk.dosenk.service.BlockerEngineService
+
 @AndroidEntryPoint
 class TutorialActiveMissionFragment : Fragment(R.layout.fragment_tutorial_active_mission) {
 
     private val viewModel: TutorialMissionViewModel by viewModels()
     private var countdownJob: Job? = null
+
+
+    private var kickOutJob: Job? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -105,15 +112,44 @@ class TutorialActiveMissionFragment : Fragment(R.layout.fragment_tutorial_active
 
             // Matamos el contador de 15s y arrancamos el 2:30
             startDynamicCountdown(tvTimerCountdown, 150)
+
+            //¡LA TRAMPA DE LOS 10 SEGUNDOS
+            kickOutJob = viewLifecycleOwner.lifecycleScope.launch {
+                delay(10000) // Esperamos 10 segundos en silencio...
+                if (isActive) {
+                    executeKickOutProtocol() //
+                }
+            }
         }
 
         // Aqui es lo interesante
         val finalAction = View.OnClickListener {
-
+            // Cancelamos la trampa de los 10s
+            kickOutJob?.cancel()
+            executeKickOutProtocol()
         }
 
         btnNoDecidiEso.setOnClickListener(finalAction)
         btnQueQuieresDecir.setOnClickListener(finalAction)
+    }
+
+    // EXPULSIÓN
+    private fun executeKickOutProtocol() {
+
+        viewModel.finishOnboarding{
+            findNavController().navigate(R.id.action_TutoHome_to_TutoConclusion)
+            val serviceIntent = Intent(requireContext(), BlockerEngineService::class.java)
+            requireContext().startForegroundService(serviceIntent)
+
+            // LO EXPULSAMOS AL HOME DE ANDROID DE INMEDIATO
+            val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(homeIntent)
+
+        }
+
     }
 
     // En caso de que el usuario no presione el "entiendo"
@@ -150,5 +186,6 @@ class TutorialActiveMissionFragment : Fragment(R.layout.fragment_tutorial_active
     override fun onDestroyView() {
         super.onDestroyView()
         countdownJob?.cancel()
+        kickOutJob?.cancel() // Matamos el contador de expulsión si sale del fragmento
     }
 }

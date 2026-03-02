@@ -1,7 +1,9 @@
 package host.senk.dosenk.ui.dashboard
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -18,12 +20,10 @@ import host.senk.dosenk.R
 import host.senk.dosenk.util.AppUsageManager
 import host.senk.dosenk.util.applyDoSenkGradient
 import kotlinx.coroutines.launch
-import host.senk.dosenk.ui.onboarding.TutorialDashboardFragment
 
 @AndroidEntryPoint
 class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
 
-    // Conectamos con el ViewModel
     private val sharedViewModel: SetupViewModel by activityViewModels()
 
     private lateinit var rvTopVices: RecyclerView
@@ -35,6 +35,7 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
     private lateinit var btnAcceptPunishment: Button
     private lateinit var tvVerdict: TextView
 
+    // Este launcher nos sirve para AMBOS permisos. Cada vez que regresa de ajustes, volvemos a checar.
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -44,7 +45,6 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Referencias XML
         rvTopVices = view.findViewById(R.id.rvTopVices)
         tvStatsTitle = view.findViewById(R.id.tvStatsTitle)
         tvStatsSubtitle = view.findViewById(R.id.tvStatsSubtitle)
@@ -54,24 +54,28 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
         btnAcceptPunishment = view.findViewById(R.id.btnAcceptPunishment)
         tvVerdict = view.findViewById(R.id.tvVerdict)
 
-        // Gradientes
-        view.findViewById<View>(R.id.header)
-            ?.findViewById<View>(R.id.layoutLogoGradient)
-            ?.applyDoSenkGradient(cornerRadius = 12f)
-
-        view.findViewById<View>(R.id.cardVices)
-            ?.findViewById<View>(R.id.layoutStatsGradient)
-            ?.applyDoSenkGradient(cornerRadius = 24f)
+        view.findViewById<View>(R.id.header)?.findViewById<View>(R.id.layoutLogoGradient)?.applyDoSenkGradient(cornerRadius = 12f)
+        view.findViewById<View>(R.id.cardVices)?.findViewById<View>(R.id.layoutStatsGradient)?.applyDoSenkGradient(cornerRadius = 24f)
 
         rvTopVices.layoutManager = LinearLayoutManager(requireContext())
 
+        //  Decide qué permiso pedir
         btnGrantPermission.setOnClickListener {
-            val intent = AppUsageManager.getPermissionSettingsIntent()
-            requestPermissionLauncher.launch(intent)
+            if (!AppUsageManager.hasUsageStatsPermission(requireContext())) {
+                // Pedimos el de Uso de Apps
+                val intent = AppUsageManager.getPermissionSettingsIntent()
+                requestPermissionLauncher.launch(intent)
+            } else if (!Settings.canDrawOverlays(requireContext())) {
+                // Pedimos el de Ventanas Flotantes
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:${requireContext().packageName}")
+                )
+                requestPermissionLauncher.launch(intent)
+            }
         }
 
         btnAcceptPunishment.setOnClickListener {
-            // para mandarlo sl a TutorialDashboardFragment
             findNavController().navigate(R.id.action_global_to_tutorialDashboardFragment)
         }
 
@@ -79,21 +83,34 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
     }
 
     private fun checkPermissionAndLoadStats() {
-        if (AppUsageManager.hasUsageStatsPermission(requireContext())) {
+        val hasUsageStats = AppUsageManager.hasUsageStatsPermission(requireContext())
+        val hasOverlay = Settings.canDrawOverlays(requireContext())
+
+        // Si ya tiene los dos, arrancamos la magia
+        if (hasUsageStats && hasOverlay) {
             showLoadingState()
             loadVices()
         } else {
-            showPermissionState()
+            showPermissionState(hasUsageStats, hasOverlay)
         }
     }
 
-    private fun showPermissionState() {
-        tvStatsTitle.text = "Analizando tu personalidad..."
-        tvStatsSubtitle.text = "Para ser tu jefe, necesito ver tus trapos sucios. Dame acceso a tu tiempo de uso de tu pantallita."
+    private fun showPermissionState(hasUsageStats: Boolean, hasOverlay: Boolean) {
         cardPermission.visibility = View.VISIBLE
         cardVices.visibility = View.GONE
         btnAcceptPunishment.visibility = View.GONE
         tvVerdict.visibility = View.GONE
+
+        // Cambiamos el texto de la tarjeta dependiendo de lo que falte
+        if (!hasUsageStats) {
+            tvStatsTitle.text = "Analizando tu personalidad..."
+            tvStatsSubtitle.text = "Para ser tu jefe, necesito ver tus trapos sucios. Dame acceso a tu tiempo de uso de tu pantallita."
+            btnGrantPermission.text = "¡Revisar mi celular!"
+        } else if (!hasOverlay) {
+            tvStatsTitle.text = "Un último detalle..."
+            tvStatsSubtitle.text = "Para poder castigarte, necesito el poder de aparecer sobre otras apps. ¡Dame el control!"
+            btnGrantPermission.text = "¡Dar poder absoluto!"
+        }
     }
 
     private fun showLoadingState() {
@@ -103,22 +120,14 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
     }
 
     private fun loadVices() {
-        // Le ordenamos al ViewModel que haga el cálculo pesado
         sharedViewModel.loadUsageStats(requireContext())
-
-        // Nos sentamos a observar los resultados
         viewLifecycleOwner.lifecycleScope.launch {
             sharedViewModel.usageReport.collect { report ->
-                // Si el reporte ya no es nulo, significa que ya terminó de calcular
                 if (report != null) {
-                    // Sacamos las 5 apps de la caja
                     val topVicesList = report.topVices
-
                     if (topVicesList.isNotEmpty()) {
                         tvStatsTitle.text = "Resultados del Análisis"
                         tvStatsSubtitle.text = "Los números no mienten."
-
-                        // Le pasamos la LISTA pura al Adapter
                         rvTopVices.adapter = TopVicesAdapter(topVicesList)
 
                         cardVices.visibility = View.VISIBLE
@@ -126,7 +135,7 @@ class SetupStatsFragment : Fragment(R.layout.fragment_setup_stats) {
                         tvVerdict.visibility = View.VISIBLE
 
                         val worstApp = topVicesList[0]
-                        tvVerdict.text = "¿${AppUsageManager.formatTime(worstApp.timeInForegroundMillis)} en ${worstApp.appName}?, Y así querías conquistar el mundo? Ay, pues a comenzar!"
+                        tvVerdict.text = "¿${AppUsageManager.formatTime(worstApp.timeInForegroundMillis)} en ${worstApp.appName}?, ¿Y así querías conquistar el mundo? Ay, pues a comenzar!"
                     } else {
                         tvStatsTitle.text = "Vaya, vaya..."
                         tvStatsSubtitle.text = "Parece que eres un monje y no usaste apps hoy."
