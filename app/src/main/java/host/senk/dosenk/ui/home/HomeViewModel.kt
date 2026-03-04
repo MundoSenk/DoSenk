@@ -7,12 +7,21 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.local.dao.UserDao
 import host.senk.dosenk.data.local.dao.MissionDao
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import dagger.hilt.android.qualifiers.ApplicationContext //
+import host.senk.dosenk.service.MissionBlockerService
 
 sealed class MissionCardState {
     object Idle : MissionCardState()
@@ -24,19 +33,21 @@ sealed class MissionCardState {
 class HomeViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     private val userDao: UserDao,
-    private val missionDao: MissionDao
+    private val missionDao: MissionDao,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     val currentUserAlias = userPreferences.userAlias.asLiveData()
     val isEmergencyActive = userPreferences.isEmergencyActive.asLiveData()
 
-    // Variable reactiva para el rango
     private val _realRankName = MutableStateFlow("Desconocido")
     val realRankName: StateFlow<String> = _realRankName
 
-    // El estado de la tarjeta de misiones que hicimos antes
     private val _missionState = MutableStateFlow<MissionCardState>(MissionCardState.Idle)
     val missionState: StateFlow<MissionCardState> = _missionState
+
+    // Esta es nuestra "bomba de tiempo"
+    private var transitionJob: Job? = null
 
     init {
         loadUserRank()
@@ -53,26 +64,103 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+
+    // EL CEREBRO Pending -> Active -> Completed
+
     private fun checkCurrentMissions() {
         viewModelScope.launch {
-            // El Flow se queda escuchando 24/7 si hay cambios en la tabla
-            missionDao.getNextPendingMission().collect { mission ->
-                if (mission != null) {
+            // Escuchamos AL MISMO TIEMPO si hay una misión Activa o una Pendiente
+            combine(
+                missionDao.getActiveMission(),
+                missionDao.getNextPendingMission()
+            ) { active, pending ->
+                Pair(active, pending)
+            }.collect { (active, pending) ->
 
-                    val currentTime = System.currentTimeMillis()
-                    val diffMillis = mission.executionDate - currentTime
+                // Cancelamos cualquier reloj anterior para que no choquen
+                transitionJob?.cancel()
 
-                    val secondsUntilStart = if (diffMillis > 0) (diffMillis / 1000).toInt() else 0
+                val currentTime = System.currentTimeMillis()
 
+                if (active != null) {
+                    //  HAY UNA MISIÓN ACTIVA
+                    val endTime = active.executionDate + (active.durationMinutes * 60 * 1000L)
+                    val timeLeftMillis = endTime - currentTime
 
-                    _missionState.value = MissionCardState.Pending(
-                        secondsUntilStart = secondsUntilStart,
-                        missionName = mission.name
-                    )
+                    if (timeLeftMillis > 0) {
+                        // Le pasamos los datos a tu MissionTimerManager para que se ponga rojo/morado
+                        _missionState.value = MissionCardState.Active(
+                            secondsLeft = (timeLeftMillis / 1000).toInt(),
+                            blockType = active.blockType
+                        )
+
+                        // Cuando el tiempo acabe, mandarla al historial
+                        transitionJob = viewModelScope.launch {
+                            delay(timeLeftMillis)
+                            archiveMission(active)
+                        }
+                    } else {
+                        // Si ya pasó su hora y nadie se dio cuenta, archívala
+                        archiveMission(active)
+                    }
+
+                } else if (pending != null) {
+                    // HAY UNA MISIÓN PENDIENTE (ESPERANDO)
+                    val timeToStartMillis = pending.executionDate - currentTime
+
+                    if (timeToStartMillis > 0) {
+                        // Le pasamos los datos a tu MissionTimerManager para que cuente los minutos que faltan
+                        _missionState.value = MissionCardState.Pending(
+                            secondsUntilStart = (timeToStartMillis / 1000).toInt(),
+                            missionName = pending.name
+                        )
+
+                        // Programamos la bomba: Cuando el tiempo llegue a cero,ACTÍVALA
+                        transitionJob = viewModelScope.launch {
+                            delay(timeToStartMillis)
+                            activateMission(pending)
+                        }
+                    } else {
+                        // Si el tiempo ya pasó o es cero, actívala inmediatamente
+                        activateMission(pending)
+                    }
+
                 } else {
                     _missionState.value = MissionCardState.Idle
                 }
             }
+        }
+    }
+
+    private fun activateMission(mission: host.senk.dosenk.data.local.entity.MissionEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val updatedMission = mission.copy(status = "active")
+            missionDao.updateMission(updatedMission)
+
+            // invocamos al bloqueomision
+            val serviceIntent = Intent(appContext, MissionBlockerService::class.java)
+
+            // Le pasamos el tiempo Y el nombre de la misión
+            val durationSeconds = mission.durationMinutes * 60
+            serviceIntent.putExtra("DURATION_SECONDS", durationSeconds)
+            serviceIntent.putExtra("MISSION_NAME", mission.name)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                appContext.startForegroundService(serviceIntent)
+            } else {
+                appContext.startService(serviceIntent)
+            }
+        }
+    }
+
+    private fun archiveMission(mission: host.senk.dosenk.data.local.entity.MissionEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val updatedMission = mission.copy(status = "completed")
+            missionDao.updateMission(updatedMission)
+
+            // Apagamos el NUEVO servicio
+            val serviceIntent = Intent(appContext, MissionBlockerService::class.java)
+            appContext.stopService(serviceIntent)
         }
     }
 }
