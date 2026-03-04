@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- LÓGICA INMERSIVA (Nueva) ---
+    // LÓGICA INMERSIVA
     private fun hideSystemUI() {
         // Le decimos a la ventana que nosotros controlamos el espacio
         WindowCompat.setDecorFitsSystemWindows(window, false)

@@ -9,6 +9,7 @@ import host.senk.dosenk.data.local.entity.UserEntity
 import host.senk.dosenk.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Patterns
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
@@ -88,5 +89,9 @@ class RegistrationViewModel @Inject constructor(
                 onError(e.message ?: "Error desconocido al registrar")
             }
         }
+    }
+
+    fun isValidEmail(email: String): Boolean {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 }
