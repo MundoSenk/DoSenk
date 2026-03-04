@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import host.senk.dosenk.ui.blocks.BlockZoneFragment
 
 @AndroidEntryPoint
 class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
@@ -132,9 +133,33 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
 
 
+        val btnTimePicker = view.findViewById<TextView>(R.id.btnTimePicker)
+
+        ////////////////// HORA DE INICIOOOO
+        btnTimePicker.setOnClickListener {
+            val currentTime = java.util.Calendar.getInstance()
+            val hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY)
+            val minute = currentTime.get(java.util.Calendar.MINUTE)
+
+            val timePicker = TimePickerDialog(requireContext(), { _, selectedHour, selectedMinute ->
+                viewModel.setStartTime(selectedHour, selectedMinute)
+
+                // Formateamos para que se vea bonito (ej. 05:09 PM)
+                val amPm = if (selectedHour >= 12) "PM" else "AM"
+                val hour12 = if (selectedHour % 12 == 0) 12 else selectedHour % 12
+                val timeStr = String.format("%02d:%02d %s", hour12, selectedMinute, amPm)
+
+                btnTimePicker.text = timeStr
+                btnTimePicker.applyDoSenkGradient(cornerRadius = 16f)
+                btnTimePicker.setTextColor(requireContext().getColor(R.color.white))
+            }, hour, minute, false) // false = formato 12 hrs (AM/PM)
+
+            timePicker.setTitle("¿A qué hora inicia el castigo?")
+            timePicker.show()
+        }
 
 
-        ////////////////// FECHA (Calendario)
+        ////////////////// DÍA (Calendario)
         btnDatePicker.setOnClickListener {
             val datePicker = MaterialDatePicker.Builder.datePicker()
                 .setTitleText("Día de la misión")
@@ -150,7 +175,6 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
             }
             datePicker.show(parentFragmentManager, "DATE_PICKER")
         }
-
 
 
 
@@ -185,8 +209,15 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         btnNext.setOnClickListener {
             viewModel.missionName = etMissionName.text.toString()
             if (viewModel.isFormValid()) {
-                // findNavController().navigate(R.id.action_createMission_to_blockZone)
-                Toast.makeText(requireContext(), " DECIDAMOS EL BLOQUEO", Toast.LENGTH_SHORT).show()
+
+                // le pasamos el booleano que lo cambia to do!
+                val bundle = Bundle().apply {
+                    putBoolean("isSelectionMode", true)
+                }
+
+                // Navegamos pasándole el Bundle
+                findNavController().navigate(R.id.action_createMissionFragment_to_blockZoneFragment, bundle)
+
             } else {
                 Toast.makeText(requireContext(), "Ponle nombre y fecha, gallo", Toast.LENGTH_SHORT).show()
             }
@@ -196,5 +227,7 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().popBackStack()
         }
+
+
     }
 }

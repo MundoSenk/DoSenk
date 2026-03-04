@@ -238,6 +238,13 @@
         <action
             android:id="@+id/action_global_to_createMissionFragment"
             app:destination="@id/createMissionFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_BlockZone"
+            app:destination="@id/BlockZone"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
     </fragment>
 
 
@@ -318,6 +325,28 @@
         android:id="@+id/createMissionFragment"
         android:name="host.senk.dosenk.ui.mission.CreateMissionFragment"
         android:label="CreateMissionFragment"
-        tools:layout="@layout/fragment_create_mission" />
+        tools:layout="@layout/fragment_create_mission">
+        <action
+            android:id="@+id/action_createMissionFragment_to_blockZoneFragment"
+            app:destination="@id/BlockZone"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
 
+    <fragment
+        android:id="@+id/BlockZone"
+        android:name="host.senk.dosenk.ui.blocks.BlockZoneFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_block_zone" >
+
+        <action
+            android:id="@+id/action_BlockZone_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
 </navigation>

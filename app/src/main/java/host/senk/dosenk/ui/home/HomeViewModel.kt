@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.local.dao.UserDao
+import host.senk.dosenk.data.local.dao.MissionDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -22,7 +23,8 @@ sealed class MissionCardState {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
-    private val userDao: UserDao //
+    private val userDao: UserDao,
+    private val missionDao: MissionDao
 ) : ViewModel() {
 
     val currentUserAlias = userPreferences.userAlias.asLiveData()
@@ -53,10 +55,24 @@ class HomeViewModel @Inject constructor(
 
     private fun checkCurrentMissions() {
         viewModelScope.launch {
-            // TODO: Aquí leeremos la tabla de 'missions' en Room.
-            // Lo dejamos en Idle (Vacío) por ahora para que no truene,
-            // ya pronto le inyectaremos las misiones reales de la base de datos.
-            _missionState.value = MissionCardState.Idle
+            // El Flow se queda escuchando 24/7 si hay cambios en la tabla
+            missionDao.getNextPendingMission().collect { mission ->
+                if (mission != null) {
+
+                    val currentTime = System.currentTimeMillis()
+                    val diffMillis = mission.executionDate - currentTime
+
+                    val secondsUntilStart = if (diffMillis > 0) (diffMillis / 1000).toInt() else 0
+
+
+                    _missionState.value = MissionCardState.Pending(
+                        secondsUntilStart = secondsUntilStart,
+                        missionName = mission.name
+                    )
+                } else {
+                    _missionState.value = MissionCardState.Idle
+                }
+            }
         }
     }
 }
