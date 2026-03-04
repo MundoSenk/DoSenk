@@ -48,7 +48,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:fontFamily="@font/poppins_medium"
-                android:text="El celular está bloqueado. Vuelve a lo tuyo o ríndete como un cobarde."
+                android:text="¿Qué paso mi adulto chiquito?\nEstas tiempo fuera.."
                 android:textAlignment="center"
                 android:textColor="#B3B3B3"
                 android:textSize="16dp" />
@@ -70,7 +70,7 @@
                 android:layout_marginTop="32dp"
                 android:backgroundTint="?attr/doSkinButton"
                 android:fontFamily="@font/poppins_bold"
-                android:text="¡Me rindo!"
+                android:text="DEJAME!!"
                 android:textColor="@color/white"
                 android:textSize="18sp"
                 app:cornerRadius="16dp" />
