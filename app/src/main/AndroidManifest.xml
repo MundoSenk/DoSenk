@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <application
         android:name=".DoSenkApp"
         android:allowBackup="true"
@@ -31,7 +33,6 @@
             </intent-filter>
         </activity>
 
-
         <service
             android:name=".service.BlockerEngineService"
             android:enabled="true"
@@ -43,6 +44,10 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
+
+        <receiver
+            android:name=".service.MissionTriggerReceiver"
+            android:exported="false" />
 
     </application>
 </manifest>

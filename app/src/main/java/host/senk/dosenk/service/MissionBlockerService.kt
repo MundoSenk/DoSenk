@@ -33,6 +33,7 @@ class MissionBlockerService : Service() {
 
     private var timeLeftSeconds = 0
     private var defaultLauncherPackage: String = ""
+    private var endTimeMillis: Long = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -74,14 +75,14 @@ class MissionBlockerService : Service() {
         createNotificationChannel()
         val notification = NotificationCompat.Builder(this, "DO_MISSION_CHANNEL")
             .setContentTitle(">Do: Misión Activa")
-            .setContentText("Tengo tu telefonito")
+            .setContentText("No intentes escapar...")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .build()
 
-        startForeground(2, notification) // Usamos ID 2 para no chocar con el tutorial
+        startForeground(2, notification)
 
-        // saca los datos de ka bd
-        timeLeftSeconds = intent?.getIntExtra("DURATION_SECONDS", 60) ?: 60
+        // ¡ATRAPAMOS LA HORA EXACTA EN LA QUE TERMINA EL CASTIGO!
+        endTimeMillis = intent?.getLongExtra("END_TIME_MILLIS", 0L) ?: 0L
         val missionName = intent?.getStringExtra("MISSION_NAME") ?: "Castigo Activo"
 
         tvMissionName.text = "¿Listo para:\n$missionName?"
@@ -93,7 +94,16 @@ class MissionBlockerService : Service() {
 
     private fun startEngine() {
         engineJob = serviceScope.launch {
-            while (isActive && timeLeftSeconds > 0) {
+            while (isActive) {
+                // CALCULAMOS EL TIEMPO REAL RESTANTE BASADO EN EL RELOJ DEL SISTEMA
+                val currentTime = System.currentTimeMillis()
+                val timeLeftMillis = endTimeMillis - currentTime
+
+                if (timeLeftMillis <= 0) {
+                    break
+                }
+
+                val timeLeftSeconds = (timeLeftMillis / 1000).toInt()
                 val hours = timeLeftSeconds / 3600
                 val minutes = (timeLeftSeconds % 3600) / 60
                 val seconds = timeLeftSeconds % 60
@@ -102,9 +112,9 @@ class MissionBlockerService : Service() {
                 checkForegroundApp()
 
                 delay(1000)
-                timeLeftSeconds--
             }
 
+            // Cuando el ciclo se rompe
             overlayView.visibility = View.GONE
             stopSelf()
         }

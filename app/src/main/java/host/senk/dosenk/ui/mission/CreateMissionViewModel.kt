@@ -11,10 +11,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import dagger.hilt.android.qualifiers.ApplicationContext
+import host.senk.dosenk.service.MissionTriggerReceiver
 
 @HiltViewModel
 class CreateMissionViewModel @Inject constructor(
-    private val missionDao: MissionDao
+    private val missionDao: MissionDao,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     // Slibgeton como mochilita para guardar datos antes de hacer una mision en la room
@@ -80,11 +87,39 @@ class CreateMissionViewModel @Inject constructor(
             val newMission = MissionEntity(
                 name = missionName,
                 durationMinutes = durationMinutes.value,
-                executionDate = finalTimestamp, // ¡AQUÍ VA LA FECHA EXACTA CON HORA!
+                executionDate = finalTimestamp,
                 assignmentType = assignmentType.value,
                 blockType = blockTypeChosen,
                 status = "pending"
             )
+
+
+            val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(appContext, MissionTriggerReceiver::class.java).apply {
+                putExtra("MISSION_NAME", missionName)
+                putExtra("DURATION_MINUTES", durationMinutes.value)
+            }
+
+
+            // Creamos un intent pendiente único
+            val pendingIntent = PendingIntent.getBroadcast(
+                appContext,
+                (finalTimestamp / 1000).toInt(), // ID único
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+
+
+            try {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    finalTimestamp,
+                    pendingIntent
+                )
+            } catch (e: SecurityException) {
+
+            }
 
             missionDao.insertMission(newMission)
 

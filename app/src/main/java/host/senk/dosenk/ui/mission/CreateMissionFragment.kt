@@ -210,12 +210,23 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
             viewModel.missionName = etMissionName.text.toString()
             if (viewModel.isFormValid()) {
 
-                // le pasamos el booleano que lo cambia to do!
+                val alarmManager = requireContext().getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    if (!alarmManager.canScheduleExactAlarms()) {
+                        // Mandamos a por el permiso
+                        Toast.makeText(requireContext(), "¡>Do necesita permiso de Alarmas para bloquearte!", Toast.LENGTH_LONG).show()
+
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        startActivity(intent)
+
+                        return@setOnClickListener
+                    }
+                }
+
                 val bundle = Bundle().apply {
                     putBoolean("isSelectionMode", true)
                 }
-
-                // Navegamos pasándole el Bundle
                 findNavController().navigate(R.id.action_createMissionFragment_to_blockZoneFragment, bundle)
 
             } else {
