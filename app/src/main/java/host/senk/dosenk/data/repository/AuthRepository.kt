@@ -4,23 +4,29 @@ import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.local.dao.UserDao
 import host.senk.dosenk.data.local.entity.UserEntity
 import host.senk.dosenk.data.remote.ApiService
-import host.senk.dosenk.data.remote.model.RegisterRequest
+import host.senk.dosenk.data.remote.model.ApiResponse
 import host.senk.dosenk.data.remote.model.CheckRequest
 import host.senk.dosenk.data.remote.model.LoginRequest
+import host.senk.dosenk.data.remote.model.RegisterRequest
 import host.senk.dosenk.data.remote.model.ScheduleBatchRequest
 import host.senk.dosenk.data.remote.model.ScheduleData
+import host.senk.dosenk.data.remote.model.SaveVicesRequest
+import host.senk.dosenk.data.remote.model.ViceDto
+import host.senk.dosenk.util.AppUsageInfo
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
-    private val api: ApiService,     //Conexión Nube
-    private val userDao: UserDao,    // Conexión Local
-    private val userPreferences: UserPreferences // Configuración
+    private val api: ApiService,
+    private val userDao: UserDao,
+    private val userPreferences: UserPreferences
 ) {
 
-    suspend fun registerUser(user: UserEntity) {
-
-        //  Convertir Entidad Local -> Request Remoto
+    /**
+     * Registro de usuario: Envía datos al servidor, y si es exitoso,
+     * guarda al usuario en la base de datos local (Room) y en preferencias.
+     */
+    suspend fun registerUser(user: UserEntity): ApiResponse {
         val request = RegisterRequest(
             username = user.username,
             email = user.email,
@@ -31,191 +37,199 @@ class AuthRepository @Inject constructor(
             themeColor = user.themeColor
         )
 
-        // MANDAR A PHP (Retrofit)
         val response = api.registerUser(request)
 
-        //  Verificar respuesta
-        if (response.isSuccessful && response.body()?.success == true) {
+        if (response.isSuccessful && response.body() != null) {
             val serverResponse = response.body()!!
 
+            if (serverResponse.success) {
+                // Guardar localmente solo si el servidor aceptó
+                userDao.insertUser(user)
 
-            // Ahora sí, guardamos en Room para uso offline
-            userDao.insertUser(user)
-
-            // Guardamos sesión activa
-            userPreferences.saveUserSession(
-                token = serverResponse.uuid ?: "no-uuid", // Usamos el UUID real del server
-                alias = user.username
-            )
-
-            // Guardar tema
-            val themeIndex = when(user.themeColor) {
-                "red" -> 1
-                "dark" -> 2
-                "teal" -> 3
-                else -> 0
-            }
-            userPreferences.saveTheme(themeIndex)
-
-        } else {
-            // ERROR DEL SERVIDOR (Ej: "Usuario ya existe" o error 500)
-            val errorMsg = response.body()?.message ?: "Error del servidor: ${response.code()}"
-            throw Exception(errorMsg) // Esto lo atrapará el ViewModel y mostrará Toast
-        }
-    }
-
-
-    suspend fun checkAvailability(username: String, email: String): Pair<Boolean, String> {
-        try {
-            val request = CheckRequest(username, email)
-            val response = api.checkAvailability(request)
-
-            if (response.isSuccessful && response.body() != null) {
-                val apiResponse = response.body()!!
-                // Si success es true, está libre. Si es false, mensaje del PHP.
-                return Pair(apiResponse.success, apiResponse.message)
-            } else {
-                return Pair(false, "Error del servidor: ${response.code()}")
-            }
-        } catch (e: Exception) {
-            return Pair(false, "Error de conexión: ${e.message}")
-        }
-    }
-
-
-    suspend fun login(userOrEmail: String, pass: String): Pair<Boolean, String> {
-        try {
-            //  INTENTO REMOTO
-            val request = LoginRequest(userOrEmail, pass)
-            val response = api.loginUser(request)
-
-            if (response.isSuccessful && response.body()?.success == true) {
-                val data = response.body()!!
-
-                //  Guardar sesión
                 userPreferences.saveUserSession(
-                    token = data.uuid ?: "uuid-error",
-                    alias = data.username ?: userOrEmail
+                    token = serverResponse.uuid ?: "no-uuid",
+                    alias = user.username
                 )
 
-                // Aplicar tema del usuario
-                val themeIndex = when(data.themeColor) {
+                val themeIndex = when (user.themeColor) {
                     "red" -> 1
                     "dark" -> 2
                     "teal" -> 3
                     else -> 0
                 }
                 userPreferences.saveTheme(themeIndex)
-
-                userPreferences.saveSetupFinished(data.setupFinished)
-
-                return Pair(true, "Bienvenido")
-            } else {
-                // FALLÓ EN NUBE
-                val msg = response.body()?.message ?: "Error de credenciales"
-                return Pair(false, msg)
             }
-
-        } catch (e: Exception) {
-            // SI NO HAY INTERNET -> Intentar Login Local (Offline)
-            // Esto asume que el usuario ya se había logueado/registrado en este cel antes
-            val localUser = userDao.getUserByEmailOrUsername(userOrEmail)
-            if (localUser != null && localUser.password == pass) {
-                // Login Local Exitoso
-                userPreferences.saveUserSession("offline_token", localUser.username)
-                return Pair(true, "Bienvenido (Modo Offline)")
-            }
-
-            return Pair(false, "Sin conexión y credenciales no guardadas")
+            return serverResponse
+        } else {
+            throw Exception("Error del servidor: ${response.code()}")
         }
     }
 
+    /**
+     * Verifica si el nombre de usuario o email ya están registrados.
+     */
+    suspend fun checkAvailability(username: String, email: String): Pair<Boolean, String> {
+        return try {
+            val request = CheckRequest(username, email)
+            val response = api.checkAvailability(request)
 
+            if (response.isSuccessful && response.body() != null) {
+                val apiResponse = response.body()!!
+                Pair(apiResponse.success, apiResponse.message)
+            } else {
+                Pair(false, "Error del servidor: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Pair(false, "Error de conexión: ${e.message}")
+        }
+    }
+
+    /**
+     * Inicio de sesión: Intenta primero vía API. Si no hay conexión,
+     * intenta validar contra la base de datos local (Modo Offline).
+     */
+    suspend fun login(userOrEmail: String, pass: String): Pair<Boolean, String> {
+        return try {
+            val request = LoginRequest(userOrEmail, pass)
+            val response = api.loginUser(request)
+
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()!!
+
+                userPreferences.saveUserSession(
+                    token = data.uuid ?: "uuid-error",
+                    alias = data.username ?: userOrEmail
+                )
+
+                val themeIndex = when (data.themeColor) {
+                    "red" -> 1
+                    "dark" -> 2
+                    "teal" -> 3
+                    else -> 0
+                }
+                userPreferences.saveTheme(themeIndex)
+                userPreferences.saveSetupFinished(data.setupFinished)
+
+                Pair(true, "Bienvenido")
+            } else {
+                val msg = response.body()?.message ?: "Error de credenciales"
+                Pair(false, msg)
+            }
+        } catch (e: Exception) {
+            // LOGIN OFFLINE
+            val localUser = userDao.getUserByEmailOrUsername(userOrEmail)
+            if (localUser != null && localUser.password == pass) {
+                userPreferences.saveUserSession("offline_token", localUser.username)
+                Pair(true, "Bienvenido (Modo Offline)")
+            } else {
+                Pair(false, "Sin conexión y credenciales no guardadas")
+            }
+        }
+    }
+
+    /**
+     * Guarda la lista de horarios/actividades del usuario.
+     */
     suspend fun saveSchedules(schedules: List<ScheduleData>): Boolean {
-        try {
-            //  Obtener el UUID del usuario actual (Token)
+        return try {
             val uuid = userPreferences.userToken.first()
-
             if (uuid.isEmpty()) return false
 
-            //  Armar petición
             val request = ScheduleBatchRequest(uuid, schedules)
             val response = api.saveSchedules(request)
 
             if (response.isSuccessful && response.body()?.success == true) {
-                //Primera parte del registro
                 userPreferences.saveSetupFinished(1)
-                return true
+                true
+            } else {
+                false
             }
-            return false
         } catch (e: Exception) {
             e.printStackTrace()
-            return false
+            false
         }
     }
 
-
-
+    /**
+     * Guarda el nivel de disciplina y las aplicaciones detectadas como "vicios".
+     */
     suspend fun saveDisciplineLevel(
         dailyHours: Float,
         rankName: String,
-        vices: List<host.senk.dosenk.util.AppUsageInfo>
+        vices: List<AppUsageInfo>
     ): Boolean {
-        try {
-            // Obtener UUID y Username del DataStore
+        return try {
             val uuid = userPreferences.userToken.first()
             val usernameAlias = userPreferences.userAlias.first()
 
-            // Si no hay token, no podemos guardar en la nube
             if (uuid.isEmpty()) return false
 
-            //  Convertir las apps locales al formato del servidor
             val vicesDtoList = vices.map { app ->
-                host.senk.dosenk.data.remote.model.ViceDto(
+                ViceDto(
                     package_name = app.packageName,
                     app_name = app.appName,
                     time_spent_ms = app.timeInForegroundMillis
                 )
             }
 
-            // Armar petición para Retrofit
-            val request = host.senk.dosenk.data.remote.model.SaveVicesRequest(
+            val request = SaveVicesRequest(
                 uuid = uuid,
                 daily_wasted_hours = dailyHours,
                 rank_name = rankName,
                 vices = vicesDtoList
             )
 
-            //  Mandar a la API de PHP (Usando tu variable 'api')
             val response = api.saveVicesAndRank(request)
 
             if (response.isSuccessful && response.body()?.success == true) {
-
                 val currentUser = userDao.getUserByEmailOrUsername(usernameAlias)
-
                 if (currentUser != null) {
-                    // Copiamos el usuario actual pero le inyectamos los nuevos datos
                     val updatedUser = currentUser.copy(
                         rankName = rankName,
                         dailyWastedHours = dailyHours,
                         setupFinished = 2
                     )
-                    // Guardamos la actualización
                     userDao.updateUser(updatedUser)
                 }
-
-                // Guardamos en preferencias que ya terminó el Onboarding
                 userPreferences.saveSetupFinished(2)
-
-                return true
+                true
             } else {
-                return false
+                false
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            return false
+            false
         }
     }
 
 
+    //  (Recibe UUID y OTP)
+    suspend fun verifyOtp(uuid: String, code: String): Pair<Boolean, String> {
+        return try {
+            val response = api.verifyOtp(mapOf("uuid" to uuid, "otp" to code))
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                Pair(body.success, body.message ?: "Verificación exitosa")
+            } else {
+                Pair(false, "Código incorrecto o expirado")
+            }
+        } catch (e: Exception) {
+            Pair(false, "Error de conexión")
+        }
+    }
+
+    // (Recibe Email)
+    suspend fun resendOtpByEmail(email: String): Pair<Boolean, String> {
+        return try {
+            val response = api.resendCode(mapOf("email" to email))
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                Pair(body.success, body.message ?: "Código enviado")
+            } else {
+                Pair(false, "Error al reenviar")
+            }
+        } catch (e: Exception) {
+            Pair(false, "Error de red")
+        }
+    }
 }

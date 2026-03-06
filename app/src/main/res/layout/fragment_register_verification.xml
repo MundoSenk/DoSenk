@@ -128,7 +128,7 @@
 
                 <TextView
                     android:id="@+id/tvUserEmail"
-                    android:text="tu@correo.com"
+                    android:text=""
                     android:gravity="center"
                     android:textColor="@color/black"
                     android:fontFamily="@font/poppins_bold"
@@ -137,7 +137,7 @@
                     android:layout_height="wrap_content"/>
 
                 <EditText
-                    android:id="@+id/etOtpCode"
+                    android:id="@+id/etOtp"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:background="@drawable/bg_input_rounded"
