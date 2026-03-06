@@ -1,9 +1,6 @@
 package host.senk.dosenk.ui.auth
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import host.senk.dosenk.data.local.entity.UserEntity
 import host.senk.dosenk.data.repository.AuthRepository
@@ -13,61 +10,52 @@ import android.util.Patterns
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val repository: AuthRepository // ¡Aquí está la conexión al Server/BD!
+    private val repository: AuthRepository
 ) : ViewModel() {
 
-    // Skin visual
-    private val _userSkinIndex = MutableLiveData<Int>(0)
+    private val _loading = MutableLiveData<Boolean>()
+    val loading: LiveData<Boolean> = _loading
+
+    private val _error = MutableLiveData<String>()
+    val error: LiveData<String> = _error
+
+    private val _navigateToVerify = MutableLiveData<String>()
+    val navigateToVerify: LiveData<String> = _navigateToVerify
+
+    private val _userSkinIndex = MutableLiveData(0)
     val userSkinIndex: LiveData<Int> = _userSkinIndex
 
-    // --- MOCHILA DE DATOS (Se llena paso a paso) ---
+    // Datos temporales
     var firstName = ""
     var lastName = ""
     var birthDate = ""
-
     var username = ""
     var password = ""
     var email = ""
+
+    val userEmail = MutableLiveData<String>()
+    val userUUID = MutableLiveData<String>()
 
     fun setSkin(index: Int) {
         _userSkinIndex.value = index
     }
 
-
-    fun validateAccountAvailability(user: String, mail: String, onResult: (Boolean, String) -> Unit) {
-        viewModelScope.launch {
-            // Llamamos al repositorio (que llama a PHP)
-            val result = repository.checkAvailability(user, mail)
-
-            val isAvailable = result.first
-            val message = result.second
-
-            if (isAvailable) {
-                // Si está libre, guardamos en la mochila
-                username = user
-                email = mail
-            }
-
-            // Avisamos a la vista (Fragment)
-            onResult(isAvailable, message)
-        }
+    fun clearNavigationToVerify() {
+        _navigateToVerify.value = ""
     }
 
-
-
-    // Esta función se llama desde RegisterReadyFragment
-    fun registerUser(onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun startRegistration() {
         viewModelScope.launch {
+            _loading.value = true
+            _error.value = ""
             try {
-                //  Traducir el índice del skin a texto para la BD
-                val themeName = when(_userSkinIndex.value) {
+                val themeName = when (_userSkinIndex.value) {
                     1 -> "red"
                     2 -> "dark"
                     3 -> "teal"
                     else -> "purple"
                 }
 
-                //  Empaquetar to do en la Entidad
                 val newUser = UserEntity(
                     firstName = firstName,
                     lastName = lastName,
@@ -78,15 +66,42 @@ class RegistrationViewModel @Inject constructor(
                     themeColor = themeName
                 )
 
-                // Mandar al Repositorio (PHP -> Room)
-                repository.registerUser(newUser)
+                val result = repository.registerUser(newUser)
 
-                //  Si no tronó, es éxito
-                onSuccess()
-
+                if (result.success) {
+                    userUUID.value = result.uuid ?: ""
+                    userEmail.value = email
+                    _navigateToVerify.value = email
+                } else {
+                    _error.value = result.message ?: "Error al registrar"
+                }
             } catch (e: Exception) {
-                // Si tronó (ej: "Usuario ya existe" o "Sin internet")
-                onError(e.message ?: "Error desconocido al registrar")
+                _error.value = e.message ?: "Error de conexión"
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    fun verifyCode(code: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val uuid = userUUID.value ?: ""
+            if (uuid.isNotEmpty()) {
+                val result = repository.verifyOtp(uuid, code)
+                onResult(result.first, result.second)
+            } else {
+                onResult(false, "No se encontró el ID de usuario")
+            }
+        }
+    }
+
+    fun resendOtp(onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            if (email.isNotEmpty()) {
+                val result = repository.resendOtpByEmail(email)
+                onResult(result.first, result.second)
+            } else {
+                onResult(false, "No se encontró el correo")
             }
         }
     }
