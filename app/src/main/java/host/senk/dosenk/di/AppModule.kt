@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import host.senk.dosenk.data.local.DoSenkDatabase
 import host.senk.dosenk.data.local.dao.UserDao
+import host.senk.dosenk.data.local.dao.MissionDao //
 import javax.inject.Singleton
 
 @Module
@@ -26,9 +27,15 @@ object AppModule {
         ).build()
     }
 
-    // Para no llamar a la db entera siempre
+    // Para no llamar a la db entera siempre (Usuarios)
     @Provides
     fun provideUserDao(database: DoSenkDatabase): UserDao {
         return database.userDao()
+    }
+
+    // (Misiones)
+    @Provides
+    fun provideMissionDao(database: DoSenkDatabase): MissionDao {
+        return database.missionDao()
     }
 }

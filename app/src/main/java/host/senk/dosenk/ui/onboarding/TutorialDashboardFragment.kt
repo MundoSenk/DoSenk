@@ -32,6 +32,8 @@ class TutorialDashboardFragment : Fragment(R.layout.fragment_tutorial_dashboard)
 
     private val tutorialViewModel: TutorialViewModel by viewModels()
 
+    private val viewModel: TutorialMissionViewModel by viewModels()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -44,6 +46,7 @@ class TutorialDashboardFragment : Fragment(R.layout.fragment_tutorial_dashboard)
         val btnYes = view.findViewById<View>(R.id.btnYes)
         val btnWhatever = view.findViewById<View>(R.id.btnWhatever)
         val tvRankTitle = view.findViewById<TextView>(R.id.tvRankTitle)
+        val tvHeaderUsername = view.findViewById<View>(R.id.header)?.findViewById<TextView>(R.id.tvUsername)
         val btnAcceptRank = view.findViewById<Button>(R.id.btnAcceptRank)
 
         // PINTADO DE GRADIENTES (UI)
@@ -54,6 +57,13 @@ class TutorialDashboardFragment : Fragment(R.layout.fragment_tutorial_dashboard)
         view.findViewById<View>(R.id.cardStats)
             ?.findViewById<View>(R.id.layoutStatsGradient)
             ?.applyDoSenkGradient(cornerRadius = 24f)
+
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.realAlias.collect { alias ->
+                tvHeaderUsername?.text = "Bienvenido, $alias"
+            }
+        }
 
         // Acción compartida para los dos botones del perrito
         val startCalculationAction = View.OnClickListener {
