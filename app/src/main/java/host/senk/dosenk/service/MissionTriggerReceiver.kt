@@ -23,6 +23,7 @@ class MissionTriggerReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        android.util.Log.d("DOSENK_DEBUG", "¡Alarma recibida! Despertando a la bestia...")
         val pendingResult = goAsync()
 
         val hiltEntryPoint = EntryPointAccessors.fromApplication(
@@ -34,39 +35,47 @@ class MissionTriggerReceiver : BroadcastReceiver() {
         val missionName = intent.getStringExtra("MISSION_NAME") ?: return
         val durationMinutes = intent.getIntExtra("DURATION_MINUTES", 0)
 
-        // LA AUDITORÍA DE LA HORA EN PLENA MADRUGADA
+        //  LA AUDITORÍA DE LA HORA EN PLENA MADRUGADA
         val isAutoTime = android.provider.Settings.Global.getInt(
             context.contentResolver,
             android.provider.Settings.Global.AUTO_TIME, 0
         ) == 1
 
+        // Preparamos el golpe Lanzar el servicio de Bloqueo
         val serviceIntent = Intent(context, MissionBlockerService::class.java).apply {
             if (!isAutoTime) {
-                //  MODO TRAMPA: Viajó en el tiempo con la app cerrada
+                // MODO TRAMPA
                 putExtra("DURATION_SECONDS", 99999)
                 putExtra("MISSION_NAME", "¡Trampa!\nPrende la Hora Automática.")
                 putExtra("IS_TIME_PUNISHMENT", true)
             } else {
-                //  MODO NORMAL
+                // MODO NORMAL
                 putExtra("DURATION_SECONDS", durationMinutes * 60)
                 putExtra("MISSION_NAME", missionName)
                 putExtra("IS_TIME_PUNISHMENT", false)
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
+        // AQUÍ LANZAMOS EL BLOQUEO DIRECTAMENTE
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        } catch (e: Exception) {
+            // Bypass para restricciones raras en segundo plano
             context.startService(serviceIntent)
         }
 
+        // Actualizamos la base de datos
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val mission = missionDao.getNextPendingMission().firstOrNull()
                 if (mission != null && mission.name == missionName) {
                     val updatedMission = mission.copy(
                         status = "active",
-                        executionDate = System.currentTimeMillis()
+                        executionDate = System.currentTimeMillis() // EFECTO COBRADOR
                     )
                     missionDao.updateMission(updatedMission)
                 }

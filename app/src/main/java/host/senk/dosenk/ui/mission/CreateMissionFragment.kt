@@ -19,6 +19,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import host.senk.dosenk.ui.blocks.BlockZoneFragment
+import host.senk.dosenk.util.requestAutoStartPermission
+
 
 @AndroidEntryPoint
 class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
@@ -207,12 +209,12 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
         // BOTÓN DE AVANZAR
         // BOTÓN DE AVANZAR
+        // BOTÓN DE AVANZAR
         btnNext.setOnClickListener {
             viewModel.missionName = etMissionName.text.toString()
             if (viewModel.isFormValid()) {
 
-
-                //  CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
+                // CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
                 val isAutoTime = android.provider.Settings.Global.getInt(
                     requireContext().contentResolver,
                     android.provider.Settings.Global.AUTO_TIME, 0
@@ -222,12 +224,10 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
                     Toast.makeText(requireContext(), "¡Tramposo! Activa la 'Fecha y hora automática' en tus ajustes para usar >Do.", Toast.LENGTH_LONG).show()
                     val intent = android.content.Intent(android.provider.Settings.ACTION_DATE_SETTINGS)
                     startActivity(intent)
-                    return@setOnClickListener // Lo mandamos a los ajustes y le cortamos el paso
+                    return@setOnClickListener
                 }
 
-
                 // CADENERO 2: PERMISO DE PANTALLA NEGRA (SUPERPOSICIÓN)
-
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                     if (!android.provider.Settings.canDrawOverlays(requireContext())) {
                         Toast.makeText(requireContext(), "¡>Do necesita permiso de sobreponerse para encerrarte!", Toast.LENGTH_LONG).show()
@@ -236,26 +236,40 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
                             android.net.Uri.parse("package:${requireContext().packageName}")
                         )
                         startActivity(intent)
-                        return@setOnClickListener // Cortamos el paso
+                        return@setOnClickListener
                     }
                 }
 
-
-
                 // CADENERO 3: PERMISO DE ALARMAS EXACTAS (Android 12+)
-
                 val alarmManager = requireContext().getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                     if (!alarmManager.canScheduleExactAlarms()) {
                         Toast.makeText(requireContext(), "¡>Do necesita permiso de Alarmas para castigarte a tiempo!", Toast.LENGTH_LONG).show()
                         val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
                         startActivity(intent)
-                        return@setOnClickListener // Cortamos el paso
+                        return@setOnClickListener
                     }
                 }
 
+                // : INICIO AUTOMÁTICO Y BATERÍA
+                val prefs = requireContext().getSharedPreferences("DoSenkPrefs", android.content.Context.MODE_PRIVATE)
+                val hasSeenAutoStart = prefs.getBoolean("hasSeenAutoStart", false)
 
-                // SI PASA LOS 3 CADENEROS, ENTRA A LA ZONA DE BLOQUEO
+                if (!hasSeenAutoStart) {
+                    // Marcamos que ya se lo mostramos para que jamás vuelva a entrar a este if
+                    prefs.edit().putBoolean("hasSeenAutoStart", true).apply()
+
+                    Toast.makeText(requireContext(), "Importante: Para que las misiones funcionen, desactiva la optimización de batería para >Do.", Toast.LENGTH_LONG).show()
+
+                    // Llamamos a tu herramienta de forma directa
+                    requestAutoStartPermission(requireContext())
+
+                    return@setOnClickListener // Cortamos el paso para que configure y luego vuelva a la app
+                }
+                // -------------------------------------------------------------------------
+
+
+                // SI PASA LOS 4 CADENEROS, ENTRA A LA ZONA DE BLOQUEO
                 val bundle = android.os.Bundle().apply {
                     putBoolean("isSelectionMode", true)
                 }
