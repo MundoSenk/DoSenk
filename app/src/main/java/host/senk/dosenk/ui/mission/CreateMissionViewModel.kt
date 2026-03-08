@@ -98,6 +98,7 @@ class CreateMissionViewModel @Inject constructor(
             val intent = Intent(appContext, MissionTriggerReceiver::class.java).apply {
                 putExtra("MISSION_NAME", missionName)
                 putExtra("DURATION_MINUTES", durationMinutes.value)
+                addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
             }
 
 
@@ -112,11 +113,9 @@ class CreateMissionViewModel @Inject constructor(
 
 
             try {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    finalTimestamp,
-                    pendingIntent
-                )
+                val alarmClockInfo = AlarmManager.AlarmClockInfo(finalTimestamp, null)
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+
             } catch (e: SecurityException) {
 
             }

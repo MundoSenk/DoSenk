@@ -33,7 +33,10 @@ class MissionBlockerService : Service() {
 
     private var timeLeftSeconds = 0
     private var defaultLauncherPackage: String = ""
-    private var endTimeMillis: Long = 0L
+
+    private var endTimeRealtime: Long = 0L
+
+    private var isTimePunishment = false
 
     override fun onCreate() {
         super.onCreate()
@@ -52,23 +55,25 @@ class MissionBlockerService : Service() {
         )
 
         val themeContext = android.view.ContextThemeWrapper(this, R.style.Theme_DoSenk_Teal)
-        // INFLAMOS EL NUEVO LAYOUT
         overlayView = LayoutInflater.from(themeContext).inflate(R.layout.layout_mission_overlay, null)
 
         tvTimer = overlayView.findViewById(R.id.tvRealMissionTimer)
         tvMissionName = overlayView.findViewById(R.id.tvMissionNameTitle)
 
-        val btnGiveUp = overlayView.findViewById<Button>(R.id.btnGiveUpReal)
-        btnGiveUp.setOnClickListener {
-            overlayView.visibility = View.GONE
-            val appIntent = Intent(this, host.senk.dosenk.ui.MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }
-            startActivity(appIntent)
-        }
-
         overlayView.visibility = View.GONE
-        windowManager.addView(overlayView, layoutParams)
+
+        // BLINDAJE ANTI-CRASHES POR PERMISOS REVOCADOS
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (android.provider.Settings.canDrawOverlays(this)) {
+                    windowManager.addView(overlayView, layoutParams)
+                }
+            } else {
+                windowManager.addView(overlayView, layoutParams)
+            }
+        } catch (e: Exception) {
+            // Si quitaron el permiso a la mala, no crasheamos. El castigo sigue en segundo plano.
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -79,13 +84,48 @@ class MissionBlockerService : Service() {
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .build()
 
-        startForeground(2, notification)
+        try {
+            startForeground(2, notification)
+        } catch (e: Exception) {
+            // Si Android se pone payaso y nos niega la notificación, lo ignoramos
+        }
 
-        // ¡ATRAPAMOS LA HORA EXACTA EN LA QUE TERMINA EL CASTIGO!
-        endTimeMillis = intent?.getLongExtra("END_TIME_MILLIS", 0L) ?: 0L
-        val missionName = intent?.getStringExtra("MISSION_NAME") ?: "Castigo Activo"
+        // ¿Es un castigo por viajar en el tiempo?
+        isTimePunishment = intent?.getBooleanExtra("IS_TIME_PUNISHMENT", false) ?: false
 
-        tvMissionName.text = "¿Listo para:\n$missionName?"
+        val btnGiveUp = overlayView.findViewById<Button>(R.id.btnGiveUpReal)
+
+        if (isTimePunishment) {
+            // MODO TRAMPOSO: Reloj infinito y botón hacia Ajustes
+            endTimeRealtime = Long.MAX_VALUE
+
+            tvTimer.setText("TRAMPA")
+            tvMissionName.setText(intent?.getStringExtra("MISSION_NAME") ?: "¡TRAMPA DETECTADA!")
+
+            btnGiveUp.setText("Ir a Ajustes")
+            btnGiveUp.setOnClickListener {
+                val settingsIntent = Intent(android.provider.Settings.ACTION_DATE_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(settingsIntent)
+            }
+        } else {
+            // MODO NORMAL: Castigo de misión
+            val durationSeconds = intent?.getIntExtra("DURATION_SECONDS", 60) ?: 60
+            endTimeRealtime = android.os.SystemClock.elapsedRealtime() + (durationSeconds * 1000L)
+
+            val missionName = intent?.getStringExtra("MISSION_NAME") ?: "Castigo Activo"
+            tvMissionName.setText("¿Listo para:\n$missionName?")
+
+            btnGiveUp.setText("¡Me rindo!")
+            btnGiveUp.setOnClickListener {
+                overlayView.visibility = View.GONE
+                val appIntent = Intent(this, host.senk.dosenk.ui.MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                }
+                startActivity(appIntent)
+            }
+        }
 
         startEngine()
 
@@ -95,26 +135,27 @@ class MissionBlockerService : Service() {
     private fun startEngine() {
         engineJob = serviceScope.launch {
             while (isActive) {
-                // CALCULAMOS EL TIEMPO REAL RESTANTE BASADO EN EL RELOJ DEL SISTEMA
-                val currentTime = System.currentTimeMillis()
-                val timeLeftMillis = endTimeMillis - currentTime
+                val timeLeftMillis = endTimeRealtime - android.os.SystemClock.elapsedRealtime()
 
                 if (timeLeftMillis <= 0) {
                     break
                 }
 
-                val timeLeftSeconds = (timeLeftMillis / 1000).toInt()
-                val hours = timeLeftSeconds / 3600
-                val minutes = (timeLeftSeconds % 3600) / 60
-                val seconds = timeLeftSeconds % 60
-                tvTimer.text = String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                // Solo actualizamos los números si NO es castigo de trampa
+                if (!isTimePunishment) {
+                    val remainingSeconds = (timeLeftMillis / 1000).toInt()
+                    val hours = remainingSeconds / 3600
+                    val minutes = (remainingSeconds % 3600) / 60
+                    val seconds = remainingSeconds % 60
+
+                    tvTimer.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds))
+                }
 
                 checkForegroundApp()
 
                 delay(1000)
             }
 
-            // Cuando el ciclo se rompe
             overlayView.visibility = View.GONE
             stopSelf()
         }
@@ -126,7 +167,10 @@ class MissionBlockerService : Service() {
         val isMyApp = currentApp == packageName
         val isPhone = currentApp.contains("dialer") || currentApp.contains("telecom") || currentApp.contains("incallui")
 
-        if (!isLauncher && !isMyApp && !isPhone && currentApp.isNotEmpty()) {
+        // PERMITIMOS QUE ABRAN AJUSTES PARA QUE PUEDAN ARREGLAR LA HORA
+        val isSettings = currentApp.contains("settings") || currentApp == "com.android.settings"
+
+        if (!isLauncher && !isMyApp && !isPhone && !isSettings && currentApp.isNotEmpty()) {
             if (overlayView.visibility == View.GONE) overlayView.visibility = View.VISIBLE
         } else {
             if (overlayView.visibility == View.VISIBLE) overlayView.visibility = View.GONE

@@ -134,21 +134,48 @@ class HomeViewModel @Inject constructor(
 
     private fun activateMission(mission: host.senk.dosenk.data.local.entity.MissionEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            val updatedMission = mission.copy(status = "active")
+
+
+            // EL EFECTO COBRADOR
+            val updatedMission = mission.copy(
+                status = "active",
+                executionDate = System.currentTimeMillis()
+            )
             missionDao.updateMission(updatedMission)
 
             // invocamos al bloqueomision
             val serviceIntent = Intent(appContext, MissionBlockerService::class.java)
 
-            // Le pasamos el tiempo Y el nombre de la misión
-            val durationSeconds = mission.durationMinutes * 60
-            serviceIntent.putExtra("DURATION_SECONDS", durationSeconds)
-            serviceIntent.putExtra("MISSION_NAME", mission.name)
+            // LA AUDITORÍA DE LA HORA AUTOMÁTICA
+            val isAutoTime = android.provider.Settings.Global.getInt(
+                appContext.contentResolver,
+                android.provider.Settings.Global.AUTO_TIME, 0
+            ) == 1
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                appContext.startForegroundService(serviceIntent)
+            if (!isAutoTime) {
+                // MODO TRAMPA: Le mandamos el código 99999
+                serviceIntent.putExtra("DURATION_SECONDS", 99999)
+                serviceIntent.putExtra("MISSION_NAME", "¡Trampa!\nPrende la Hora Automática.")
+                serviceIntent.putExtra("IS_TIME_PUNISHMENT", true)
             } else {
-                appContext.startService(serviceIntent)
+                // MODO NORMAL: Le pasamos los segundos de su castigo real
+                val durationSeconds = mission.durationMinutes * 60
+                serviceIntent.putExtra("DURATION_SECONDS", durationSeconds)
+                serviceIntent.putExtra("MISSION_NAME", mission.name)
+                serviceIntent.putExtra("IS_TIME_PUNISHMENT", false)
+            }
+
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    appContext.startForegroundService(serviceIntent)
+                } else {
+                    appContext.startService(serviceIntent)
+                }
+            } catch (e: Exception) {
+
+                if (e.javaClass.simpleName == "ForegroundServiceStartNotAllowedException") {
+                    appContext.startService(serviceIntent)
+                }
             }
         }
     }

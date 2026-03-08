@@ -23,7 +23,6 @@ class MissionTriggerReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        //  Le decimos a Android
         val pendingResult = goAsync()
 
         val hiltEntryPoint = EntryPointAccessors.fromApplication(
@@ -35,12 +34,24 @@ class MissionTriggerReceiver : BroadcastReceiver() {
         val missionName = intent.getStringExtra("MISSION_NAME") ?: return
         val durationMinutes = intent.getIntExtra("DURATION_MINUTES", 0)
 
-        val endTimeMillis = System.currentTimeMillis() + (durationMinutes * 60 * 1000L)
+        // LA AUDITORÍA DE LA HORA EN PLENA MADRUGADA
+        val isAutoTime = android.provider.Settings.Global.getInt(
+            context.contentResolver,
+            android.provider.Settings.Global.AUTO_TIME, 0
+        ) == 1
 
-        // Despertamos a la Bestia (Pantalla Negra)
         val serviceIntent = Intent(context, MissionBlockerService::class.java).apply {
-            putExtra("END_TIME_MILLIS", endTimeMillis)
-            putExtra("MISSION_NAME", missionName)
+            if (!isAutoTime) {
+                //  MODO TRAMPA: Viajó en el tiempo con la app cerrada
+                putExtra("DURATION_SECONDS", 99999)
+                putExtra("MISSION_NAME", "¡Trampa!\nPrende la Hora Automática.")
+                putExtra("IS_TIME_PUNISHMENT", true)
+            } else {
+                //  MODO NORMAL
+                putExtra("DURATION_SECONDS", durationMinutes * 60)
+                putExtra("MISSION_NAME", missionName)
+                putExtra("IS_TIME_PUNISHMENT", false)
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -51,14 +62,15 @@ class MissionTriggerReceiver : BroadcastReceiver() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // EL ARREGLO DEL BUCLE: Leemos UNA VEZ con firstOrNull()
                 val mission = missionDao.getNextPendingMission().firstOrNull()
                 if (mission != null && mission.name == missionName) {
-                    val updatedMission = mission.copy(status = "active")
+                    val updatedMission = mission.copy(
+                        status = "active",
+                        executionDate = System.currentTimeMillis()
+                    )
                     missionDao.updateMission(updatedMission)
                 }
             } finally {
-                // APAGAMOS EL ESCUDO:
                 pendingResult.finish()
             }
         }

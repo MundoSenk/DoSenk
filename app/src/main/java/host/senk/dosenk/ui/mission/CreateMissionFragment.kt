@@ -206,25 +206,57 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         btnManual.setOnClickListener { viewModel.setAssignmentType("manual") }
 
         // BOTÓN DE AVANZAR
+        // BOTÓN DE AVANZAR
         btnNext.setOnClickListener {
             viewModel.missionName = etMissionName.text.toString()
             if (viewModel.isFormValid()) {
 
-                val alarmManager = requireContext().getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                    if (!alarmManager.canScheduleExactAlarms()) {
-                        // Mandamos a por el permiso
-                        Toast.makeText(requireContext(), "¡>Do necesita permiso de Alarmas para bloquearte!", Toast.LENGTH_LONG).show()
+                //  CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
+                val isAutoTime = android.provider.Settings.Global.getInt(
+                    requireContext().contentResolver,
+                    android.provider.Settings.Global.AUTO_TIME, 0
+                ) == 1
 
-                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                if (!isAutoTime) {
+                    Toast.makeText(requireContext(), "¡Tramposo! Activa la 'Fecha y hora automática' en tus ajustes para usar >Do.", Toast.LENGTH_LONG).show()
+                    val intent = android.content.Intent(android.provider.Settings.ACTION_DATE_SETTINGS)
+                    startActivity(intent)
+                    return@setOnClickListener // Lo mandamos a los ajustes y le cortamos el paso
+                }
+
+
+                // CADENERO 2: PERMISO DE PANTALLA NEGRA (SUPERPOSICIÓN)
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    if (!android.provider.Settings.canDrawOverlays(requireContext())) {
+                        Toast.makeText(requireContext(), "¡>Do necesita permiso de sobreponerse para encerrarte!", Toast.LENGTH_LONG).show()
+                        val intent = android.content.Intent(
+                            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            android.net.Uri.parse("package:${requireContext().packageName}")
+                        )
                         startActivity(intent)
-
-                        return@setOnClickListener
+                        return@setOnClickListener // Cortamos el paso
                     }
                 }
 
-                val bundle = Bundle().apply {
+
+
+                // CADENERO 3: PERMISO DE ALARMAS EXACTAS (Android 12+)
+
+                val alarmManager = requireContext().getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    if (!alarmManager.canScheduleExactAlarms()) {
+                        Toast.makeText(requireContext(), "¡>Do necesita permiso de Alarmas para castigarte a tiempo!", Toast.LENGTH_LONG).show()
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        startActivity(intent)
+                        return@setOnClickListener // Cortamos el paso
+                    }
+                }
+
+
+                // SI PASA LOS 3 CADENEROS, ENTRA A LA ZONA DE BLOQUEO
+                val bundle = android.os.Bundle().apply {
                     putBoolean("isSelectionMode", true)
                 }
                 findNavController().navigate(R.id.action_createMissionFragment_to_blockZoneFragment, bundle)
