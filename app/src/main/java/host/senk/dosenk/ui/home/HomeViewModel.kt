@@ -88,19 +88,31 @@ class HomeViewModel @Inject constructor(
                     val timeLeftMillis = endTime - currentTime
 
                     if (timeLeftMillis > 0) {
-                        // Le pasamos los datos a tu MissionTimerManager para que se ponga rojo/morado
+                        val remainingSeconds = (timeLeftMillis / 1000).toInt()
+
                         _missionState.value = MissionCardState.Active(
-                            secondsLeft = (timeLeftMillis / 1000).toInt(),
+                            secondsLeft = remainingSeconds,
                             blockType = active.blockType
                         )
 
-                        // Cuando el tiempo acabe, mandarla al historial
+                        // LANZAMOS EL BLOQUEO INMEDIATO PARA REANUDAR EL CASTIGO
+                        val serviceIntent = Intent(appContext, MissionBlockerService::class.java).apply {
+                            putExtra("DURATION_SECONDS", remainingSeconds)
+                            putExtra("MISSION_NAME", active.name)
+                            putExtra("IS_TIME_PUNISHMENT", false)
+                        }
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) appContext.startForegroundService(serviceIntent)
+                            else appContext.startService(serviceIntent)
+                        } catch (e: Exception) {
+                            if (e.javaClass.simpleName == "ForegroundServiceStartNotAllowedException") appContext.startService(serviceIntent)
+                        }
+
                         transitionJob = viewModelScope.launch {
                             delay(timeLeftMillis)
                             archiveMission(active)
                         }
                     } else {
-                        // Si ya pasó su hora y nadie se dio cuenta, archívala
                         archiveMission(active)
                     }
 
@@ -135,30 +147,22 @@ class HomeViewModel @Inject constructor(
     private fun activateMission(mission: host.senk.dosenk.data.local.entity.MissionEntity) {
         viewModelScope.launch(Dispatchers.IO) {
 
-
-            // EL EFECTO COBRADOR
-            val updatedMission = mission.copy(
-                status = "active",
-                executionDate = System.currentTimeMillis()
-            )
+            // YA NO HAY EFECTO COBRADOR.
+            val updatedMission = mission.copy(status = "active")
             missionDao.updateMission(updatedMission)
 
-            // invocamos al bloqueomision
             val serviceIntent = Intent(appContext, MissionBlockerService::class.java)
 
-            // LA AUDITORÍA DE LA HORA AUTOMÁTICA
             val isAutoTime = android.provider.Settings.Global.getInt(
                 appContext.contentResolver,
                 android.provider.Settings.Global.AUTO_TIME, 0
             ) == 1
 
             if (!isAutoTime) {
-                // MODO TRAMPA: Le mandamos el código 99999
                 serviceIntent.putExtra("DURATION_SECONDS", 99999)
                 serviceIntent.putExtra("MISSION_NAME", "¡Trampa!\nPrende la Hora Automática.")
                 serviceIntent.putExtra("IS_TIME_PUNISHMENT", true)
             } else {
-                // MODO NORMAL: Le pasamos los segundos de su castigo real
                 val durationSeconds = mission.durationMinutes * 60
                 serviceIntent.putExtra("DURATION_SECONDS", durationSeconds)
                 serviceIntent.putExtra("MISSION_NAME", mission.name)
@@ -172,7 +176,6 @@ class HomeViewModel @Inject constructor(
                     appContext.startService(serviceIntent)
                 }
             } catch (e: Exception) {
-
                 if (e.javaClass.simpleName == "ForegroundServiceStartNotAllowedException") {
                     appContext.startService(serviceIntent)
                 }

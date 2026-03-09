@@ -75,7 +75,7 @@ class MissionTriggerReceiver : BroadcastReceiver() {
                 if (mission != null && mission.name == missionName) {
                     val updatedMission = mission.copy(
                         status = "active",
-                        executionDate = System.currentTimeMillis() // EFECTO COBRADOR
+                        executionDate = System.currentTimeMillis()
                     )
                     missionDao.updateMission(updatedMission)
                 }

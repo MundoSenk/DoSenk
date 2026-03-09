@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import host.senk.dosenk.data.local.dao.MissionDao
+import host.senk.dosenk.data.local.entity.MissionEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -27,9 +28,13 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
             intent.action == "android.intent.action.QUICKBOOT_POWERON" ||
-            intent.action == "com.htc.intent.action.QUICKBOOT_POWERON") {
+            intent.action == "com.htc.intent.action.QUICKBOOT_POWERON" ||
+            intent.action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
 
-            android.util.Log.d("DOSENK_DEBUG", "¡Celular encendido! Analizando escenarios...")
+            android.util.Log.d("DOSENK_DEBUG", "¿porque apagaste el telefono?")
+
+            //  SOSTENEMOS LA PUERTA PARA QUE ANDROID NO NOS MATE
+            val pendingResult = goAsync()
 
             val hiltEntryPoint = EntryPointAccessors.fromApplication(
                 context.applicationContext,
@@ -38,120 +43,101 @@ class BootReceiver : BroadcastReceiver() {
             val missionDao = hiltEntryPoint.getMissionDao()
 
             CoroutineScope(Dispatchers.IO).launch {
-                val currentTime = System.currentTimeMillis()
+                try {
+                    val currentTime = System.currentTimeMillis()
+                    var penaltySeconds = 0
+                    var penaltyName = ""
 
+                    val activeMission = missionDao.getActiveMission().firstOrNull()
+                    val pendingMission = missionDao.getNextPendingMission().firstOrNull()
 
-                //////////////////  REVISAMOS SI HABÍA UNA MISIÓN ACTIVA CUANDO SE APAGÓ
-                val activeMission = missionDao.getActiveMission().firstOrNull()
+                    suspend fun processMission(mission: MissionEntity, wasAlreadyActive: Boolean) {
+                        val endTime = mission.executionDate + (mission.durationMinutes * 60 * 1000L)
 
-                if (activeMission != null) {
-                    val endTime = activeMission.executionDate + (activeMission.durationMinutes * 60 * 1000L)
+                        if (currentTime >= endTime) {
+                            // ESCENARIO 3: Se apagó y ya pasó la hora límite. Lo perdonamos.
+                            missionDao.updateMission(mission.copy(status = "completed"))
 
-                    if (currentTime < endTime) {
-                        // ESCENARIO 1: El tramposo prendió el celular antes de que acabara su castigo
-                        val remainingSeconds = ((endTime - currentTime) / 1000).toInt()
-                        lanzarBloqueoInmediato(context, remainingSeconds, activeMission.name)
-                    } else {
-                        // ESCENARIO 2: Se apagó a medio castigo, pero ya pasó la hora límite. Lo perdonamos.
-                        val completedMission = activeMission.copy(status = "completed")
-                        missionDao.updateMission(completedMission)
+                        } else if (currentTime >= mission.executionDate && currentTime < endTime) {
+                            // ESCENARIO 1: Prendió el celular en plena hora de castigo
+                            val humillacion = if (wasAlreadyActive) {
+                                "¿Creíste que apagando el teléfono te salvarías? Idiota.\n\n${mission.name}"
+                            } else {
+                                mission.name
+                            }
+
+                            missionDao.updateMission(mission.copy(status = "active", name = humillacion))
+
+                            // Guardamos la condena para ejecutarla
+                            penaltySeconds = ((endTime - currentTime) / 1000).toInt()
+                            penaltyName = humillacion
+
+                        } else {
+                            // ESCENARIO 2: Es en el futuro. Reprogramamos la bomba.
+                            reprogramarAlarma(context, mission)
+                        }
                     }
-                }
+
+                    if (activeMission != null) processMission(activeMission, true)
+                    if (pendingMission != null) processMission(pendingMission, false)
 
 
-                //////////////// REVISAMOS LAS MISIONES PENDIENTES
-                val pendingMission = missionDao.getNextPendingMission().firstOrNull()
+                    // 🚨 EL MISIL NUCLEAR DIRECTO AL SERVICIO (No a MainActivity)
 
-                if (pendingMission != null) {
-                    val endTime = pendingMission.executionDate + (pendingMission.durationMinutes * 60 * 1000L)
+                    if (penaltySeconds > 0) {
+                        val serviceIntent = Intent(context, MissionBlockerService::class.java).apply {
+                            putExtra("DURATION_SECONDS", penaltySeconds)
+                            putExtra("MISSION_NAME", penaltyName)
+                            putExtra("IS_TIME_PUNISHMENT", false)
+                        }
 
-                    if (currentTime >= endTime) {
-                        // ESCENARIO 1: Estuvo apagado durante TODA la ventana de la misión. Misión cumplida.
-                        val completedMission = pendingMission.copy(status = "completed")
-                        missionDao.updateMission(completedMission)
+                        // Usamos getForegroundService
+                        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            PendingIntent.getForegroundService(
+                                context, 999, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                            )
+                        } else {
+                            PendingIntent.getService(
+                                context, 999, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                            )
+                        }
 
-                    } else if (currentTime >= pendingMission.executionDate && currentTime < endTime) {
-                        // ESCENARIO 2 : La alarma no sonó porque estaba apagado, pero AHORITA es la hora del castigo.
-                        val activatedMission = pendingMission.copy(status = "active")
-                        missionDao.updateMission(activatedMission)
+                        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                        val dummyIntent = PendingIntent.getActivity(context, 0, Intent(), PendingIntent.FLAG_IMMUTABLE)
 
-                        val remainingSeconds = ((endTime - currentTime) / 1000).toInt()
-                        lanzarBloqueoInmediato(context, remainingSeconds, pendingMission.name)
-
-                    } else {
-                        // ESCENARIO 3: La misión es en el futuro. Volvemos a armar la bomba tranquilamente.
-                        reprogramarAlarma(context, pendingMission)
+                        // Detonamos la pantalla negra en 2 segundos usando el AlarmClock supremo
+                        val alarmClockInfo = AlarmManager.AlarmClockInfo(System.currentTimeMillis() + 2000, dummyIntent)
+                        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
                     }
+
+                } finally {
+                    //  SOLTAMOS LA PUERTA (Importante para no gastar batería)
+                    pendingResult.finish()
                 }
             }
         }
     }
 
-
-    // Función auxiliar blindada con el Despertador Nuclear
-    private fun lanzarBloqueoInmediato(context: Context, remainingSeconds: Int, missionName: String) {
-        val serviceIntent = Intent(context, MissionBlockerService::class.java).apply {
-            putExtra("DURATION_SECONDS", remainingSeconds)
-            // ¡Mensaje humillante personalizado!
-            putExtra("MISSION_NAME", "¿Creíste que apagando el teléfono te salvarías? Idiota.\n\n$missionName")
-            putExtra("IS_TIME_PUNISHMENT", false)
-        }
-
-        // En lugar de iniciarlo nosotros, programamos la alarma
-        // para que estalle 2 segundos después de encender el celular.
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(
-                context,
-                999, // ID único para el castigo inmediato
-                serviceIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        } else {
-            PendingIntent.getService(
-                context,
-                999,
-                serviceIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        }
-
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        try {
-            val dummyIntent = PendingIntent.getActivity(context, 0, Intent(), PendingIntent.FLAG_IMMUTABLE)
-            // Disparamos en 2 segundos para darle tiempo a Android de respirar
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(System.currentTimeMillis() + 2000, dummyIntent)
-            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-        } catch (e: Exception) {
-            // Permisos denegados
-        }
-    }
-
-    // Función auxiliar para reprogramar misiones futuras
-    private fun reprogramarAlarma(context: Context, mission: host.senk.dosenk.data.local.entity.MissionEntity) {
+    private fun reprogramarAlarma(context: Context, mission: MissionEntity) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        val serviceIntent = Intent(context, MissionBlockerService::class.java).apply {
+        val triggerIntent = Intent(context, MissionTriggerReceiver::class.java).apply {
             putExtra("MISSION_NAME", mission.name)
-            putExtra("DURATION_SECONDS", mission.durationMinutes * 60)
-            putExtra("IS_TIME_PUNISHMENT", false)
+            putExtra("DURATION_MINUTES", mission.durationMinutes)
+            addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         }
 
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(
-                context, (mission.executionDate / 1000).toInt(), serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        } else {
-            PendingIntent.getService(
-                context, (mission.executionDate / 1000).toInt(), serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            (mission.executionDate / 1000).toInt(),
+            triggerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         try {
             val dummyIntent = PendingIntent.getActivity(context, 0, Intent(), PendingIntent.FLAG_IMMUTABLE)
             val alarmClockInfo = AlarmManager.AlarmClockInfo(mission.executionDate, dummyIntent)
             alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-        } catch (e: Exception) {
-            // Permisos revocados
-        }
+        } catch (e: Exception) {}
     }
 }
