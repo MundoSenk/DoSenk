@@ -17,9 +17,11 @@ import host.senk.dosenk.util.applyDoSenkGradient
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-// ¡Aquí está la importación perfecta desde tu nuevo paquete!
+
 import host.senk.dosenk.ui.nav.AddMenuBottomSheet
 import kotlinx.coroutines.launch
+
+import androidx.navigation.fragment.findNavController
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home) {
@@ -41,6 +43,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         setupHeaderClock(view)
         setupEmergencyCard(view)
         setupFab(view)
+        setupBottomNav(view)
 
         // DELEGAMOS LA TARJETA DE MISIÓN A SU MANAGER
         val cardsGrid = view.findViewById<View>(R.id.cards_grid)
@@ -121,6 +124,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 tvStatus.text = "¡BLOQUEO DE\nEMERGENCIA!"
                 cardEmergency.alpha = 0.9f
             }
+        }
+    }
+
+
+    private fun setupBottomNav(view: View) {
+
+        val navTimeline = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_timeline)
+
+        navTimeline?.setOnClickListener {
+            // Viaje al Timeline
+            findNavController().navigate(R.id.action_homeFragment_to_TimeLime)
         }
     }
 

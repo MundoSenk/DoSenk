@@ -18,12 +18,38 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:gravity="center"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="32dp"
             android:paddingBottom="10dp"
             android:background="?attr/doSkinEnd">
 
-            <View android:layout_width="40dp" android:layout_height="1dp"/>
+            <ImageView
+                android:id="@+id/nav_timeline"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="6dp"
+                android:src="@android:drawable/ic_menu_my_calendar"
+                app:tint="@color/white"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"/>
 
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+
+            <View android:layout_width="50dp" android:layout_height="1dp"/>
+
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+
+            <ImageView
+                android:id="@+id/nav_profile"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="6dp"
+                android:src="@android:drawable/ic_menu_preferences"
+                app:tint="#88FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 

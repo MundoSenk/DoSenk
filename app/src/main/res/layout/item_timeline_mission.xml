@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingEnd="16dp">
+
+    <TextView
+        android:id="@+id/tvStartTime"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:text="15:00"
+        android:textColor="#4A4A4A"
+        android:textSize="16sp"
+        android:fontFamily="@font/poppins_medium"
+        android:gravity="end"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/timelineLine"
+        android:layout_width="2dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:background="#A349A4"
+        app:layout_constraintStart_toEndOf="@id/tvStartTime"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <ImageView
+        android:id="@+id/timelineCircle"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/bg_capsule_white"
+        app:tint="#A349A4"
+        app:layout_constraintStart_toStartOf="@id/timelineLine"
+        app:layout_constraintEnd_toEndOf="@id/timelineLine"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardMission"
+        android:layout_width="0dp"
+        android:layout_height="150dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:layout_constraintStart_toEndOf="@id/timelineLine"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutMissionGradient"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/tvMissionType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_capsule_white"
+                android:fontFamily="@font/poppins_bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="2dp"
+                android:text="Misión diaria"
+                android:textColor="#A349A4"
+                android:textSize="10sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvBlockType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/bg_capsule_white"
+                android:fontFamily="@font/poppins_bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="2dp"
+                android:text="Bloqueo: Radical"
+                android:textColor="#A349A4"
+                android:textSize="10sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvMissionTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="12dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/anton_regular"
+                android:maxLines="1"
+                android:text="Creación de Personajes"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvMissionType" />
+
+            <TextView
+                android:id="@+id/tvExecutionTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/bg_capsule_white"
+                android:fontFamily="@font/poppins_bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="2dp"
+                android:text="Ejecución: 14:30-15:30"
+                android:textColor="#A349A4"
+                android:textSize="10sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvMissionTitle" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="4dp"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvExecutionTime">
+
+                <TextView
+                    android:id="@+id/tvMissionDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppins_regular"
+                    android:padding="8dp"
+                    android:text="En una libreta dibuja/redacta rasgos fisicos de tu personaje principal"
+                    android:textColor="#555555"
+                    android:textSize="11sp" />
+            </androidx.cardview.widget.CardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
