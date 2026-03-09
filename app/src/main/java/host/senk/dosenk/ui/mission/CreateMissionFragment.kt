@@ -47,6 +47,11 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
 
 
+
+
+
+
+
         ///////////// SELECCION DE TIEMPOOOOOOOOOOOOO
         // CHIPS DE TIEMPO
         val timeButtons = mapOf(
@@ -96,6 +101,8 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
 
 
+
+
         ////////////////// RELOJ TEMPORIZADOR
         btnCustomTime.setOnClickListener {
             // Inflamos el diseño de las rueditas que acabamos de crear
@@ -136,6 +143,52 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
 
         val btnTimePicker = view.findViewById<TextView>(R.id.btnTimePicker)
+
+
+
+
+        //  MODO EDICIÓN O CREACIÓN
+        val missionId = arguments?.getInt("missionId", 0) ?: 0
+        if (missionId > 0) {
+            tvTitle.text = "Editar Misión"
+            btnNext.text = "¡Actualizar Misión!"
+
+            // Le decimos al ViewModel que cargue los datos
+            if (viewModel.currentEditingMissionId != missionId) {
+                viewModel.loadMissionForEditing(missionId)
+            }
+        } else {
+            tvTitle.text = "Nueva Misión"
+            btnNext.text = "¡A asignar el bloqueo!"
+        }
+
+        // ESCUCHAMOS CUANDO LOS DATOS ESTÉN LISTOS PARA RELLENAR LOS TEXTOS
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.missionLoaded.collect { mission ->
+                etMissionName.setText(mission.name)
+                view.findViewById<EditText>(R.id.etMissionDescription).setText(mission.description)
+
+                // Pintamos el botón del día
+                val sdf = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
+                sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                btnDatePicker.text = sdf.format(java.util.Date(mission.executionDate))
+                btnDatePicker.applyDoSenkGradient(cornerRadius = 16f)
+                btnDatePicker.setTextColor(requireContext().getColor(R.color.white))
+
+                // Pintamos el botón de la hora
+                val calendar = java.util.Calendar.getInstance().apply { timeInMillis = mission.executionDate }
+                val hour = calendar.get(java.util.Calendar.HOUR_OF_DAY)
+                val minute = calendar.get(java.util.Calendar.MINUTE)
+                val amPm = if (hour >= 12) "PM" else "AM"
+                val hour12 = if (hour % 12 == 0) 12 else hour % 12
+                btnTimePicker.text = String.format("%02d:%02d %s", hour12, minute, amPm)
+                btnTimePicker.applyDoSenkGradient(cornerRadius = 16f)
+                btnTimePicker.setTextColor(requireContext().getColor(R.color.white))
+            }
+        }
+
+
+
 
         ////////////////// HORA DE INICIOOOO
         btnTimePicker.setOnClickListener {
@@ -302,6 +355,11 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         view.findViewById<View>(R.id.btnBack).setOnClickListener {
             findNavController().popBackStack()
         }
+
+
+
+
+
 
 
     }

@@ -89,8 +89,17 @@ object AppUsageManager {
             .map { it.packageName }
             .toSet()
 
+        val healthyApps = setOf(
+            "jp.pokemon.pokemonsleep"
+
+        )
+
         // Filtramos el mapa para quedarnos solo con las apps que son lanchaubles
-        val validAppsMap = aggregatedStats.filter { it.value > 0 && launchableApps.contains(it.key) }
+        val validAppsMap = aggregatedStats.filter {
+            it.value > 0 &&
+                    launchableApps.contains(it.key) &&
+                    !healthyApps.contains(it.key)
+        }
 
         //  Sumamos  el tiempo de todas las apps válidas
         val trueTotalTimeMs = validAppsMap.values.sum()

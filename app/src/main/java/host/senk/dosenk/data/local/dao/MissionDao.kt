@@ -31,4 +31,8 @@ interface MissionDao {
     // Historial
     @Query("SELECT * FROM missions ORDER BY executionDate DESC")
     fun getAllMissions(): Flow<List<MissionEntity>>
+
+
+    @Query("SELECT * FROM missions WHERE id = :id LIMIT 1")
+    suspend fun getMissionById(id: Int): MissionEntity?
 }

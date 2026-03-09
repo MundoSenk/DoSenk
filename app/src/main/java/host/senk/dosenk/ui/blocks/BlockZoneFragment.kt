@@ -12,6 +12,8 @@ import host.senk.dosenk.R
 import host.senk.dosenk.ui.mission.CreateMissionViewModel
 import host.senk.dosenk.util.applyDoSenkGradient
 
+import host.senk.dosenk.ui.timeline.TimelineFragment
+
 @AndroidEntryPoint
 class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
 
@@ -73,7 +75,7 @@ class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
     private fun saveAndNavigate(blockType: String, clickedButton: View) {
         // Se desactiav el boton para no dublicar registros
         clickedButton.isEnabled = false
-        findNavController().navigate(R.id.action_BlockZone_to_home)
+        findNavController().navigate(R.id.action_BlockZone_to_TimeLime)
 
         viewModel.saveMissionToDatabase(blockType) {
             Toast.makeText(requireContext(), "¡Misión $blockType programada!", Toast.LENGTH_SHORT).show()

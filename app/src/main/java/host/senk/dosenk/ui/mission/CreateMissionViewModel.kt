@@ -18,6 +18,8 @@ import android.content.Intent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import host.senk.dosenk.service.MissionTriggerReceiver
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 @HiltViewModel
 class CreateMissionViewModel @Inject constructor(
@@ -29,6 +31,13 @@ class CreateMissionViewModel @Inject constructor(
 
     var missionName = ""
     var missionDescription = ""
+
+    var currentEditingMissionId: Int? = null
+    private var oldExecutionDate: Long = 0L ///ppara cancelar la alarma
+
+    // Un canal de comunicación para avisarle a la pantalla que ya cargamos los datos
+    private val _missionLoaded = MutableSharedFlow<MissionEntity>()
+    val missionLoaded = _missionLoaded.asSharedFlow()
 
     private val _durationMinutes = MutableStateFlow(45)
     val durationMinutes: StateFlow<Int> = _durationMinutes
@@ -89,7 +98,6 @@ class CreateMissionViewModel @Inject constructor(
 
     // pa que nos e encimen las misiones
     suspend fun hasTimeConflict(): Boolean {
-        // Calculamos la hora exacta de inicio y fin de la misión que intentan crear
         val utcDate = executionDate.value ?: System.currentTimeMillis()
         val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
         calendarUTC.timeInMillis = utcDate
@@ -106,14 +114,17 @@ class CreateMissionViewModel @Inject constructor(
         val requestedStart = localCalendar.timeInMillis
         val requestedEnd = requestedStart + (durationMinutes.value * 60 * 1000L)
 
-        // Traemos todas las misiones y buscamos un choque
-        val allMissions = missionDao.getAllMissions().first() // Importa kotlinx.coroutines.flow.first
+        // Traemos todas las misiones
+        val allMissions = missionDao.getAllMissions().first()
 
-        return allMissions.filter { it.status == "pending" || it.status == "active" }.any { mission ->
+        return allMissions.filter {
+            // FILTRO: Que estén activas o pendientes, Y QUE NO SEA LA MISIÓN QUE ESTAMOS EDITANDO
+            (it.status == "pending" || it.status == "active") && (it.id != currentEditingMissionId)
+        }.any { mission ->
             val existingStart = mission.executionDate
             val existingEnd = existingStart + (mission.durationMinutes * 60 * 1000L)
 
-            // La fórmula sagrada de la colisión de tiempos
+            // Fórmula de colisión
             (requestedStart < existingEnd) && (requestedEnd > existingStart)
         }
     }
@@ -138,6 +149,7 @@ class CreateMissionViewModel @Inject constructor(
             val finalTimestamp = localCalendar.timeInMillis
 
             val newMission = MissionEntity(
+                id = currentEditingMissionId ?: 0,
                 name = missionName,
                 description = missionDescription,
                 durationMinutes = durationMinutes.value,
@@ -148,11 +160,23 @@ class CreateMissionViewModel @Inject constructor(
             )
 
 
+
+
             val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(appContext, MissionTriggerReceiver::class.java).apply {
                 putExtra("MISSION_NAME", missionName)
                 putExtra("DURATION_MINUTES", durationMinutes.value)
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+            }
+
+
+            if (oldExecutionDate != 0L && oldExecutionDate != finalTimestamp) {
+                val oldIntent = Intent(appContext, MissionTriggerReceiver::class.java)
+                val oldPendingIntent = PendingIntent.getBroadcast(
+                    appContext, (oldExecutionDate / 1000).toInt(), oldIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                alarmManager.cancel(oldPendingIntent)
             }
 
 
@@ -174,9 +198,40 @@ class CreateMissionViewModel @Inject constructor(
 
             }
 
-            missionDao.insertMission(newMission)
+            if (currentEditingMissionId != null) {
+                missionDao.updateMission(newMission)
+            } else {
+                missionDao.insertMission(newMission)
+            }
 
             withContext(Dispatchers.Main) { onComplete() }
+
+
+        }
+    }
+
+
+    fun loadMissionForEditing(missionId: Int) {
+        currentEditingMissionId = missionId
+        viewModelScope.launch {
+            val mission = missionDao.getMissionById(missionId)
+            if (mission != null) {
+                missionName = mission.name
+                missionDescription = mission.description
+                oldExecutionDate = mission.executionDate
+
+                _durationMinutes.value = mission.durationMinutes
+                _executionDate.value = mission.executionDate
+                _assignmentType.value = mission.assignmentType
+
+                // Extraemos la hora y minuto para el reloj
+                val calendar = java.util.Calendar.getInstance().apply { timeInMillis = mission.executionDate }
+                _startHour.value = calendar.get(java.util.Calendar.HOUR_OF_DAY)
+                _startMinute.value = calendar.get(java.util.Calendar.MINUTE)
+
+                // Le avisamos a la UI que rellene los cuadros de texto
+                _missionLoaded.emit(mission)
+            }
         }
     }
 

@@ -75,11 +75,11 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
                     // REGLA: Tiene que ser 'pending' Y su hora de inicio debe ser en el FUTURO
                     if (clickedMission.status == "pending" && clickedMission.executionDate > currentTime) {
 
-                        // ES EDITABLE
-                        android.widget.Toast.makeText(requireContext(), "Editando: ${clickedMission.name}", android.widget.Toast.LENGTH_SHORT).show()
-
-                        // TODO: Aquí mandaremos al usuario a la pantalla de edición
-
+                        // ¡ES EDITABLE!
+                        val bundle = Bundle().apply {
+                            putInt("missionId", clickedMission.id)
+                        }
+                        findNavController().navigate(R.id.createMissionFragment, bundle)
                     } else {
                         android.widget.Toast.makeText(requireContext(), "El pasado pisado, gallo. Esta misión ya no se puede alterar.", android.widget.Toast.LENGTH_LONG).show()
                     }
