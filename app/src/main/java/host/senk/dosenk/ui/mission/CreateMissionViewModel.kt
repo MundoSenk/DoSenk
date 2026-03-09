@@ -67,6 +67,25 @@ class CreateMissionViewModel @Inject constructor(
     }
 
 
+    fun isTimeValid(): Boolean {
+        val utcDate = executionDate.value ?: System.currentTimeMillis()
+        val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        calendarUTC.timeInMillis = utcDate
+
+        val localCalendar = java.util.Calendar.getInstance()
+        localCalendar.set(java.util.Calendar.YEAR, calendarUTC.get(java.util.Calendar.YEAR))
+        localCalendar.set(java.util.Calendar.MONTH, calendarUTC.get(java.util.Calendar.MONTH))
+        localCalendar.set(java.util.Calendar.DAY_OF_MONTH, calendarUTC.get(java.util.Calendar.DAY_OF_MONTH))
+        localCalendar.set(java.util.Calendar.HOUR_OF_DAY, _startHour.value ?: 0)
+        localCalendar.set(java.util.Calendar.MINUTE, _startMinute.value ?: 0)
+        localCalendar.set(java.util.Calendar.SECOND, 0)
+        localCalendar.set(java.util.Calendar.MILLISECOND, 0)
+
+        // ¿El momento que armó el usuario es mayor al segundo actual?
+        return localCalendar.timeInMillis > System.currentTimeMillis()
+    }
+
+
     fun saveMissionToDatabase(blockTypeChosen: String, onComplete: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
 

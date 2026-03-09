@@ -214,6 +214,19 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
             val etDesc = view.findViewById<EditText>(R.id.etMissionDescription)
             viewModel.missionDescription = etDesc.text.toString()
+
+            if (viewModel.isFormValid()) {
+
+                //  CADENERO 0: NO PERMITIR MISIONES EN EL PASADO
+                if (!viewModel.isTimeValid()) {
+                    Toast.makeText(requireContext(), "No puedes programar misiones en el pasado, gallo", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+            }
+
+
+
             if (viewModel.isFormValid()) {
 
                 // CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
@@ -289,4 +302,6 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
 
     }
+
+
 }

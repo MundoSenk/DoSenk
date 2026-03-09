@@ -14,15 +14,33 @@ import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.data.local.entity.MissionEntity
 import host.senk.dosenk.util.applyDoSenkGradient
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+
+
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class TimelineFragment : Fragment(R.layout.fragment_timeline) {
 
+    private val viewModel: TimelineViewModel by viewModels()
+
     private lateinit var rvTimeline: RecyclerView
     private lateinit var adapter: TimelineAdapter
 
+    // VARIABLES DEL ACHICADO Y AGRANDADO DE LA LINEA DE TIEMPO
+    private lateinit var scaleGestureDetector: ScaleGestureDetector
+    private var currentPixelsPerMinute = 4f // Empieza en 4 pixeles por minuto
+    private val MIN_PIXELS = 1.5f // Límite para que no se aplaste hasta desaparecer
+    private val MAX_PIXELS = 12f
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
+
 
         setupInsets(view)
         setupGradients(view)
@@ -36,21 +54,19 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         // INICIALIZAR LA LISTA (Con nuestros datos de mentira por ahora)
         rvTimeline = view.findViewById(R.id.rvTimeline)
         rvTimeline.layoutManager = LinearLayoutManager(requireContext())
-
-        val mockData = listOf(
-            TimelineItem.MissionCard(
-                timeLabel = "15:00",
-                mission = MissionEntity(name = "Creación de Personajes", description = "En una libreta dibuja...", durationMinutes = 60, executionDate = 0L, assignmentType = "manual", blockType = "Humano", status = "pending")
-            ),
-            TimelineItem.EmptySlot(timeLabel = "16:00", durationMinutes = 60),
-            TimelineItem.MissionCard(
-                timeLabel = "17:00",
-                mission = MissionEntity(name = "Misión Rápida", description = "Llamar a mi abuela", durationMinutes = 15, executionDate = 0L, assignmentType = "manual", blockType = "Dios", status = "pending")
-            )
-        )
-
-        adapter = TimelineAdapter(mockData)
+        adapter = TimelineAdapter(emptyList()) // Empieza vacío
         rvTimeline.adapter = adapter
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.timelineItems.collect { items ->
+                // Actualizamos el Adapter reemplazando la lista completa
+                adapter = TimelineAdapter(items, currentPixelsPerMinute)
+                rvTimeline.adapter = adapter
+            }
+        }
+
+
+        setupPinchToZoom()
     }
 
     //  pintado de gradiantes
@@ -77,5 +93,41 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             findNavController().navigate(R.id.action_timeline_to_Home)
         }
+    }
+
+
+    ////////// PINCH - TO - ZOOM
+    private fun setupPinchToZoom() {
+        // Configuramos el cerebro matemático que calcula qué tanto separas los dedos
+        scaleGestureDetector = ScaleGestureDetector(requireContext(), object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                // Multiplicamos la escala actual por la fuerza del pellizco
+                currentPixelsPerMinute *= detector.scaleFactor
+
+                // Limitamos el valor para que no se rompa la UI (CoerceIn es magia de Kotlin)
+                currentPixelsPerMinute = currentPixelsPerMinute.coerceIn(MIN_PIXELS, MAX_PIXELS)
+
+                // Le avisamos a tu Adapter que redibuje todo
+                adapter.updateScale(currentPixelsPerMinute)
+                return true
+            }
+        })
+
+        //  Conectamos el cerebro al RecyclerView
+        rvTimeline.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                // Le pasamos la información del toque al sensor de pellizcos
+                scaleGestureDetector.onTouchEvent(e)
+
+                //  TRUCO MAESTRO: Si hay más de 1 dedo, retornamos TRUE.
+                // Esto intercepta el evento y evita que la lista haga "Scroll" mientras haces Zoom.
+                return e.pointerCount > 1
+            }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+                // Si interceptamos el evento (2 dedos), seguimos mandándole la info al sensor
+                scaleGestureDetector.onTouchEvent(e)
+            }
+        })
     }
 }
