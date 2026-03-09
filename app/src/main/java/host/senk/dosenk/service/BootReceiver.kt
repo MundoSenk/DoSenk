@@ -87,22 +87,42 @@ class BootReceiver : BroadcastReceiver() {
         }
     }
 
-    // Función auxiliar para no repetir código
+
+    // Función auxiliar blindada con el Despertador Nuclear
     private fun lanzarBloqueoInmediato(context: Context, remainingSeconds: Int, missionName: String) {
         val serviceIntent = Intent(context, MissionBlockerService::class.java).apply {
             putExtra("DURATION_SECONDS", remainingSeconds)
+            // ¡Mensaje humillante personalizado!
             putExtra("MISSION_NAME", "¿Creíste que apagando el teléfono te salvarías? Idiota.\n\n$missionName")
             putExtra("IS_TIME_PUNISHMENT", false)
         }
 
+        // En lugar de iniciarlo nosotros, programamos la alarma
+        // para que estalle 2 segundos después de encender el celular.
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(
+                context,
+                999, // ID único para el castigo inmediato
+                serviceIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        } else {
+            PendingIntent.getService(
+                context,
+                999,
+                serviceIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
-            }
+            val dummyIntent = PendingIntent.getActivity(context, 0, Intent(), PendingIntent.FLAG_IMMUTABLE)
+            // Disparamos en 2 segundos para darle tiempo a Android de respirar
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(System.currentTimeMillis() + 2000, dummyIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         } catch (e: Exception) {
-            context.startService(serviceIntent)
+            // Permisos denegados
         }
     }
 
