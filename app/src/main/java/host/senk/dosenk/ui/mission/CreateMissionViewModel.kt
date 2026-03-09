@@ -17,6 +17,7 @@ import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import host.senk.dosenk.service.MissionTriggerReceiver
+import kotlinx.coroutines.flow.first
 
 @HiltViewModel
 class CreateMissionViewModel @Inject constructor(
@@ -83,6 +84,38 @@ class CreateMissionViewModel @Inject constructor(
 
         // ¿El momento que armó el usuario es mayor al segundo actual?
         return localCalendar.timeInMillis > System.currentTimeMillis()
+    }
+
+
+    // pa que nos e encimen las misiones
+    suspend fun hasTimeConflict(): Boolean {
+        // Calculamos la hora exacta de inicio y fin de la misión que intentan crear
+        val utcDate = executionDate.value ?: System.currentTimeMillis()
+        val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        calendarUTC.timeInMillis = utcDate
+
+        val localCalendar = java.util.Calendar.getInstance()
+        localCalendar.set(java.util.Calendar.YEAR, calendarUTC.get(java.util.Calendar.YEAR))
+        localCalendar.set(java.util.Calendar.MONTH, calendarUTC.get(java.util.Calendar.MONTH))
+        localCalendar.set(java.util.Calendar.DAY_OF_MONTH, calendarUTC.get(java.util.Calendar.DAY_OF_MONTH))
+        localCalendar.set(java.util.Calendar.HOUR_OF_DAY, _startHour.value ?: 0)
+        localCalendar.set(java.util.Calendar.MINUTE, _startMinute.value ?: 0)
+        localCalendar.set(java.util.Calendar.SECOND, 0)
+        localCalendar.set(java.util.Calendar.MILLISECOND, 0)
+
+        val requestedStart = localCalendar.timeInMillis
+        val requestedEnd = requestedStart + (durationMinutes.value * 60 * 1000L)
+
+        // Traemos todas las misiones y buscamos un choque
+        val allMissions = missionDao.getAllMissions().first() // Importa kotlinx.coroutines.flow.first
+
+        return allMissions.filter { it.status == "pending" || it.status == "active" }.any { mission ->
+            val existingStart = mission.executionDate
+            val existingEnd = existingStart + (mission.durationMinutes * 60 * 1000L)
+
+            // La fórmula sagrada de la colisión de tiempos
+            (requestedStart < existingEnd) && (requestedEnd > existingStart)
+        }
     }
 
 

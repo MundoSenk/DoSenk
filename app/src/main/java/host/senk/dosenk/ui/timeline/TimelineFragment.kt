@@ -57,11 +57,34 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         adapter = TimelineAdapter(emptyList()) // Empieza vacío
         rvTimeline.adapter = adapter
 
+        // OBSERVAMOS A LA BASE DE DATOS EN TIEMPO REAL
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.timelineItems.collect { items ->
-                // Actualizamos el Adapter reemplazando la lista completa
                 adapter = TimelineAdapter(items, currentPixelsPerMinute)
                 rvTimeline.adapter = adapter
+
+                // AUTO-SCROLL A LA HORA ACTUAL
+                if (items.isNotEmpty()) {
+                    // Sacamos la hora actual en texto (Ej: "14:45")
+                    val currentTimeStr = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+
+                    // Buscamos cuál es la tarjeta que sigue
+                    val targetIndex = items.indexOfFirst { item ->
+                        val timeLabel = when (item) {
+                            is TimelineItem.MissionCard -> item.timeLabel
+                            is TimelineItem.EmptySlot -> item.timeLabel
+                        }
+                        // Comparamos los textos. Magia: "15:00" es alfabéticamente mayor que "14:45"
+                        timeLabel >= currentTimeStr
+                    }
+
+                    if (targetIndex != -1) {
+                        // Le damos un respiro de 50ms a la interfaz para que termine de dibujar las tarjetas
+                        rvTimeline.postDelayed({
+                            (rvTimeline.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(targetIndex, 100)
+                        }, 50)
+                    }
+                }
             }
         }
 

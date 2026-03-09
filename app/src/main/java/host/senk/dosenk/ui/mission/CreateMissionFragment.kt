@@ -170,7 +170,12 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
             datePicker.addOnPositiveButtonClickListener { timestamp ->
                 viewModel.setExecutionDate(timestamp)
-                val dateStr = SimpleDateFormat("dd/MM/yy", Locale.getDefault()).format(Date(timestamp))
+
+                // lo debe leer en utc
+                val sdf = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+                sdf.timeZone = java.util.TimeZone.getTimeZone("UTC") // <--- ¡LA LÍNEA MÁGICA!
+
+                val dateStr = sdf.format(Date(timestamp))
                 btnDatePicker.text = dateStr
                 btnDatePicker.applyDoSenkGradient(cornerRadius = 16f)
                 btnDatePicker.setTextColor(requireContext().getColor(R.color.white))
@@ -211,84 +216,82 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         // BOTÓN DE AVANZAR
         btnNext.setOnClickListener {
             viewModel.missionName = etMissionName.text.toString()
-
             val etDesc = view.findViewById<EditText>(R.id.etMissionDescription)
             viewModel.missionDescription = etDesc.text.toString()
 
             if (viewModel.isFormValid()) {
 
-                //  CADENERO 0: NO PERMITIR MISIONES EN EL PASADO
+                // CADENERO 0: NO PERMITIR MISIONES EN EL PASADO (Esto no ocupa base de datos)
                 if (!viewModel.isTimeValid()) {
                     Toast.makeText(requireContext(), "No puedes programar misiones en el pasado, gallo", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
 
-            }
+                // 🚨 CADENERO 0.5: ESCUDO ANTI-CLONES (Requiere base de datos, así que lanzamos Corrutina)
+                viewLifecycleOwner.lifecycleScope.launch {
 
-
-
-            if (viewModel.isFormValid()) {
-
-                // CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
-                val isAutoTime = android.provider.Settings.Global.getInt(
-                    requireContext().contentResolver,
-                    android.provider.Settings.Global.AUTO_TIME, 0
-                ) == 1
-
-                if (!isAutoTime) {
-                    Toast.makeText(requireContext(), "¡Tramposo! Activa la 'Fecha y hora automática' en tus ajustes para usar >Do.", Toast.LENGTH_LONG).show()
-                    val intent = android.content.Intent(android.provider.Settings.ACTION_DATE_SETTINGS)
-                    startActivity(intent)
-                    return@setOnClickListener
-                }
-
-                // CADENERO 2: PERMISO DE PANTALLA NEGRA (SUPERPOSICIÓN)
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    if (!android.provider.Settings.canDrawOverlays(requireContext())) {
-                        Toast.makeText(requireContext(), "¡>Do necesita permiso de sobreponerse para encerrarte!", Toast.LENGTH_LONG).show()
-                        val intent = android.content.Intent(
-                            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            android.net.Uri.parse("package:${requireContext().packageName}")
-                        )
-                        startActivity(intent)
-                        return@setOnClickListener
+                    // LE PREGUNTAMOS AL CEREBRO
+                    if (viewModel.hasTimeConflict()) {
+                        Toast.makeText(requireContext(), "¡Ya tienes una misión a esa hora! No puedes hacer dos cosas a la vez.", Toast.LENGTH_LONG).show()
+                        return@launch
                     }
-                }
 
-                // CADENERO 3: PERMISO DE ALARMAS EXACTAS (Android 12+)
-                val alarmManager = requireContext().getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                    if (!alarmManager.canScheduleExactAlarms()) {
-                        Toast.makeText(requireContext(), "¡>Do necesita permiso de Alarmas para castigarte a tiempo!", Toast.LENGTH_LONG).show()
-                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                    // SI NO HAY CONFLICTO, SEGUIMOS CON LOS DEMÁS CADENEROS...
+
+                    // CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
+                    val isAutoTime = android.provider.Settings.Global.getInt(
+                        requireContext().contentResolver,
+                        android.provider.Settings.Global.AUTO_TIME, 0
+                    ) == 1
+
+                    if (!isAutoTime) {
+                        Toast.makeText(requireContext(), "¡Tramposo! Activa la 'Fecha y hora automática' en tus ajustes para usar >Do.", Toast.LENGTH_LONG).show()
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_DATE_SETTINGS)
                         startActivity(intent)
-                        return@setOnClickListener
+                        return@launch
                     }
+
+                    // CADENERO 2: PERMISO DE PANTALLA NEGRA
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        if (!android.provider.Settings.canDrawOverlays(requireContext())) {
+                            Toast.makeText(requireContext(), "¡>Do necesita permiso de sobreponerse para encerrarte!", Toast.LENGTH_LONG).show()
+                            val intent = android.content.Intent(
+                                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                android.net.Uri.parse("package:${requireContext().packageName}")
+                            )
+                            startActivity(intent)
+                            return@launch
+                        }
+                    }
+
+                    // CADENERO 3: PERMISO DE ALARMAS EXACTAS
+                    val alarmManager = requireContext().getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        if (!alarmManager.canScheduleExactAlarms()) {
+                            Toast.makeText(requireContext(), "¡>Do necesita permiso de Alarmas para castigarte a tiempo!", Toast.LENGTH_LONG).show()
+                            val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                            startActivity(intent)
+                            return@launch
+                        }
+                    }
+
+                    // CADENERO 4: INICIO AUTOMÁTICO Y BATERÍA
+                    val prefs = requireContext().getSharedPreferences("DoSenkPrefs", android.content.Context.MODE_PRIVATE)
+                    val hasSeenAutoStart = prefs.getBoolean("hasSeenAutoStart", false)
+
+                    if (!hasSeenAutoStart) {
+                        prefs.edit().putBoolean("hasSeenAutoStart", true).apply()
+                        Toast.makeText(requireContext(), "Importante: Para que las misiones funcionen, desactiva la optimización de batería para >Do.", Toast.LENGTH_LONG).show()
+                        requestAutoStartPermission(requireContext())
+                        return@launch
+                    }
+
+                    //  SI PASA TODOS LOS CADENEROS, ENTRA A LA ZONA DE BLOQUEO
+                    val bundle = android.os.Bundle().apply {
+                        putBoolean("isSelectionMode", true)
+                    }
+                    findNavController().navigate(R.id.action_createMissionFragment_to_blockZoneFragment, bundle)
                 }
-
-                // : INICIO AUTOMÁTICO Y BATERÍA
-                val prefs = requireContext().getSharedPreferences("DoSenkPrefs", android.content.Context.MODE_PRIVATE)
-                val hasSeenAutoStart = prefs.getBoolean("hasSeenAutoStart", false)
-
-                if (!hasSeenAutoStart) {
-                    // Marcamos que ya se lo mostramos para que jamás vuelva a entrar a este if
-                    prefs.edit().putBoolean("hasSeenAutoStart", true).apply()
-
-                    Toast.makeText(requireContext(), "Importante: Para que las misiones funcionen, desactiva la optimización de batería para >Do.", Toast.LENGTH_LONG).show()
-
-                    // Llamamos a tu herramienta de forma directa
-                    requestAutoStartPermission(requireContext())
-
-                    return@setOnClickListener // Cortamos el paso para que configure y luego vuelva a la app
-                }
-                // -------------------------------------------------------------------------
-
-
-                // SI PASA LOS 4 CADENEROS, ENTRA A LA ZONA DE BLOQUEO
-                val bundle = android.os.Bundle().apply {
-                    putBoolean("isSelectionMode", true)
-                }
-                findNavController().navigate(R.id.action_createMissionFragment_to_blockZoneFragment, bundle)
 
             } else {
                 Toast.makeText(requireContext(), "Ponle nombre y fecha, gallo", Toast.LENGTH_SHORT).show()
@@ -302,6 +305,8 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
 
     }
+
+
 
 
 }
