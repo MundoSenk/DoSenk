@@ -9,6 +9,7 @@ data class MissionEntity(
 
     // Lo que viene del Formulario
     val name: String,               // Estudiar Programación
+    val description: String = "",
     val durationMinutes: Int,       //  45
     val executionDate: Long,        // Timestamp (Cuándo toca sufrir)
     val assignmentType: String,     // Manual o Auto

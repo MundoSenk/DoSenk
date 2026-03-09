@@ -27,6 +27,7 @@ class CreateMissionViewModel @Inject constructor(
     // Slibgeton como mochilita para guardar datos antes de hacer una mision en la room
 
     var missionName = ""
+    var missionDescription = ""
 
     private val _durationMinutes = MutableStateFlow(45)
     val durationMinutes: StateFlow<Int> = _durationMinutes
@@ -86,6 +87,7 @@ class CreateMissionViewModel @Inject constructor(
 
             val newMission = MissionEntity(
                 name = missionName,
+                description = missionDescription,
                 durationMinutes = durationMinutes.value,
                 executionDate = finalTimestamp,
                 assignmentType = assignmentType.value,

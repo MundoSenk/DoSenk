@@ -70,9 +70,26 @@
                     android:drawableStart="@android:drawable/ic_menu_edit"
                     android:drawablePadding="8dp"
                     android:elevation="2dp"
-                    android:layout_marginBottom="24dp"
-                    android:importantForAutofill="no"
+                    android:layout_marginBottom="16dp"
                     android:inputType="textPersonName" />
+
+                <EditText
+                    android:id="@+id/etMissionDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="80dp"
+                    android:background="@drawable/bg_capsule_white"
+                    android:hint="Que es lo que vas a realizar?.."
+                    android:fontFamily="@font/poppins_medium"
+                    android:textSize="14sp"
+                    android:padding="16dp"
+                    android:gravity="top|start"
+                    android:elevation="2dp"
+                    android:layout_marginBottom="24dp"
+                    android:inputType="textMultiLine"
+                    android:maxLines="4" />
+
+
 
                 <TextView
                     android:layout_width="wrap_content"

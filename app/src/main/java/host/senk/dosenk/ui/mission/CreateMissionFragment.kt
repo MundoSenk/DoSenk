@@ -32,7 +32,7 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
         //  XML
         val rootLayout = view.findViewById<View>(R.id.createMissionRoot)
-        val tvTitle = view.findViewById<TextView>(R.id.tvTitle) // Ya no lo pintamos
+        val tvTitle = view.findViewById<TextView>(R.id.tvTitle)
         val etMissionName = view.findViewById<EditText>(R.id.etMissionName)
         val btnDatePicker = view.findViewById<TextView>(R.id.btnDatePicker)
         val btnNext = view.findViewById<TextView>(R.id.btnNextToBlockZone)
@@ -207,11 +207,13 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         btnAuto.setOnClickListener { viewModel.setAssignmentType("auto") }
         btnManual.setOnClickListener { viewModel.setAssignmentType("manual") }
 
-        // BOTÓN DE AVANZAR
-        // BOTÓN DE AVANZAR
+
         // BOTÓN DE AVANZAR
         btnNext.setOnClickListener {
             viewModel.missionName = etMissionName.text.toString()
+
+            val etDesc = view.findViewById<EditText>(R.id.etMissionDescription)
+            viewModel.missionDescription = etDesc.text.toString()
             if (viewModel.isFormValid()) {
 
                 // CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
