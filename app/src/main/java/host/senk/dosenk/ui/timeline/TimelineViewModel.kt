@@ -1,8 +1,10 @@
 package host.senk.dosenk.ui.timeline
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.local.dao.MissionDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,11 +16,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TimelineViewModel @Inject constructor(
-    private val missionDao: MissionDao
+    private val missionDao: MissionDao,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val _timelineItems = MutableStateFlow<List<TimelineItem>>(emptyList())
     val timelineItems: StateFlow<List<TimelineItem>> = _timelineItems
+
+    val currentUserAlias = userPreferences.userAlias.asLiveData()
+
 
     init {
         loadMissionsForToday()

@@ -20,6 +20,8 @@ import androidx.lifecycle.lifecycleScope
 
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import android.widget.TextView
+import host.senk.dosenk.ui.nav.AddMenuBottomSheet
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -45,6 +47,7 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         setupInsets(view)
         setupGradients(view)
         setupBackButton()
+        setupInteractiveElements(view)
 
         // NAVEGACIÓN DESDE EL MENÚ INFERIOR
         view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_timeline)?.setOnClickListener {
@@ -54,13 +57,34 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         // INICIALIZAR LA LISTA (Con nuestros datos de mentira por ahora)
         rvTimeline = view.findViewById(R.id.rvTimeline)
         rvTimeline.layoutManager = LinearLayoutManager(requireContext())
-        adapter = TimelineAdapter(emptyList()) // Empieza vacío
+
+        adapter = TimelineAdapter(emptyList(), currentPixelsPerMinute) {
+            // Clic vacío mientras carga
+        }
         rvTimeline.adapter = adapter
 
         // OBSERVAMOS A LA BASE DE DATOS EN TIEMPO REAL
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.timelineItems.collect { items ->
-                adapter = TimelineAdapter(items, currentPixelsPerMinute)
+
+                // INYECTAMOS LA LÓGICA DEL CLIC AL ADAPTER
+                adapter = TimelineAdapter(items, currentPixelsPerMinute) { clickedMission ->
+
+                    val currentTime = System.currentTimeMillis()
+
+                    // REGLA: Tiene que ser 'pending' Y su hora de inicio debe ser en el FUTURO
+                    if (clickedMission.status == "pending" && clickedMission.executionDate > currentTime) {
+
+                        // ES EDITABLE
+                        android.widget.Toast.makeText(requireContext(), "Editando: ${clickedMission.name}", android.widget.Toast.LENGTH_SHORT).show()
+
+                        // TODO: Aquí mandaremos al usuario a la pantalla de edición
+
+                    } else {
+                        android.widget.Toast.makeText(requireContext(), "El pasado pisado, gallo. Esta misión ya no se puede alterar.", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+
                 rvTimeline.adapter = adapter
 
                 // AUTO-SCROLL A LA HORA ACTUAL
@@ -109,6 +133,8 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
             v.updatePadding(top = insets.top, bottom = insets.bottom)
             WindowInsetsCompat.CONSUMED
         }
+
+
     }
 
     // FORZAR EL COMPORTAMIENTO DEL BOTÓN ATRÁS
@@ -153,4 +179,29 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
             }
         })
     }
+
+
+    private fun setupInteractiveElements(view: View) {
+        // 1. El botón de agregar (+)
+        val fabAdd = view.findViewById<View>(R.id.fabAddContainer)
+
+        fabAdd.setOnClickListener {
+            val bottomSheet = AddMenuBottomSheet()
+            bottomSheet.show(parentFragmentManager, "AddMenuBottomSheet")
+        }
+        val tvUser = view.findViewById<View>(R.id.header).findViewById<TextView>(R.id.tvUsername)
+        viewModel.currentUserAlias.observe(viewLifecycleOwner) { alias ->
+            tvUser.text = "¿A trabajar, @${alias}?"
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 }

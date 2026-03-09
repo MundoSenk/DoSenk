@@ -7,11 +7,14 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import host.senk.dosenk.R
 
+import host.senk.dosenk.data.local.entity.MissionEntity
+
 import host.senk.dosenk.util.applyDoSenkGradient
 
 class TimelineAdapter(
     private var items: List<TimelineItem>,
-    private var pixelsPerMinute: Float = 4f //
+    private var pixelsPerMinute: Float = 4f,
+    private val onMissionClick: (MissionEntity) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -75,6 +78,10 @@ class TimelineAdapter(
             val layoutParams = holder.cardMission.layoutParams
             layoutParams.height = heightInPixels
             holder.cardMission.layoutParams = layoutParams
+
+            holder.cardMission.setOnClickListener {
+                onMissionClick(item.mission)
+            }
 
         } else if (holder is EmptyViewHolder && item is TimelineItem.EmptySlot) {
             holder.tvTime.text = item.timeLabel

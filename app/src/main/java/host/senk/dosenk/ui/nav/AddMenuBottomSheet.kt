@@ -39,7 +39,7 @@ class AddMenuBottomSheet : BottomSheetDialogFragment() {
             dismiss()
 
 
-            findNavController().navigate(R.id.action_global_to_createMissionFragment)
+            findNavController().navigate(R.id.createMissionFragment)
         }
 
 
