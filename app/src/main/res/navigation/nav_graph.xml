@@ -384,6 +384,13 @@
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
             app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_TimeLime_to_BlockZone"
+            app:destination="@id/BlockZone"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
     </fragment>
 
 </navigation>

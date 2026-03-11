@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
-import host.senk.dosenk.data.local.entity.MissionEntity
 import host.senk.dosenk.util.applyDoSenkGradient
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -182,7 +181,7 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
 
 
     private fun setupInteractiveElements(view: View) {
-        // 1. El botón de agregar (+)
+        // El botón de agregar (+)
         val fabAdd = view.findViewById<View>(R.id.fabAddContainer)
 
         fabAdd.setOnClickListener {
@@ -193,6 +192,15 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         viewModel.currentUserAlias.observe(viewLifecycleOwner) { alias ->
             tvUser.text = "¿A trabajar, @${alias}?"
         }
+
+
+        val navBlocks = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_blocks)
+
+        navBlocks?.setOnClickListener {
+            // Viaje al block
+            findNavController().navigate(R.id.action_TimeLime_to_BlockZone)
+        }
+
     }
 
 

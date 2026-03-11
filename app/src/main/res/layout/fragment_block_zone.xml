@@ -1,27 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5">
 
+    <include
+        android:id="@+id/header"
+        layout="@layout/include_dashboard_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
         android:paddingBottom="40dp"
-        android:clipToPadding="false">
+        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp"
+            android:paddingHorizontal="24dp"
             android:gravity="center_horizontal">
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="16dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="8dp">
 
@@ -98,12 +108,10 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="6dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal">
-
                     <LinearLayout
                         android:id="@+id/bgHumanoGradient"
                         android:layout_width="110dp"
@@ -118,7 +126,6 @@
                             android:fontFamily="@font/anton_regular"
                             android:textSize="26sp"/>
                     </LinearLayout>
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
@@ -126,7 +133,6 @@
                         android:orientation="vertical"
                         android:gravity="center"
                         android:padding="12dp">
-
                         <TextView
                             android:id="@+id/tvHumanoTitle"
                             android:layout_width="wrap_content"
@@ -135,7 +141,6 @@
                             android:textColor="?attr/doSkinButton"
                             android:fontFamily="@font/anton_regular"
                             android:textSize="18sp"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -145,7 +150,6 @@
                             android:fontFamily="@font/poppins_bold"
                             android:textSize="10sp"
                             android:layout_marginVertical="8dp"/>
-
                         <TextView
                             android:id="@+id/btnChooseHumano"
                             android:layout_width="wrap_content"
@@ -168,12 +172,10 @@
                 android:layout_marginBottom="32dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="6dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal">
-
                     <LinearLayout
                         android:id="@+id/bgDiosGradient"
                         android:layout_width="110dp"
@@ -188,7 +190,6 @@
                             android:fontFamily="@font/anton_regular"
                             android:textSize="26sp"/>
                     </LinearLayout>
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
@@ -196,7 +197,6 @@
                         android:orientation="vertical"
                         android:gravity="center"
                         android:padding="12dp">
-
                         <TextView
                             android:id="@+id/tvDiosTitle"
                             android:layout_width="wrap_content"
@@ -205,7 +205,6 @@
                             android:textColor="?attr/doSkinButton"
                             android:fontFamily="@font/anton_regular"
                             android:textSize="18sp"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -215,7 +214,6 @@
                             android:fontFamily="@font/poppins_bold"
                             android:textSize="10sp"
                             android:layout_marginVertical="8dp"/>
-
                         <TextView
                             android:id="@+id/btnChooseDios"
                             android:layout_width="wrap_content"
@@ -231,7 +229,14 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
         </LinearLayout>
     </ScrollView>
+
+    <include
+        android:id="@+id/bottomNav"
+        layout="@layout/include_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

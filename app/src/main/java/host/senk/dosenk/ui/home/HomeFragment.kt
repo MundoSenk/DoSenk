@@ -136,6 +136,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             // Viaje al Timeline
             findNavController().navigate(R.id.action_homeFragment_to_TimeLime)
         }
+
+        val navBlocks = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_blocks)
+
+        navBlocks?.setOnClickListener {
+            // Viaje al blocks
+            findNavController().navigate(R.id.action_homeFragment_to_BlockZone)
+        }
     }
 
     override fun onDestroyView() {
