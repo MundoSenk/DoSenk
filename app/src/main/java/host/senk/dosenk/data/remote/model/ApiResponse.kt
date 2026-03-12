@@ -12,5 +12,7 @@ data class ApiResponse(
     val lastName: String?,
     val birthDate: String?,
     val themeColor: String?,
-    val setupFinished: Int?
+    val setupFinished: Int?,
+    val dailyWastedHours: Float?,
+    val rankName: Int?
 )

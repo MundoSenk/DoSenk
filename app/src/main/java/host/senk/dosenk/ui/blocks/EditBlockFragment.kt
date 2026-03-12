@@ -94,17 +94,16 @@ class EditBlockFragment : Fragment(R.layout.fragment_edit_block) {
                 }
 
                 // Convertimos el Set a JSON
-                /*  val jsonBlockList = Gson().toJson(selectedPackages)
-                val userUuidString = viewModel.currentUserUuid.value ?: "usuario_desconocido"
+                val jsonBlockList = Gson().toJson(selectedPackages)
 
-                val newProfile = BlockProfileEntity(
-                    userUuid = userUuidString,
-                    name = blockName,
-                    blockedAppsJson = jsonBlockList
-                )
+                // Le decimos al ViewModel que guarde de verdad
+                btnSave.isEnabled = false
+                btnSave.text = "Guardando..."
 
-
-                 */
+                viewModel.saveCustomBlock(blockName, jsonBlockList) {
+                    Toast.makeText(requireContext(), "Bloqueo '$blockName' guardado", Toast.LENGTH_SHORT).show()
+                    findNavController().popBackStack()
+                }
 
                 // Lanzamos la corrutina para guardar
                 viewLifecycleOwner.lifecycleScope.launch {

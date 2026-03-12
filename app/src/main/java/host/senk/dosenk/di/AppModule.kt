@@ -10,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import host.senk.dosenk.data.local.DoSenkDatabase
 import host.senk.dosenk.data.local.dao.UserDao
 import host.senk.dosenk.data.local.dao.MissionDao //
+import host.senk.dosenk.data.local.dao.BlockProfileDao
 import javax.inject.Singleton
 
 @Module
@@ -37,5 +38,11 @@ object AppModule {
     @Provides
     fun provideMissionDao(database: DoSenkDatabase): MissionDao {
         return database.missionDao()
+    }
+
+    // preparar el bloqueo
+    @Provides
+    fun provideBlockProfileDao(database: DoSenkDatabase): BlockProfileDao {
+        return database.blockProfileDao()
     }
 }
