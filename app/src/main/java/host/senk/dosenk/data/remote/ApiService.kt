@@ -24,6 +24,8 @@ interface ApiService {
     @POST("schedule/save_batch.php")
     suspend fun saveSchedules(@Body request: ScheduleBatchRequest): Response<ApiResponse>
 
+
+    //Aqui se subo el setup a 2, cambiado a 3
     @POST("user/save_vices.php")
     suspend fun saveVicesAndRank(@Body request: SaveVicesRequest): Response<ApiResponse>
 
