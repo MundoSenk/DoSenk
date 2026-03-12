@@ -28,8 +28,8 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSchedule(schedule: ScheduleEntity)
 
-    @Query("SELECT * FROM schedules WHERE userId = :userId")
-    suspend fun getSchedulesForUser(userId: Int): List<ScheduleEntity>
+    @Query("SELECT * FROM schedules WHERE userUuid = :userUuid")
+    suspend fun getSchedulesForUser(userUuid: String): List<ScheduleEntity>
 
     // Borrar todo (útil para cerrar sesión limpia)
     @Query("DELETE FROM users")

@@ -362,6 +362,9 @@
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
             app:exitAnim="@android:anim/fade_out"/>
+        <action
+            android:id="@+id/action_BlockZone_to_editBlock"
+            app:destination="@id/editBlock" />
     </fragment>
 
     <fragment
@@ -391,6 +394,19 @@
             app:popUpToInclusive="true"
             app:enterAnim="@android:anim/fade_in"
             app:exitAnim="@android:anim/fade_out"/>
+    </fragment>
+
+
+
+    <fragment
+        android:id="@+id/editBlock"
+        android:name="host.senk.dosenk.ui.blocks.EditBlockFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_edit_block" >
+
+        <action
+            android:id="@+id/action_editBlock_to_BlockZone"
+            app:destination="@id/BlockZone" />
     </fragment>
 
 </navigation>

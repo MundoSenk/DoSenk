@@ -20,10 +20,17 @@ import host.senk.dosenk.service.MissionTriggerReceiver
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import host.senk.dosenk.data.local.dao.BlockProfileDao
+
+
+import host.senk.dosenk.data.local.UserPreferences
+import java.util.UUID
 
 @HiltViewModel
 class CreateMissionViewModel @Inject constructor(
     private val missionDao: MissionDao,
+    private val blockProfileDao: BlockProfileDao,
+    private val userPreferences: UserPreferences,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -32,7 +39,8 @@ class CreateMissionViewModel @Inject constructor(
     var missionName = ""
     var missionDescription = ""
 
-    var currentEditingMissionId: Int? = null
+    var currentEditingMissionId: String? = null
+
     private var oldExecutionDate: Long = 0L ///ppara cancelar la alarma
 
     // Un canal de comunicación para avisarle a la pantalla que ya cargamos los datos
@@ -49,6 +57,9 @@ class CreateMissionViewModel @Inject constructor(
     val assignmentType: StateFlow<String> = _assignmentType
     private val _startHour = MutableStateFlow<Int?>(null)
     private val _startMinute = MutableStateFlow<Int?>(null)
+
+
+    val allCustomBlocks = blockProfileDao.getAllProfiles()
 
     // FUNCIONES PARA ACTUALIZAR LA MOCHILA
 
@@ -119,7 +130,7 @@ class CreateMissionViewModel @Inject constructor(
 
         return allMissions.filter {
             // FILTRO: Que estén activas o pendientes, Y QUE NO SEA LA MISIÓN QUE ESTAMOS EDITANDO
-            (it.status == "pending" || it.status == "active") && (it.id != currentEditingMissionId)
+            (it.status == "pending" || it.status == "active") && (it.uuid != currentEditingMissionId)
         }.any { mission ->
             val existingStart = mission.executionDate
             val existingEnd = existingStart + (mission.durationMinutes * 60 * 1000L)
@@ -132,6 +143,9 @@ class CreateMissionViewModel @Inject constructor(
 
     fun saveMissionToDatabase(blockTypeChosen: String, onComplete: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
+
+            val ownerUuid = userPreferences.userToken.first()
+
 
             // Unimos el Día (del calendario UTC) con la Hora local
             val utcDate = executionDate.value ?: System.currentTimeMillis()
@@ -149,7 +163,8 @@ class CreateMissionViewModel @Inject constructor(
             val finalTimestamp = localCalendar.timeInMillis
 
             val newMission = MissionEntity(
-                id = currentEditingMissionId ?: 0,
+                uuid = currentEditingMissionId ?: UUID.randomUUID().toString(),
+                userUuid = ownerUuid,
                 name = missionName,
                 description = missionDescription,
                 durationMinutes = durationMinutes.value,
@@ -205,16 +220,14 @@ class CreateMissionViewModel @Inject constructor(
             }
 
             withContext(Dispatchers.Main) { onComplete() }
-
-
         }
     }
 
 
-    fun loadMissionForEditing(missionId: Int) {
+    fun loadMissionForEditing(missionId: String) {
         currentEditingMissionId = missionId
         viewModelScope.launch {
-            val mission = missionDao.getMissionById(missionId)
+            val mission = missionDao.getMissionByUuid(missionId)
             if (mission != null) {
                 missionName = mission.name
                 missionDescription = mission.description

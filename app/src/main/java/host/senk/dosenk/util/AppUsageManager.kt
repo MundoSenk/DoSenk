@@ -90,7 +90,8 @@ object AppUsageManager {
             .toSet()
 
         val healthyApps = setOf(
-            "jp.pokemon.pokemonsleep"
+            "jp.pokemon.pokemonsleep",
+            context.packageName
 
         )
 

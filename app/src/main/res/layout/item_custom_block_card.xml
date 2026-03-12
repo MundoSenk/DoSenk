@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="140dp"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/bgCustomGradient"
+            android:layout_width="110dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvCustomNameLeft"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Custom"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:fontFamily="@font/anton_regular"
+                android:textSize="22sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bloqueo Personalizado"
+                android:textColor="?attr/doSkinButton"
+                android:fontFamily="@font/anton_regular"
+                android:textSize="18sp"/>
+
+            <TextView
+                android:id="@+id/tvCustomAppsCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BLOQUEA X APLICACIONES"
+                android:textAlignment="center"
+                android:textColor="#4A4A8A"
+                android:fontFamily="@font/poppins_bold"
+                android:textSize="10sp"
+                android:layout_marginVertical="8dp"/>
+
+            <TextView
+                android:id="@+id/btnChooseCustom"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:gravity="center"
+                android:paddingHorizontal="24dp"
+                android:background="@drawable/bg_capsule_white"
+                android:text="¡ESCOGELO!"
+                android:textColor="@color/white"
+                android:fontFamily="@font/poppins_bold"
+                android:textSize="10sp"
+                android:elevation="2dp"/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

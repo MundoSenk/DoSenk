@@ -33,6 +33,6 @@ interface MissionDao {
     fun getAllMissions(): Flow<List<MissionEntity>>
 
 
-    @Query("SELECT * FROM missions WHERE id = :id LIMIT 1")
-    suspend fun getMissionById(id: Int): MissionEntity?
+    @Query("SELECT * FROM missions WHERE uuid = :uuid LIMIT 1")
+    suspend fun getMissionByUuid(uuid: String): MissionEntity?
 }

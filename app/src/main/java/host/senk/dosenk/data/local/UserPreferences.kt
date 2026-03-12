@@ -90,7 +90,7 @@ class UserPreferences @Inject constructor(
 
     val userToken: Flow<String> = context.dataStore.data
         .map { preferences ->
-            preferences[USER_TOKEN] ?: "" // Si no hay, devuelve vacío
+            preferences[USER_TOKEN] ?: ""
         }
 
 

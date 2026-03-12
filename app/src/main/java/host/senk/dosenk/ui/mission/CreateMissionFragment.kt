@@ -148,8 +148,8 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
 
 
         //  MODO EDICIÓN O CREACIÓN
-        val missionId = arguments?.getInt("missionId", 0) ?: 0
-        if (missionId > 0) {
+        val missionId = arguments?.getString("missionId") ?: null
+        if (missionId != null) {
             tvTitle.text = "Editar Misión"
             btnNext.text = "¡Actualizar Misión!"
 
@@ -280,7 +280,7 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
                     return@setOnClickListener
                 }
 
-                // 🚨 CADENERO 0.5: ESCUDO ANTI-CLONES (Requiere base de datos, así que lanzamos Corrutina)
+                //  ESCUDO ANTI-CLONES (Requiere base de datos, así que lanzamos Corrutina)
                 viewLifecycleOwner.lifecycleScope.launch {
 
                     // LE PREGUNTAMOS AL CEREBRO
@@ -289,7 +289,7 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
                         return@launch
                     }
 
-                    // SI NO HAY CONFLICTO, SEGUIMOS CON LOS DEMÁS CADENEROS...
+                    // SI NO HAY CONFLICTO, SEGUIMOS CON LOS DEMÁS CADENEROS
 
                     // CADENERO 1: EL TIEMPO AUTOMÁTICO (ANTI-VIAJEROS)
                     val isAutoTime = android.provider.Settings.Global.getInt(

@@ -1,12 +1,12 @@
 package host.senk.dosenk.data.local.entity
 
-import android.content.IntentSender
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "users")
 data class UserEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+
+    @PrimaryKey val uuid: String,
 
     // Datos Personales
     val firstName: String,
@@ -16,13 +16,13 @@ data class UserEntity(
     // Datos de Cuenta
     val username: String,
     val email: String,
-    val password: String, // En local, por ahora texto plano.
+    val password: String,
 
     // Configuración
-    val themeColor: String = "purple", // Por defecto
+    val themeColor: String = "purple",
 
     // Rangos
-    val rankName: String= "Desconocido",
+    val rankName: String = "Desconocido",
     val dailyWastedHours: Float? = 0f,
     val setupFinished: Int? = 0
 )

@@ -43,19 +43,19 @@ class AuthRepository @Inject constructor(
             val serverResponse = response.body()!!
 
             if (serverResponse.success) {
-                // Guardar localmente solo si el servidor aceptó
-                userDao.insertUser(user)
+                //  Extraemos el UUID real que nos dio PHP
+                val realUuid = serverResponse.uuid ?: "no-uuid"
+
+                val finalUser = user.copy(uuid = realUuid)
+                userDao.insertUser(finalUser)
 
                 userPreferences.saveUserSession(
-                    token = serverResponse.uuid ?: "no-uuid",
-                    alias = user.username
+                    token = realUuid,
+                    alias = finalUser.username
                 )
 
-                val themeIndex = when (user.themeColor) {
-                    "red" -> 1
-                    "dark" -> 2
-                    "teal" -> 3
-                    else -> 0
+                val themeIndex = when (finalUser.themeColor) {
+                    "red" -> 1; "dark" -> 2; "teal" -> 3; else -> 0
                 }
                 userPreferences.saveTheme(themeIndex)
             }
@@ -67,7 +67,7 @@ class AuthRepository @Inject constructor(
 
     /**
      * Verifica si el nombre de usuario o email ya están registrados.
-     */
+
     suspend fun checkAvailability(username: String, email: String): Pair<Boolean, String> {
         return try {
             val request = CheckRequest(username, email)
@@ -83,38 +83,52 @@ class AuthRepository @Inject constructor(
             Pair(false, "Error de conexión: ${e.message}")
         }
     }
-
-    /**
-     * Inicio de sesión: Intenta primero vía API. Si no hay conexión,
-     * intenta validar contra la base de datos local (Modo Offline).
      */
+
+
+
     suspend fun login(userOrEmail: String, pass: String): Pair<Boolean, String> {
         return try {
-            val request = LoginRequest(userOrEmail, pass)
+            val request = LoginRequest(username = userOrEmail, password = pass)
             val response = api.loginUser(request)
 
             if (response.isSuccessful && response.body()?.success == true) {
                 val data = response.body()!!
+                val userUuid = data.uuid ?: "uuid-error"
+                val alias = data.username ?: userOrEmail
 
-                userPreferences.saveUserSession(
-                    token = data.uuid ?: "uuid-error",
-                    alias = data.username ?: userOrEmail
+                //  BORRAMOS CUALQUIER USUARIO VIEJO EN ESTE CELULAR
+                userDao.deleteAllUsers()
+
+                //  RECONSTRUIMOS EL USUARIO EN ROOM CON LOS DATOS DE LA NUBE
+                val loggedInUser = UserEntity(
+                    uuid = userUuid,
+                    username = alias,
+                    email = data.email ?: userOrEmail,
+                    password = pass, // Lo mantenemos local para el modo offline
+                    firstName = data.firstName ?: "Desconocido",
+                    lastName = data.lastName ?: "Desconocido",
+                    birthDate = data.birthDate ?: "0000-00-00",
+                    themeColor = data.themeColor ?: "purple",
+                    setupFinished = data.setupFinished ?: 0
                 )
+                userDao.insertUser(loggedInUser)
 
-                val themeIndex = when (data.themeColor) {
-                    "red" -> 1
-                    "dark" -> 2
-                    "teal" -> 3
-                    else -> 0
+                //  GUARDAMOS EN PREFERENCIAS
+                userPreferences.saveUserSession(token = userUuid, alias = alias)
+
+                val themeIndex = when (loggedInUser.themeColor) {
+                    "red" -> 1; "dark" -> 2; "teal" -> 3; else -> 0
                 }
                 userPreferences.saveTheme(themeIndex)
-                userPreferences.saveSetupFinished(data.setupFinished)
+                userPreferences.saveSetupFinished(loggedInUser.setupFinished ?: 0)
 
                 Pair(true, "Bienvenido")
             } else {
                 val msg = response.body()?.message ?: "Error de credenciales"
                 Pair(false, msg)
             }
+
         } catch (e: Exception) {
             // LOGIN OFFLINE
             val localUser = userDao.getUserByEmailOrUsername(userOrEmail)

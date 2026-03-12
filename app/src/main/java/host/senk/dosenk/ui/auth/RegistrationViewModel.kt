@@ -57,6 +57,7 @@ class RegistrationViewModel @Inject constructor(
                 }
 
                 val newUser = UserEntity(
+                    uuid= "",
                     firstName = firstName,
                     lastName = lastName,
                     birthDate = birthDate,

@@ -76,7 +76,7 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
 
                         // ¡ES EDITABLE!
                         val bundle = Bundle().apply {
-                            putInt("missionId", clickedMission.id)
+                            putString("missionId", clickedMission.uuid) // 🚨 Cambio a putString y .uuid
                         }
                         findNavController().navigate(R.id.createMissionFragment, bundle)
                     } else {
@@ -168,7 +168,6 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
                 scaleGestureDetector.onTouchEvent(e)
 
                 //  TRUCO MAESTRO: Si hay más de 1 dedo, retornamos TRUE.
-                // Esto intercepta el evento y evita que la lista haga "Scroll" mientras haces Zoom.
                 return e.pointerCount > 1
             }
 
@@ -195,6 +194,10 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
 
 
         val navBlocks = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_blocks)
+
+        view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_home)?.setOnClickListener {
+            findNavController().navigate(R.id.homeFragment)
+        }
 
         navBlocks?.setOnClickListener {
             // Viaje al block

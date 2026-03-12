@@ -1,7 +1,9 @@
 package host.senk.dosenk.ui.blocks
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
@@ -10,17 +12,20 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.ui.mission.CreateMissionViewModel
 import host.senk.dosenk.ui.nav.AddMenuBottomSheet
 import host.senk.dosenk.util.applyDoSenkGradient
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
 
-    // La mochila sigue aquí, pero solo la usaremos si estamos en modo "Selección"
     private val viewModel: CreateMissionViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -37,20 +42,16 @@ class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
         btnHumano.applyDoSenkGradient(cornerRadius = 16f)
         btnDios.applyDoSenkGradient(cornerRadius = 16f)
 
-        // LA DOBLE PERSONALIDAD (El chisme que le pasamos al navegar)
         val isSelectionMode = arguments?.getBoolean("isSelectionMode") ?: false
 
         if (isSelectionMode) {
             btnHumano.text = "¡ESCÓGELO!"
             btnDios.text = "¡ESCÓGELO!"
-
             btnHumano.setOnClickListener { v -> saveAndNavigate("Humano", v) }
             btnDios.setOnClickListener { v -> saveAndNavigate("Dios", v) }
         } else {
-            // MODO VITRINA (Llegó desde la Navbar)
             btnHumano.text = "MUÉSTRAMELO"
             btnDios.text = "MUÉSTRAMELO"
-
             btnHumano.setOnClickListener {
                 Toast.makeText(requireContext(), "Demostración: Bloqueo Humano activado ", Toast.LENGTH_SHORT).show()
             }
@@ -60,9 +61,69 @@ class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
         }
 
         view.findViewById<View>(R.id.btnEditCustomBlock).setOnClickListener {
-            Toast.makeText(requireContext(), "Editando bloqueo personalizado", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.action_BlockZone_to_editBlock)
+        }
+
+
+        loadCustomBlocks(view, isSelectionMode)
+    }
+
+    private fun loadCustomBlocks(rootView: View, isSelectionMode: Boolean) {
+        // Buscamos el contenedor vacío que pusiste en el XML
+        val layoutCustomBlocks = rootView.findViewById<LinearLayout>(R.id.layoutCustomBlocks)
+        layoutCustomBlocks.removeAllViews()
+
+        //  Le preguntamos a la base de datos
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.allCustomBlocks.collect { profiles ->
+                // profiles es la lista de bloqueos que el usuario ha creado
+
+                for (profile in profiles) {
+                    //  Por cada bloqueo,
+                    val cardView = LayoutInflater.from(requireContext())
+                        .inflate(R.layout.item_custom_block_card, layoutCustomBlocks, false)
+
+                    // Llenamos los datos del molde
+                    val tvName = cardView.findViewById<TextView>(R.id.tvCustomNameLeft)
+                    val tvAppsCount = cardView.findViewById<TextView>(R.id.tvCustomAppsCount)
+                    val btnChoose = cardView.findViewById<TextView>(R.id.btnChooseCustom)
+
+                    tvName.text = profile.name //.
+
+                    // Extraemos cuántas apps bloqueó desencriptando el JSON
+                    try {
+                        val type = object : TypeToken<Set<String>>() {}.type
+                        val appsSet: Set<String> = Gson().fromJson(profile.blockedAppsJson, type)
+                        tvAppsCount.text = "BLOQUEA ${appsSet.size} APLICACIONES"
+                    } catch (e: Exception) {
+                        tvAppsCount.text = "BLOQUEA APLICACIONES"
+                    }
+
+                    //  Le damos vida al botón
+                    if (isSelectionMode) {
+                        btnChoose.text = "¡ESCÓGELO!"
+                        btnChoose.setOnClickListener { v ->
+                            // Pasamos el nombre del perfil ("Focus") para que se guarde en la misión
+                            saveAndNavigate(profile.name, v)
+                        }
+                    } else {
+                        btnChoose.text = "MUÉSTRAMELO"
+                        btnChoose.setOnClickListener {
+                            Toast.makeText(requireContext(), "Demostración: ${profile.name} activado", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    //  Pintamos el gradiente de la nueva tarjeta
+                    val bgGradient = cardView.findViewById<View>(R.id.bgCustomGradient)
+                    bgGradient.applyDoSenkGradient() // Por ahora usa el mismo degradado de la app
+
+                    // Finalmente, metemos la tarjeta clonada y llena al contenedor
+                    layoutCustomBlocks.addView(cardView)
+                }
+            }
         }
     }
+
 
     // MAGIA DE COLORES
     private fun setupGradients(view: View) {

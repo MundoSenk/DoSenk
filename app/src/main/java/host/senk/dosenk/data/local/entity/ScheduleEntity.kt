@@ -2,22 +2,25 @@ package host.senk.dosenk.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index // 🚨 Importa esto
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(
     tableName = "schedules",
+    indices = [Index(value = ["userUuid"])],
     foreignKeys = [
         ForeignKey(
             entity = UserEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE // Si borras al usuario, se borran sus horarios
+            parentColumns = ["uuid"],
+            childColumns = ["userUuid"],
+            onDelete = ForeignKey.CASCADE
         )
     ]
 )
 data class ScheduleEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val userId: Int,
-    val type: String, // "SCHOOL", "WORK", "BUSINESS"
-    val gridJson: String // El array de 7x24 convertido a String
+    @PrimaryKey val uuid: String = UUID.randomUUID().toString(),
+    val userUuid: String,
+    val type: String,
+    val gridJson: String
 )
