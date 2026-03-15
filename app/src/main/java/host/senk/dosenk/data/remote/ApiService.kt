@@ -6,6 +6,7 @@ import host.senk.dosenk.data.remote.model.CheckRequest
 import host.senk.dosenk.data.remote.model.LoginRequest
 import host.senk.dosenk.data.remote.model.ScheduleBatchRequest
 import host.senk.dosenk.data.remote.model.SaveVicesRequest
+import host.senk.dosenk.data.remote.model.UpdateStageRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -34,4 +35,8 @@ interface ApiService {
 
     @POST("auth/resend_otp.php")
     suspend fun resendCode(@Body body: Map<String, String>): Response<ApiResponse>
+
+
+    @POST("auth/update_stage.php")
+    suspend fun updateSetupStage(@Body request: UpdateStageRequest): retrofit2.Response<ApiResponse>
 }

@@ -22,4 +22,8 @@ interface BlockProfileDao {
     // 🚨 CAMBIA ESTO (De id a uuid)
     @Query("SELECT * FROM block_profiles WHERE uuid = :uuid LIMIT 1")
     suspend fun getProfileByUuid(uuid: String): BlockProfileEntity?
+
+
+    @Query("DELETE FROM block_profiles")
+    suspend fun deleteAllProfiles()
 }

@@ -134,7 +134,6 @@ class LoginFragment : Fragment() {
                         }
 
                         // Reiniciar para que se aplique el tema de color
-                        requireActivity().recreate()
                     }
                     is LoginViewModel.LoginEvent.Error -> {
                         Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()

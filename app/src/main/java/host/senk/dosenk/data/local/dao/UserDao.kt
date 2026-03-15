@@ -36,5 +36,8 @@ interface UserDao {
     suspend fun deleteAllUsers()
 
 
+    @Query("DELETE FROM schedules")
+    suspend fun deleteAllSchedules()
+
 
 }

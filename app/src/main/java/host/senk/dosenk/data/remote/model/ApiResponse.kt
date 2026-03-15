@@ -1,7 +1,6 @@
 package host.senk.dosenk.data.remote.model
-import com.google.gson.annotations.SerializedName
 
-
+// 🚨 1. Regresamos rankName a String
 data class ApiResponse(
     val success: Boolean,
     val message: String?,
@@ -14,5 +13,20 @@ data class ApiResponse(
     val themeColor: String?,
     val setupFinished: Int?,
     val dailyWastedHours: Float?,
-    val rankName: Int?
+    val rankName: String?,
+
+    // 🚨 2. Las listas que nos manda PHP
+    val schedules: List<ScheduleDto>?,
+    val blockProfiles: List<BlockProfileDto>?
+)
+
+// Moldes chiquitos para las listas
+data class ScheduleDto(
+    val type: String,
+    val gridJson: String
+)
+
+data class BlockProfileDto(
+    val name: String,
+    val blockedAppsJson: String
 )

@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import host.senk.dosenk.data.repository.AuthRepository
 
 @HiltViewModel
 class TutorialMissionViewModel @Inject constructor(
     private val userDao: UserDao,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val repository: AuthRepository
 ) : ViewModel() {
 
     private val _realRankName = MutableStateFlow("Desconocido")
@@ -45,7 +47,8 @@ class TutorialMissionViewModel @Inject constructor(
 
     fun saveSetupStage(stage: Int) {
         viewModelScope.launch {
-            userPreferences.saveSetupFinished(stage)
+            // Ahora le avisa a la base de datos local Y a la nube
+            repository.updateSetupStage(stage)
         }
     }
 
@@ -89,7 +92,8 @@ class TutorialMissionViewModel @Inject constructor(
     // Cuando termine el tutorial, le damos la libertad total (Stage 4)
     fun finishOnboarding(onFinished: () -> Unit) {
         viewModelScope.launch {
-            userPreferences.saveSetupFinished(4)
+            // Guardamos el glorioso Stage 4 en la nube
+            repository.updateSetupStage(4)
             onFinished()
         }
     }

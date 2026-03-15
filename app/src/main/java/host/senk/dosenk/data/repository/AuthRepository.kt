@@ -2,7 +2,10 @@ package host.senk.dosenk.data.repository
 
 import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.local.dao.UserDao
+import host.senk.dosenk.data.local.dao.BlockProfileDao
 import host.senk.dosenk.data.local.entity.UserEntity
+import host.senk.dosenk.data.local.entity.ScheduleEntity
+import host.senk.dosenk.data.local.entity.BlockProfileEntity
 import host.senk.dosenk.data.remote.ApiService
 import host.senk.dosenk.data.remote.model.ApiResponse
 import host.senk.dosenk.data.remote.model.CheckRequest
@@ -11,6 +14,7 @@ import host.senk.dosenk.data.remote.model.RegisterRequest
 import host.senk.dosenk.data.remote.model.ScheduleBatchRequest
 import host.senk.dosenk.data.remote.model.ScheduleData
 import host.senk.dosenk.data.remote.model.SaveVicesRequest
+import host.senk.dosenk.data.remote.model.UpdateStageRequest
 import host.senk.dosenk.data.remote.model.ViceDto
 import host.senk.dosenk.util.AppUsageInfo
 import kotlinx.coroutines.flow.first
@@ -19,6 +23,7 @@ import javax.inject.Inject
 class AuthRepository @Inject constructor(
     private val api: ApiService,
     private val userDao: UserDao,
+    private val blockProfileDao: BlockProfileDao,
     private val userPreferences: UserPreferences
 ) {
 
@@ -66,27 +71,9 @@ class AuthRepository @Inject constructor(
     }
 
     /**
-     * Verifica si el nombre de usuario o email ya están registrados.
-
-    suspend fun checkAvailability(username: String, email: String): Pair<Boolean, String> {
-        return try {
-            val request = CheckRequest(username, email)
-            val response = api.checkAvailability(request)
-
-            if (response.isSuccessful && response.body() != null) {
-                val apiResponse = response.body()!!
-                Pair(apiResponse.success, apiResponse.message)
-            } else {
-                Pair(false, "Error del servidor: ${response.code()}")
-            }
-        } catch (e: Exception) {
-            Pair(false, "Error de conexión: ${e.message}")
-        }
-    }
+     * Inicio de sesión: Destruye la base de datos local vieja y
+     * reconstruye "Todo Todito" con los datos del servidor.
      */
-
-
-
     suspend fun login(userOrEmail: String, pass: String): Pair<Boolean, String> {
         return try {
             val request = LoginRequest(username = userOrEmail, password = pass)
@@ -97,10 +84,12 @@ class AuthRepository @Inject constructor(
                 val userUuid = data.uuid ?: "uuid-error"
                 val alias = data.username ?: userOrEmail
 
-                //  BORRAMOS CUALQUIER USUARIO VIEJO EN ESTE CELULAR
+                //LIMPIEZA TOTAL DE LA BASE DE DATOS LOCAL
                 userDao.deleteAllUsers()
+                userDao.deleteAllSchedules()
+                blockProfileDao.deleteAllProfiles()
 
-                //  RECONSTRUIMOS EL USUARIO EN ROOM CON LOS DATOS DE LA NUBE
+                // RECONSTRUIMOS EL USUARIO
                 val loggedInUser = UserEntity(
                     uuid = userUuid,
                     username = alias,
@@ -110,11 +99,35 @@ class AuthRepository @Inject constructor(
                     lastName = data.lastName ?: "Desconocido",
                     birthDate = data.birthDate ?: "0000-00-00",
                     themeColor = data.themeColor ?: "purple",
-                    setupFinished = data.setupFinished ?: 0
+                    setupFinished = data.setupFinished ?: 0,
+                    dailyWastedHours = data.dailyWastedHours ?: 0f,
+                    rankName = data.rankName ?: "Desconocido"
                 )
                 userDao.insertUser(loggedInUser)
 
-                //  GUARDAMOS EN PREFERENCIAS
+                // RECONSTRUIMOS SUS HORARIOS
+                data.schedules?.forEach { sched ->
+                    userDao.insertSchedule(
+                        ScheduleEntity(
+                            userUuid = userUuid,
+                            type = sched.type,
+                            gridJson = sched.gridJson
+                        )
+                    )
+                }
+
+                // RECONSTRUIMOS SUS BLOQUEOS PERSONALIZADOS
+                data.blockProfiles?.forEach { block ->
+                    blockProfileDao.insertProfile(
+                        BlockProfileEntity(
+                            userUuid = userUuid,
+                            name = block.name,
+                            blockedAppsJson = block.blockedAppsJson
+                        )
+                    )
+                }
+
+                // GUARDAMOS EN PREFERENCIAS
                 userPreferences.saveUserSession(token = userUuid, alias = alias)
 
                 val themeIndex = when (loggedInUser.themeColor) {
@@ -216,7 +229,6 @@ class AuthRepository @Inject constructor(
         }
     }
 
-
     //  (Recibe UUID y OTP)
     suspend fun verifyOtp(uuid: String, code: String): Pair<Boolean, String> {
         return try {
@@ -244,6 +256,30 @@ class AuthRepository @Inject constructor(
             }
         } catch (e: Exception) {
             Pair(false, "Error de red")
+        }
+    }
+
+
+
+    /**
+     * Guarda la etapa del tutorial localmente y la sincroniza con la nube.
+     */
+    suspend fun updateSetupStage(stage: Int): Boolean {
+        return try {
+            val uuid = userPreferences.userToken.first()
+            if (uuid.isEmpty()) return false
+
+            // 1. Guardado ultra-rápido local (DataStore)
+            userPreferences.saveSetupFinished(stage)
+
+            // 2. Disparo a la nube (MySQL)
+            val request = UpdateStageRequest(uuid, stage)
+            val response = api.updateSetupStage(request)
+
+            response.isSuccessful && response.body()?.success == true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false // Falló la nube (quizá no hay internet), pero ya se guardó localmente.
         }
     }
 }
