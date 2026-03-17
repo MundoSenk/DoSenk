@@ -13,19 +13,24 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-
-import host.senk.dosenk.data.local.dao.BlockProfileDao
-import host.senk.dosenk.data.local.entity.BlockProfileEntity
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+
+import host.senk.dosenk.data.remote.ApiService
+import host.senk.dosenk.data.local.dao.BlockProfileDao
+import host.senk.dosenk.data.local.dao.MissionDao
+import host.senk.dosenk.data.local.entity.BlockProfileEntity
+import host.senk.dosenk.data.remote.model.BlockProfileDto
+import host.senk.dosenk.data.remote.model.SyncBlocksRequest
 
 @HiltViewModel
 class EditBlockViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
-    private val blockProfileDao: BlockProfileDao
+    private val blockProfileDao: BlockProfileDao,
+    private val missionDao: MissionDao,
+    private val api: ApiService
 ) : ViewModel() {
 
-    // El chisme para tu Header sádico
     val currentUserAlias = userPreferences.userAlias.asLiveData()
 
     private val _installedApps = MutableStateFlow<List<AppUsageInfo>>(emptyList())
@@ -38,26 +43,66 @@ class EditBlockViewModel @Inject constructor(
         }
     }
 
-    // 🚨 FUNCIÓN PARA GUARDAR EN LA BASE DE DATOS
-    fun saveCustomBlock(blockName: String, jsonBlockList: String, onComplete: () -> Unit) {
+    // FUNCIÓN PARA OBTENER LOS BLOQUEOS DE RESPALDO
+    suspend fun getFallbackBlocks(blockToExclude: String): List<String> {
+        val allProfiles = blockProfileDao.getAllProfiles().first()
+        val customNames = allProfiles.map { it.name }.filter { it != blockToExclude }
+
+        // Siempre le damos la opción de Dios como castigo supremo de respaldo
+        return listOf("Dios") + customNames
+    }
+
+    //  GUARDADO
+    fun saveCustomBlock(originalName: String?, blockName: String, jsonBlockList: String, onComplete: () -> Unit, onError: (String) -> Unit) {
+        val reservedWords = listOf("dios", "humano", "adicto")
+        if (reservedWords.contains(blockName.lowercase())) {
+            onError("No puedes usar nombres del sistema como '$blockName'.")
+            return
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
-            // 1. Sacamos el UUID del usuario directamente de las preferencias
             val userUuid = userPreferences.userToken.first()
 
-            // 2. Creamos la entidad
-            val newProfile = BlockProfileEntity(
-                userUuid = userUuid,
-                name = blockName,
-                blockedAppsJson = jsonBlockList
-            )
+            if (originalName != null && originalName != blockName) {
+                // SI LE CAMBIÓ EL NOMBRE AL BLOQUEO, ACTUALIZAMOS LAS MISIONES PARA QUE NO SE ROMPAN
+                missionDao.reassignMissions(oldBlockName = originalName, newBlockName = blockName)
+                blockProfileDao.deleteProfileByName(originalName, userUuid)
+            }
 
-            // 3. La guardamos en Room
+            blockProfileDao.deleteProfileByName(blockName, userUuid)
+
+            val newProfile = BlockProfileEntity(userUuid = userUuid, name = blockName, blockedAppsJson = jsonBlockList)
             blockProfileDao.insertProfile(newProfile)
 
-            // 4. Le avisamos a la pantalla que ya terminamos
-            kotlinx.coroutines.withContext(Dispatchers.Main) {
-                onComplete()
-            }
+            try {
+                val allBlocks = blockProfileDao.getAllProfiles().first()
+                val dtoList = allBlocks.map { BlockProfileDto(it.name, it.blockedAppsJson) }
+                api.syncBlocks(SyncBlocksRequest(userUuid, dtoList))
+            } catch (e: Exception) {}
+
+            withContext(Dispatchers.Main) { onComplete() }
+        }
+    }
+
+    // BORRADO Y REASIGNACIÓN SUPREMA
+    fun deleteAndReassignBlock(oldBlockName: String, newBlockName: String, onComplete: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val userUuid = userPreferences.userToken.first()
+
+            //  Mudamos las misiones al nuevo castigo elegido
+            missionDao.reassignMissions(oldBlockName, newBlockName)
+
+            //  Ejecutamos al bloqueo viejo
+            blockProfileDao.deleteProfileByName(oldBlockName, userUuid)
+
+            // Sincronizamos la nube
+            try {
+                val allBlocks = blockProfileDao.getAllProfiles().first()
+                val dtoList = allBlocks.map { BlockProfileDto(it.name, it.blockedAppsJson) }
+                api.syncBlocks(SyncBlocksRequest(userUuid, dtoList))
+            } catch (e: Exception) {}
+
+            withContext(Dispatchers.Main) { onComplete() }
         }
     }
 }

@@ -28,7 +28,7 @@ import java.util.UUID
 
 @HiltViewModel
 class CreateMissionViewModel @Inject constructor(
-    private val missionDao: MissionDao,
+    val missionDao: MissionDao,
     private val blockProfileDao: BlockProfileDao,
     private val userPreferences: UserPreferences,
     @ApplicationContext private val appContext: Context

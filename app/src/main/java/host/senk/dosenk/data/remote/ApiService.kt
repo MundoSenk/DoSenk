@@ -6,6 +6,7 @@ import host.senk.dosenk.data.remote.model.CheckRequest
 import host.senk.dosenk.data.remote.model.LoginRequest
 import host.senk.dosenk.data.remote.model.ScheduleBatchRequest
 import host.senk.dosenk.data.remote.model.SaveVicesRequest
+import host.senk.dosenk.data.remote.model.SyncBlocksRequest
 import host.senk.dosenk.data.remote.model.UpdateStageRequest
 import retrofit2.Response
 import retrofit2.http.Body
@@ -39,4 +40,8 @@ interface ApiService {
 
     @POST("auth/update_stage.php")
     suspend fun updateSetupStage(@Body request: UpdateStageRequest): retrofit2.Response<ApiResponse>
+
+    @POST("user/sync_blocks.php")
+    suspend fun syncBlocks(@Body request: SyncBlocksRequest): retrofit2.Response<ApiResponse>
+
 }

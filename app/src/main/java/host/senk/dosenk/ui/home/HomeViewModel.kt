@@ -23,6 +23,9 @@ import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext //
 import host.senk.dosenk.service.MissionBlockerService
 
+
+import host.senk.dosenk.data.local.dao.BlockProfileDao //
+
 sealed class MissionCardState {
     object Idle : MissionCardState()
     data class Pending(val secondsUntilStart: Int, val missionName: String) : MissionCardState()
@@ -34,6 +37,7 @@ class HomeViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     private val userDao: UserDao,
     private val missionDao: MissionDao,
+    private val blockProfileDao: BlockProfileDao,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -83,7 +87,7 @@ class HomeViewModel @Inject constructor(
                 val currentTime = System.currentTimeMillis()
 
                 if (active != null) {
-                    //  HAY UNA MISIÓN ACTIVA
+                    // HAY UNA MISIÓN ACTIVA
                     val endTime = active.executionDate + (active.durationMinutes * 60 * 1000L)
                     val timeLeftMillis = endTime - currentTime
 
@@ -95,12 +99,25 @@ class HomeViewModel @Inject constructor(
                             blockType = active.blockType
                         )
 
-                        // LANZAMOS EL BLOQUEO INMEDIATO PARA REANUDAR EL CASTIGO
+                        // PREPARAMOS LAS BALAS PARA EL CADENERO
                         val serviceIntent = Intent(appContext, MissionBlockerService::class.java).apply {
                             putExtra("DURATION_SECONDS", remainingSeconds)
                             putExtra("MISSION_NAME", active.name)
                             putExtra("IS_TIME_PUNISHMENT", false)
+
+                            // Le mandamos el tipo de bloqueo
+                            putExtra("BLOCK_TYPE", active.blockType)
                         }
+
+                        //  SI ES PERSONALIZADO, LE CARGAMOS LA LISTA NEGRA DESDE ROOM
+                        if (active.blockType != "Dios" && active.blockType != "Humano") {
+                            // Como estamos dentro de una corrutina (collect), podemos usar first() para leer rápido
+                            val profile = blockProfileDao.getAllProfiles().first().find { it.name == active.blockType }
+                            val jsonList = profile?.blockedAppsJson ?: "[]"
+                            serviceIntent.putExtra("BLOCK_LIST_JSON", jsonList)
+                        }
+
+                        // LANZAMOS EL BLOQUEO INMEDIATO PARA REANUDAR EL CASTIGO
                         try {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) appContext.startForegroundService(serviceIntent)
                             else appContext.startService(serviceIntent)
@@ -127,7 +144,7 @@ class HomeViewModel @Inject constructor(
                             missionName = pending.name
                         )
 
-                        // Programamos la bomba: Cuando el tiempo llegue a cero,ACTÍVALA
+                        // Programamos la bomba: Cuando el tiempo llegue a cero, ACTÍVALA
                         transitionJob = viewModelScope.launch {
                             delay(timeToStartMillis)
                             activateMission(pending)
@@ -147,7 +164,6 @@ class HomeViewModel @Inject constructor(
     private fun activateMission(mission: host.senk.dosenk.data.local.entity.MissionEntity) {
         viewModelScope.launch(Dispatchers.IO) {
 
-            // YA NO HAY EFECTO COBRADOR.
             val updatedMission = mission.copy(status = "active")
             missionDao.updateMission(updatedMission)
 
@@ -167,6 +183,16 @@ class HomeViewModel @Inject constructor(
                 serviceIntent.putExtra("DURATION_SECONDS", durationSeconds)
                 serviceIntent.putExtra("MISSION_NAME", mission.name)
                 serviceIntent.putExtra("IS_TIME_PUNISHMENT", false)
+
+                // LE MANDAMOS EL TIPO DE BLOQUEO
+                serviceIntent.putExtra("BLOCK_TYPE", mission.blockType)
+
+                // SI ES PERSONALIZADO, BUSCAMOS LA LISTA NEGRA EN ROOM Y SE LA MANDAMOS
+                if (mission.blockType != "Dios" && mission.blockType != "Humano") {
+                    val profile = blockProfileDao.getAllProfiles().first().find { it.name == mission.blockType }
+                    val jsonList = profile?.blockedAppsJson ?: "[]"
+                    serviceIntent.putExtra("BLOCK_LIST_JSON", jsonList)
+                }
             }
 
             try {

@@ -26,4 +26,9 @@ interface BlockProfileDao {
 
     @Query("DELETE FROM block_profiles")
     suspend fun deleteAllProfiles()
+
+
+
+    @Query("DELETE FROM block_profiles WHERE name = :name AND userUuid = :userUuid")
+    suspend fun deleteProfileByName(name: String, userUuid: String)
 }

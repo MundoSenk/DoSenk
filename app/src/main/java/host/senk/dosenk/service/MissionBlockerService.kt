@@ -17,6 +17,8 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import host.senk.dosenk.R
 import kotlinx.coroutines.*
 import java.util.TreeMap
@@ -31,12 +33,12 @@ class MissionBlockerService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     private var engineJob: Job? = null
 
-    private var timeLeftSeconds = 0
     private var defaultLauncherPackage: String = ""
-
     private var endTimeRealtime: Long = 0L
-
     private var isTimePunishment = false
+
+    private var blockType: String = "Dios" // Por defecto, bloquea todo
+    private var blackList: Set<String> = emptySet()
 
     override fun onCreate() {
         super.onCreate()
@@ -62,7 +64,6 @@ class MissionBlockerService : Service() {
 
         overlayView.visibility = View.GONE
 
-        // BLINDAJE ANTI-CRASHES POR PERMISOS REVOCADOS
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (android.provider.Settings.canDrawOverlays(this)) {
@@ -71,9 +72,7 @@ class MissionBlockerService : Service() {
             } else {
                 windowManager.addView(overlayView, layoutParams)
             }
-        } catch (e: Exception) {
-            // Si quitaron el permiso a la mala, no crasheamos. El castigo sigue en segundo plano.
-        }
+        } catch (e: Exception) {}
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -86,23 +85,31 @@ class MissionBlockerService : Service() {
 
         try {
             startForeground(2, notification)
-        } catch (e: Exception) {
-            // Si Android se pone payaso y nos niega la notificación, lo ignoramos
-        }
+        } catch (e: Exception) {}
 
-        // ¿Es un castigo por viajar en el tiempo?
         isTimePunishment = intent?.getBooleanExtra("IS_TIME_PUNISHMENT", false) ?: false
+
+        // RECIBIMOS LA ORDEN DEL CEREBRO
+        blockType = intent?.getStringExtra("BLOCK_TYPE") ?: "Dios"
+        val jsonList = intent?.getStringExtra("BLOCK_LIST_JSON") ?: "[]"
+
+        // DESENCRIPTAMOS LA LISTA NEGRA SI NO ES DIOS NI HUMANO
+        if (blockType != "Dios" && blockType != "Humano") {
+            try {
+                val type = object : TypeToken<Set<String>>() {}.type
+                blackList = Gson().fromJson(jsonList, type)
+            } catch (e: Exception) {
+                blackList = emptySet()
+            }
+        }
 
         val btnGiveUp = overlayView.findViewById<Button>(R.id.btnGiveUpReal)
 
         if (isTimePunishment) {
-            // MODO TRAMPOSO: Reloj infinito y botón hacia Ajustes
             endTimeRealtime = Long.MAX_VALUE
-
-            tvTimer.setText("TRAMPA")
-            tvMissionName.setText(intent?.getStringExtra("MISSION_NAME") ?: "¡TRAMPA DETECTADA!")
-
-            btnGiveUp.setText("Ir a Ajustes")
+            tvTimer.text = "TRAMPA"
+            tvMissionName.text = intent?.getStringExtra("MISSION_NAME") ?: "¡TRAMPA DETECTADA!"
+            btnGiveUp.text = "Ir a Ajustes"
             btnGiveUp.setOnClickListener {
                 val settingsIntent = Intent(android.provider.Settings.ACTION_DATE_SETTINGS).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -110,14 +117,11 @@ class MissionBlockerService : Service() {
                 startActivity(settingsIntent)
             }
         } else {
-            // MODO NORMAL: Castigo de misión
             val durationSeconds = intent?.getIntExtra("DURATION_SECONDS", 60) ?: 60
             endTimeRealtime = android.os.SystemClock.elapsedRealtime() + (durationSeconds * 1000L)
-
             val missionName = intent?.getStringExtra("MISSION_NAME") ?: "Castigo Activo"
-            tvMissionName.setText("¿Listo para:\n$missionName?")
-
-            btnGiveUp.setText("¡Me rindo!")
+            tvMissionName.text = "¿Listo para:\n$missionName?"
+            btnGiveUp.text = "Perdóname"
             btnGiveUp.setOnClickListener {
                 overlayView.visibility = View.GONE
                 val appIntent = Intent(this, host.senk.dosenk.ui.MainActivity::class.java).apply {
@@ -128,7 +132,6 @@ class MissionBlockerService : Service() {
         }
 
         startEngine()
-
         return START_STICKY
     }
 
@@ -141,18 +144,15 @@ class MissionBlockerService : Service() {
                     break
                 }
 
-                // Solo actualizamos los números si NO es castigo de trampa
                 if (!isTimePunishment) {
                     val remainingSeconds = (timeLeftMillis / 1000).toInt()
                     val hours = remainingSeconds / 3600
                     val minutes = (remainingSeconds % 3600) / 60
                     val seconds = remainingSeconds % 60
-
-                    tvTimer.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds))
+                    tvTimer.text = String.format("%02d:%02d:%02d", hours, minutes, seconds)
                 }
 
                 checkForegroundApp()
-
                 delay(1000)
             }
 
@@ -161,16 +161,33 @@ class MissionBlockerService : Service() {
         }
     }
 
+    // EL CEREBRO DEL FRANCOTIRADOR
     private fun checkForegroundApp() {
         val currentApp = getForegroundAppPackage()
+
+        // Las intocables
         val isLauncher = currentApp == defaultLauncherPackage
         val isMyApp = currentApp == packageName
         val isPhone = currentApp.contains("dialer") || currentApp.contains("telecom") || currentApp.contains("incallui")
-
-        // PERMITIMOS QUE ABRAN AJUSTES PARA QUE PUEDAN ARREGLAR LA HORA
         val isSettings = currentApp.contains("settings") || currentApp == "com.android.settings"
 
-        if (!isLauncher && !isMyApp && !isPhone && !isSettings && currentApp.isNotEmpty()) {
+        if (currentApp.isEmpty() || isLauncher || isMyApp || isPhone || isSettings) {
+            // Estás a salvo. Ocultamos el bloqueo.
+            if (overlayView.visibility == View.VISIBLE) overlayView.visibility = View.GONE
+            return
+        }
+
+        // Lógica de Castigo
+        val shouldBlock = when (blockType) {
+            "Dios" -> true // Bloquea todo lo que no sea lo de arriba
+            "Humano", "Adicto" -> false
+            else -> {
+                // ES UN BLOQUEO PERSONALIZADO. ¿La app actual está en la lista negra?
+                blackList.contains(currentApp)
+            }
+        }
+
+        if (shouldBlock) {
             if (overlayView.visibility == View.GONE) overlayView.visibility = View.VISIBLE
         } else {
             if (overlayView.visibility == View.VISIBLE) overlayView.visibility = View.GONE

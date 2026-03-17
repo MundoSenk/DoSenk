@@ -269,17 +269,17 @@ class AuthRepository @Inject constructor(
             val uuid = userPreferences.userToken.first()
             if (uuid.isEmpty()) return false
 
-            // 1. Guardado ultra-rápido local (DataStore)
+            //  Guardado ultra-rápido local (DataStore)
             userPreferences.saveSetupFinished(stage)
 
-            // 2. Disparo a la nube (MySQL)
+            // Disparo a la nube (MySQL)
             val request = UpdateStageRequest(uuid, stage)
             val response = api.updateSetupStage(request)
 
             response.isSuccessful && response.body()?.success == true
         } catch (e: Exception) {
             e.printStackTrace()
-            false // Falló la nube (quizá no hay internet), pero ya se guardó localmente.
+            false
         }
     }
 }

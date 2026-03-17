@@ -1,6 +1,6 @@
 package host.senk.dosenk.data.remote.model
 
-// 🚨 1. Regresamos rankName a String
+// 🚨  Regresamos rankName a String
 data class ApiResponse(
     val success: Boolean,
     val message: String?,
@@ -15,7 +15,7 @@ data class ApiResponse(
     val dailyWastedHours: Float?,
     val rankName: String?,
 
-    // 🚨 2. Las listas que nos manda PHP
+    // Las listas que nos manda PHP
     val schedules: List<ScheduleDto>?,
     val blockProfiles: List<BlockProfileDto>?
 )
@@ -30,3 +30,11 @@ data class BlockProfileDto(
     val name: String,
     val blockedAppsJson: String
 )
+
+
+data class SyncBlocksRequest(
+    val uuid: String,
+    val blocks: List<BlockProfileDto>
+)
+
+

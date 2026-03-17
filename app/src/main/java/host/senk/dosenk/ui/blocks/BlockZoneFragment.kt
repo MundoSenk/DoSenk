@@ -23,6 +23,9 @@ import host.senk.dosenk.ui.nav.AddMenuBottomSheet
 import host.senk.dosenk.util.applyDoSenkGradient
 import kotlinx.coroutines.launch
 
+
+import kotlinx.coroutines.flow.first
+
 @AndroidEntryPoint
 class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
 
@@ -65,6 +68,8 @@ class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
         }
 
 
+
+
         loadCustomBlocks(view, isSelectionMode)
     }
 
@@ -103,13 +108,25 @@ class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
                     if (isSelectionMode) {
                         btnChoose.text = "¡ESCÓGELO!"
                         btnChoose.setOnClickListener { v ->
-                            // Pasamos el nombre del perfil ("Focus") para que se guarde en la misión
                             saveAndNavigate(profile.name, v)
                         }
                     } else {
-                        btnChoose.text = "MUÉSTRAMELO"
+                        btnChoose.text = "EDITAR"
                         btnChoose.setOnClickListener {
-                            Toast.makeText(requireContext(), "Demostración: ${profile.name} activado", Toast.LENGTH_SHORT).show()
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                // Escudo anti-trampas
+                                val activeMission = viewModel.missionDao.getActiveMission().first()
+                                if (activeMission != null && activeMission.blockType == profile.name) {
+                                    Toast.makeText(requireContext(), "¡Tramposo! No puedes editar un bloqueo mientras cumples castigo con él.", Toast.LENGTH_LONG).show()
+                                } else {
+                                    // 🚨 ¡AQUÍ ESTABA EL ERROR! Asegúrate de que el Bundle empaca los datos exactos:
+                                    val bundle = Bundle().apply {
+                                        putString("profileName", profile.name)
+                                        putString("profileAppsJson", profile.blockedAppsJson)
+                                    }
+                                    findNavController().navigate(R.id.action_BlockZone_to_editBlock, bundle)
+                                }
+                            }
                         }
                     }
 

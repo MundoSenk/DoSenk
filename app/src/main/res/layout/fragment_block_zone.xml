@@ -130,7 +130,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Humano"
+                            android:text="Adicto"
                             android:textColor="@color/white"
                             android:fontFamily="@font/anton_regular"
                             android:textSize="26sp"/>
@@ -159,7 +159,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="NO MÁS DE 1HR POR RED SOCIAL"
+                            android:text="LIBERTAD TOTAL.. patético"
                             android:textAlignment="center"
                             android:textColor="#4A4A8A"
                             android:fontFamily="@font/poppins_bold"

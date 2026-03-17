@@ -63,7 +63,7 @@
                 android:layout_height="30dp"
                 android:gravity="center"
                 android:paddingHorizontal="24dp"
-                android:background="@drawable/bg_capsule_white"
+                android:background="?attr/doSkinButton"
                 android:text="¡ESCOGELO!"
                 android:textColor="@color/white"
                 android:fontFamily="@font/poppins_bold"

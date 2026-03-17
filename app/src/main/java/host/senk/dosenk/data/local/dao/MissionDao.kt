@@ -35,4 +35,8 @@ interface MissionDao {
 
     @Query("SELECT * FROM missions WHERE uuid = :uuid LIMIT 1")
     suspend fun getMissionByUuid(uuid: String): MissionEntity?
+
+
+    @Query("UPDATE missions SET blockType = :newBlockName WHERE blockType = :oldBlockName AND status = 'pending'")
+    suspend fun reassignMissions(oldBlockName: String, newBlockName: String)
 }
