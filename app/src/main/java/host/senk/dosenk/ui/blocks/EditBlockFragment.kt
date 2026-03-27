@@ -132,7 +132,6 @@ class EditBlockFragment : Fragment(R.layout.fragment_edit_block) {
 
         // 6. BORRADO
         btnDeleteBlock?.setOnClickListener {
-            // POP-UP 1: LA ADVERTENCIA SÁDICA
             androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("¡ALERTA MÁXIMA!")
                 .setMessage("Si borras este bloqueo, TODAS LAS MISIONES que lo tengan asignado se verán afectadas. >Do te recomienda que mejor edites sus restricciones.")
@@ -174,7 +173,7 @@ class EditBlockFragment : Fragment(R.layout.fragment_edit_block) {
                 .show()
         }
 
-        // 7. BOTÓN ATRÁS
+        // boton de atras
         view.findViewById<View>(R.id.header)?.findViewById<View>(R.id.btnBack)?.setOnClickListener {
             findNavController().popBackStack()
         }
