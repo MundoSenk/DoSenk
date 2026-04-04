@@ -132,9 +132,21 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         // INICIALIZAR LA CUADRÍCULA SEMANAL
         rvWeeklyGrid = view.findViewById(R.id.rvWeeklyGrid)
         // GridLayoutManager de 2 columnas para que se vea como en tu diseño
-        rvWeeklyGrid.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
+        rvWeeklyGrid.layoutManager = LinearLayoutManager(requireContext())
 
-        weeklyAdapter = WeeklyAdapter(emptyList()) // Empieza vacío
+
+        weeklyAdapter = WeeklyAdapter(emptyList()) { selectedDayTimestamp ->
+
+            // Le decimos al ViewModel que cargue las misiones de ese día exacto
+            viewModel.loadMissionsForToday(selectedDayTimestamp)
+
+            //  Simulamos un clic en la pestaña "Día" para que la UI regrese solita
+            view.findViewById<TextView>(R.id.tabDay)?.performClick()
+
+            // Opcional: Actualizar el texto del Header para que diga la fecha seleccionada
+            val dateStr = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date(selectedDayTimestamp))
+            view.findViewById<TextView>(R.id.tvCurrentDate)?.text = dateStr
+        }
         rvWeeklyGrid.adapter = weeklyAdapter
 
 

@@ -1,5 +1,8 @@
 package host.senk.dosenk.ui.timeline
 
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,10 +11,12 @@ import androidx.recyclerview.widget.RecyclerView
 import host.senk.dosenk.R
 import host.senk.dosenk.util.applyDoSenkGradient
 
-class WeeklyAdapter(private var items: List<WeeklyCardItem>) : RecyclerView.Adapter<WeeklyAdapter.WeeklyViewHolder>() {
+class WeeklyAdapter(
+    private var items: List<WeeklyCardItem>,
+    private val onDayClick: (Long) -> Unit
+) : RecyclerView.Adapter<WeeklyAdapter.WeeklyViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WeeklyViewHolder {
-        // Asumiendo que crearás un XML llamado item_weekly_card.xml
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_weekly_card, parent, false)
         return WeeklyViewHolder(view)
     }
@@ -19,36 +24,39 @@ class WeeklyAdapter(private var items: List<WeeklyCardItem>) : RecyclerView.Adap
     override fun onBindViewHolder(holder: WeeklyViewHolder, position: Int) {
         val item = items[position]
 
-        // Textos principales
-        holder.tvDayName.text = "${item.dayName} ${item.dateDay}"
+        // TEXTOS PRINCIPALES (HEADER)
+        holder.tvDayName.text = "${item.dayName}, ${item.dayNumber}"
+        holder.tvMonthName.text = item.monthYear
         holder.tvMissionsCount.text = item.totalMissions.toString()
         holder.tvProjectsCount.text = item.totalProjects.toString()
+        holder.tvDayXp.text = item.dayXp.toString()
 
-        //  Aplicar el color del tema
-        holder.tvDayName.setTextColor(getColorFromTheme(holder.itemView, R.attr.doSkinButton))
+        // APLICAR EL COLOR DEL TEMA (GRADIENTES)
 
-        // Pinta los fondos de los números con gradiente
-        holder.layoutMissionGradient.applyDoSenkGradient(cornerRadius = 16f)
-        holder.layoutProjectGradient.applyDoSenkGradient(cornerRadius = 16f)
+        // El Header completo
+        holder.layoutDayHeader.applyDoSenkGradient(cornerRadius = 24f) // Cornej radius alto para matchear la card
 
-        // Pintar las misiones importantes (píldoras)
+        // El número de XP
+        val activeColor = TypedValue()
+        holder.itemView.context.theme.resolveAttribute(R.attr.doSkinButton, activeColor, true)
+        holder.tvDayXp.setTextColor(activeColor.data)
+
+        // PINTAR LAS MISIONES IMPORTANTES (PÍLDORAS TRANSLARENTE CON BORDE DASHED)
         val pillViews = listOf(holder.tvImportant1, holder.tvImportant2, holder.tvImportant3)
         for (i in pillViews.indices) {
             if (i < item.importantMissions.size) {
                 pillViews[i].visibility = View.VISIBLE
                 pillViews[i].text = item.importantMissions[i]
-                // Aplicar fondo a las píldoras
-                pillViews[i].applyDoSenkGradient(cornerRadius = 8f)
+                // Aplicar fondo transparente con borde dashed
+                pillViews[i].applyDoSenkGradient(cornerRadius = 24f)
             } else {
                 pillViews[i].visibility = View.GONE
             }
         }
 
-        // Efecto visual si es HOY (puedes ponerle un borde o algo especial luego)
-        if (item.isToday) {
-            holder.tvDayName.textSize = 22f
-        } else {
-            holder.tvDayName.textSize = 18f
+        //EL CLIC MÁGICO DE NAVEGACIÓN
+        holder.itemView.setOnClickListener {
+            onDayClick(item.timestamp)
         }
     }
 
@@ -59,20 +67,15 @@ class WeeklyAdapter(private var items: List<WeeklyCardItem>) : RecyclerView.Adap
         notifyDataSetChanged()
     }
 
-    // Función auxiliar para sacar el color del tema activo
-    private fun getColorFromTheme(view: View, attrId: Int): Int {
-        val typedValue = android.util.TypedValue()
-        view.context.theme.resolveAttribute(attrId, typedValue, true)
-        return typedValue.data
-    }
-
     inner class WeeklyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvDayName: TextView = view.findViewById(R.id.tvDayName)
+        val tvMonthName: TextView = view.findViewById(R.id.tvMonthName)
+
         val tvMissionsCount: TextView = view.findViewById(R.id.tvMissionsCount)
         val tvProjectsCount: TextView = view.findViewById(R.id.tvProjectsCount)
+        val tvDayXp: TextView = view.findViewById(R.id.tvDayXp)
 
-        val layoutMissionGradient: View = view.findViewById(R.id.layoutMissionGradient)
-        val layoutProjectGradient: View = view.findViewById(R.id.layoutProjectGradient)
+        val layoutDayHeader: View = view.findViewById(R.id.layoutDayHeader)
 
         val tvImportant1: TextView = view.findViewById(R.id.tvImportant1)
         val tvImportant2: TextView = view.findViewById(R.id.tvImportant2)
