@@ -7,5 +7,5 @@ data class WeeklyCardItem(
     val isToday: Boolean,
     val totalMissions: Int,
     val totalProjects: Int,
-    val importantMissions: List<String> 
+    val importantMissions: List<String>
 )

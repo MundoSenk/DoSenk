@@ -8,6 +8,8 @@ import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.local.dao.MissionDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -20,30 +22,89 @@ class TimelineViewModel @Inject constructor(
     private val userPreferences: UserPreferences
 ) : ViewModel() {
 
+    // 🚨 ESTADO DEL DÍA
     private val _timelineItems = MutableStateFlow<List<TimelineItem>>(emptyList())
     val timelineItems: StateFlow<List<TimelineItem>> = _timelineItems
 
-    val currentUserAlias = userPreferences.userAlias.asLiveData()
+    // 🚨 ESTADO DE LA SEMANA (NUEVO)
+    private val _weekOffset = MutableStateFlow(0)
 
+    val currentUserAlias = userPreferences.userAlias.asLiveData()
 
     init {
         loadMissionsForToday()
     }
 
+    // RECIBE EL COMANDO DE LA FLECHA DESDE EL FRAGMENTO
+    fun setWeekOffset(offset: Int) {
+        _weekOffset.value = offset
+    }
+
+    //  Si la DB cambia o el offset cambia, esto se recalcula automático
+    val weeklyItems: Flow<List<WeeklyCardItem>> = combine(
+        missionDao.getAllMissions(),
+        _weekOffset
+    ) { rawMissions, offset ->
+
+        val calendar = Calendar.getInstance()
+        calendar.firstDayOfWeek = Calendar.MONDAY // Forzamos a que la semana inicie en Lunes
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        calendar.add(Calendar.WEEK_OF_YEAR, offset)
+
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+
+        val startOfWeek = calendar.timeInMillis
+        val weekCards = mutableListOf<WeeklyCardItem>()
+        val dayNames = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+
+        // Construimos los 7 días
+        for (i in 0..6) {
+            val dayStart = startOfWeek + (i * 86400000L)
+            val dayEnd = dayStart + 86400000L - 1
+
+            val calDay = Calendar.getInstance().apply { timeInMillis = dayStart }
+            val monthName = calDay.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale("es", "ES"))?.replaceFirstChar { it.uppercase() }
+            val dateDayStr = "${calDay.get(Calendar.DAY_OF_MONTH)} $monthName"
+
+            // Filtramos las misiones que caen en este día exacto
+            val dayMissions = rawMissions.filter { it.executionDate in dayStart..dayEnd }
+
+            val isToday = (Calendar.getInstance().timeInMillis in dayStart..dayEnd)
+
+            // Tomamos las 3 más largas (Más XP)
+            val topMissions = dayMissions
+                .sortedByDescending { it.durationMinutes }
+                .take(3)
+                .map { "${it.durationMinutes} Xp   ${it.name}" } // 1 min = 1 XP según tu diseño
+
+            weekCards.add(
+                WeeklyCardItem(
+                    dayName = dayNames[i],
+                    dateDay = dateDayStr,
+                    isToday = isToday,
+                    totalMissions = dayMissions.size,
+                    totalProjects = 0, // TODO: Cambiar cuando se agregue la entidad Proyecto
+                    importantMissions = topMissions
+                )
+            )
+        }
+        weekCards
+    }
+
     private fun loadMissionsForToday() {
         viewModelScope.launch {
             missionDao.getAllMissions().collect { rawMissions ->
-
-                // Solo trae misiones (De 00:00:00 a 23:59:59)
                 val calendar = Calendar.getInstance()
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
                 val startOfDay = calendar.timeInMillis
-                val endOfDay = startOfDay + 86400000L - 1 // 24 horas menos 1 milisegundo
+                val endOfDay = startOfDay + 86400000L - 1
 
-                // Solo agarramos las que caen en el rango de HOY
                 val todaysMissions = rawMissions.filter {
                     it.executionDate in startOfDay..endOfDay
                 }.sortedBy { it.executionDate }
@@ -53,16 +114,8 @@ class TimelineViewModel @Inject constructor(
 
                 for (i in todaysMissions.indices) {
                     val currentMission = todaysMissions[i]
+                    newTimeline.add(TimelineItem.MissionCard(timeFormat.format(currentMission.executionDate), currentMission))
 
-                    // Agregamos la misión real
-                    newTimeline.add(
-                        TimelineItem.MissionCard(
-                            timeLabel = timeFormat.format(currentMission.executionDate),
-                            mission = currentMission
-                        )
-                    )
-
-                    // Calcular huecos (
                     if (i < todaysMissions.size - 1) {
                         val nextMission = todaysMissions[i + 1]
                         val currentEndTimeMillis = currentMission.executionDate + (currentMission.durationMinutes * 60 * 1000L)
@@ -70,16 +123,10 @@ class TimelineViewModel @Inject constructor(
                         val gapMinutes = (gapMillis / (1000 * 60)).toInt()
 
                         if (gapMinutes > 0) {
-                            newTimeline.add(
-                                TimelineItem.EmptySlot(
-                                    timeLabel = timeFormat.format(currentEndTimeMillis),
-                                    durationMinutes = gapMinutes
-                                )
-                            )
+                            newTimeline.add(TimelineItem.EmptySlot(timeFormat.format(currentEndTimeMillis), gapMinutes))
                         }
                     }
                 }
-
                 _timelineItems.value = newTimeline
             }
         }

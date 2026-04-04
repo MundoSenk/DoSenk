@@ -44,6 +44,8 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
     private var isHeaderExpanded = false
     // Control de navegación semanal (0 = esta semana, -1 = pasada, 1 = próxima)
     private var currentWeekOffset = 0
+    private lateinit var rvWeeklyGrid: RecyclerView
+    private lateinit var weeklyAdapter: WeeklyAdapter
 
 
 
@@ -119,6 +121,31 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         }
 
         setupPinchToZoom()
+
+
+
+
+
+        /////////sEMANALLLL
+
+
+        // INICIALIZAR LA CUADRÍCULA SEMANAL
+        rvWeeklyGrid = view.findViewById(R.id.rvWeeklyGrid)
+        // GridLayoutManager de 2 columnas para que se vea como en tu diseño
+        rvWeeklyGrid.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
+
+        weeklyAdapter = WeeklyAdapter(emptyList()) // Empieza vacío
+        rvWeeklyGrid.adapter = weeklyAdapter
+
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.weeklyItems.collect { weeklyCards ->
+                if (::weeklyAdapter.isInitialized) {
+                    weeklyAdapter.updateData(weeklyCards)
+                }
+            }
+        }
+
     }
 
     private fun setupDashboardToggle(view: View) {
@@ -288,19 +315,18 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         val btnNextWeek = view.findViewById<TextView>(R.id.btnNextWeek)
         val tvWeekRange = view.findViewById<TextView>(R.id.tvWeekRange)
 
-        // Pintamos la semana actual al iniciar
         updateWeekText(tvWeekRange)
 
         btnPrevWeek?.setOnClickListener {
             currentWeekOffset--
             updateWeekText(tvWeekRange)
-            // TODO: En el futuro, aquí le diremos al ViewModel que traiga las misiones de esta semana
+            viewModel.setWeekOffset(currentWeekOffset)
         }
 
         btnNextWeek?.setOnClickListener {
             currentWeekOffset++
             updateWeekText(tvWeekRange)
-            // TODO: En el futuro, aquí le diremos al ViewModel que traiga las misiones de esta semana
+            viewModel.setWeekOffset(currentWeekOffset)
         }
     }
 
