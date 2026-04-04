@@ -23,7 +23,7 @@
         android:layout_width="2dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
-        android:background="#A349A4"
+        android:background="?attr/doSkinButton"
         app:layout_constraintStart_toEndOf="@id/tvStartTime"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
@@ -34,7 +34,7 @@
         android:layout_height="16dp"
         android:layout_marginTop="10dp"
         android:src="@drawable/bg_capsule_white"
-        app:tint="#A349A4"
+        app:tint="?attr/doSkinButton"
         app:layout_constraintStart_toStartOf="@id/timelineLine"
         app:layout_constraintEnd_toEndOf="@id/timelineLine"
         app:layout_constraintTop_toTopOf="parent" />
@@ -69,7 +69,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="2dp"
                 android:text="Misión diaria"
-                android:textColor="#A349A4"
+                android:textColor="?attr/doSkinButton"
                 android:textSize="10sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -85,7 +85,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="2dp"
                 android:text="Bloqueo: Radical"
-                android:textColor="#A349A4"
+                android:textColor="?attr/doSkinButton"
                 android:textSize="10sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -118,7 +118,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="2dp"
                 android:text="Ejecución: 14:30-15:30"
-                android:textColor="#A349A4"
+                android:textColor="?attr/doSkinButton"
                 android:textSize="10sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tvMissionTitle" />

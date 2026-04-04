@@ -45,15 +45,13 @@ class MainActivity : AppCompatActivity() {
 
     // LÓGICA INMERSIVA
     private fun hideSystemUI() {
-        // Le decimos a la ventana que nosotros controlamos el espacio
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
 
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-
-        // Configuración para que las barras aparezcan al deslizar y se oculten solas
         insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-        // Ocultamos barra de estado  y navegación
-        insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        insetsController.hide(WindowInsetsCompat.Type.navigationBars())
+
+        insetsController.show(WindowInsetsCompat.Type.statusBars())
     }
 }

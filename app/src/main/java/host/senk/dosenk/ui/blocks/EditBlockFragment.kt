@@ -136,7 +136,7 @@ class EditBlockFragment : Fragment(R.layout.fragment_edit_block) {
                 .setTitle("¡ALERTA MÁXIMA!")
                 .setMessage("Si borras este bloqueo, TODAS LAS MISIONES que lo tengan asignado se verán afectadas. >Do te recomienda que mejor edites sus restricciones.")
                 .setPositiveButton("¡Tienes razón! Lo editaré") { dialog, _ ->
-                    dialog.dismiss() // Se cierra el popup y se queda a editar
+                    dialog.dismiss()
                 }
                 .setNegativeButton("QUIERO BORRARLO") { _, _ ->
 
@@ -147,10 +147,9 @@ class EditBlockFragment : Fragment(R.layout.fragment_edit_block) {
                         var selectedIndex = 0 // Por defecto apunta a "Dios"
 
                         androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                            //  Usamos solo el Título para que Android no oculte la lista
                             .setTitle("Elige el nuevo castigo para las misiones huérfanas:")
                             .setSingleChoiceItems(blockNamesArray, selectedIndex) { _, which ->
-                                selectedIndex = which // Guardamos la opción que seleccione el usuario
+                                selectedIndex = which
                             }
                             .setPositiveButton("¡Aniquilar y Reasignar!") { _, _ ->
                                 val newTargetBlock = blockNamesArray[selectedIndex]

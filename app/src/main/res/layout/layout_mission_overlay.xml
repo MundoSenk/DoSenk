@@ -70,7 +70,7 @@
                 android:layout_marginTop="32dp"
                 android:backgroundTint="?attr/doSkinButton"
                 android:fontFamily="@font/poppins_bold"
-                android:text="DEJAME!!"
+                android:text="DÉJAME!!"
                 android:textColor="@color/white"
                 android:textSize="18sp"
                 app:cornerRadius="16dp" />

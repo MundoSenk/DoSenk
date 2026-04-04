@@ -16,10 +16,13 @@ import host.senk.dosenk.util.applyDoSenkGradient
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 
-
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.widget.TextView
+import android.widget.Toast
+import android.util.TypedValue
+import android.graphics.Color
+import android.content.res.ColorStateList
 import host.senk.dosenk.ui.nav.AddMenuBottomSheet
 import kotlinx.coroutines.launch
 
@@ -37,23 +40,27 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
     private val MIN_PIXELS = 1.5f // Límite para que no se aplaste hasta desaparecer
     private val MAX_PIXELS = 12f
 
+    // VARIABLE DE ESTADO PARA EL DASHBOARD
+    private var isHeaderExpanded = false
+    // Control de navegación semanal (0 = esta semana, -1 = pasada, 1 = próxima)
+    private var currentWeekOffset = 0
+
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
-
 
         setupInsets(view)
         setupGradients(view)
         setupBackButton()
         setupInteractiveElements(view)
 
-        // NAVEGACIÓN DESDE EL MENÚ INFERIOR
-        view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_timeline)?.setOnClickListener {
-            findNavController().popBackStack()
-        }
+        setupDashboardToggle(view)
+        setupWeekNavigation(view)
 
-        // INICIALIZAR LA LISTA (Con nuestros datos de mentira por ahora)
+
+
+        // INICIALIZAR LA LISTA (Con nuestros datos)
         rvTimeline = view.findViewById(R.id.rvTimeline)
         rvTimeline.layoutManager = LinearLayoutManager(requireContext())
 
@@ -76,11 +83,11 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
 
                         // ¡ES EDITABLE!
                         val bundle = Bundle().apply {
-                            putString("missionId", clickedMission.uuid) // 🚨 Cambio a putString y .uuid
+                            putString("missionId", clickedMission.uuid)
                         }
                         findNavController().navigate(R.id.createMissionFragment, bundle)
                     } else {
-                        android.widget.Toast.makeText(requireContext(), "El pasado pisado, gallo. Esta misión ya no se puede alterar.", android.widget.Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), "El pasado pisado, gallo. Esta misión ya no se puede alterar.", Toast.LENGTH_LONG).show()
                     }
                 }
 
@@ -111,29 +118,97 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
             }
         }
 
-
         setupPinchToZoom()
     }
 
-    //  pintado de gradiantes
+    private fun setupDashboardToggle(view: View) {
+        val layoutHeaderClickable = view.findViewById<View>(R.id.layoutHeaderClickable)
+        val layoutTabs = view.findViewById<View>(R.id.layoutTabs)
+        val layoutSearchBar = view.findViewById<View>(R.id.layoutSearchBar)
+
+        val layoutWeeklyView = view.findViewById<View>(R.id.layoutWeeklyView)
+        val rvTimeline = view.findViewById<View>(R.id.rvTimeline)
+
+        val tabDay = view.findViewById<TextView>(R.id.tabDay)
+        val tabWeek = view.findViewById<TextView>(R.id.tabWeek)
+        val tabMonth = view.findViewById<TextView>(R.id.tabMonth)
+
+        // Extraemos el color activo del Tema
+        val activeColor = TypedValue()
+        requireContext().theme.resolveAttribute(R.attr.doSkinButton, activeColor, true)
+        val inactiveColor = Color.parseColor("#888888")
+
+        // 1. EL CLIC MÁGICO EN EL TÍTULO
+        layoutHeaderClickable?.setOnClickListener {
+            isHeaderExpanded = !isHeaderExpanded
+
+            if (isHeaderExpanded) {
+                // EXPANDIR: Mostramos los botones, escondemos el buscador
+                layoutTabs?.visibility = View.VISIBLE
+                layoutSearchBar?.visibility = View.GONE
+
+                // Pasamos automáticamente a la vista semanal como demostración
+                tabWeek?.performClick()
+            } else {
+                // COLAPSAR: Volvems al modo Día normal
+                layoutTabs?.visibility = View.GONE
+                layoutSearchBar?.visibility = View.VISIBLE
+
+                rvTimeline?.visibility = View.VISIBLE
+                layoutWeeklyView?.visibility = View.GONE
+            }
+        }
+
+        // 2. LÓGICA DE LOS TABS (Para cambiar los colores y las vistas)
+        tabDay?.setOnClickListener {
+            tabDay.backgroundTintList = ColorStateList.valueOf(activeColor.data)
+            tabWeek?.backgroundTintList = ColorStateList.valueOf(inactiveColor)
+            tabMonth?.backgroundTintList = ColorStateList.valueOf(inactiveColor)
+
+            // Mostramos lista diaria, ocultamos semanal
+            rvTimeline?.visibility = View.VISIBLE
+            layoutWeeklyView?.visibility = View.GONE
+
+            // Como elegimos Día, mejor colapsamos el menú para que se vea el buscador de nuevo
+            isHeaderExpanded = false
+            layoutTabs?.visibility = View.GONE
+            layoutSearchBar?.visibility = View.VISIBLE
+        }
+
+        tabWeek?.setOnClickListener {
+            tabWeek.backgroundTintList = ColorStateList.valueOf(activeColor.data)
+            tabDay?.backgroundTintList = ColorStateList.valueOf(inactiveColor)
+            tabMonth?.backgroundTintList = ColorStateList.valueOf(inactiveColor)
+
+            // Mostramos cuadrícula semanal, ocultamos diaria
+            layoutWeeklyView?.visibility = View.VISIBLE
+            rvTimeline?.visibility = View.GONE
+            layoutSearchBar?.visibility = View.GONE
+        }
+
+        tabMonth?.setOnClickListener {
+            tabMonth.backgroundTintList = ColorStateList.valueOf(activeColor.data)
+            tabDay?.backgroundTintList = ColorStateList.valueOf(inactiveColor)
+            tabWeek?.backgroundTintList = ColorStateList.valueOf(inactiveColor)
+
+            Toast.makeText(requireContext(), "Vista Mensual Próximamente", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // PINTADO DE GRADIENTES
     private fun setupGradients(view: View) {
-        // Pintamos el logo de arriba
         view.findViewById<View>(R.id.header)?.findViewById<View>(R.id.layoutLogoGradient)?.applyDoSenkGradient(cornerRadius = 12f)
-        // Pintamos tu nueva caja de filtros
-        view.findViewById<View>(R.id.cardFilter)?.findViewById<View>(R.id.layoutFilterGradient)?.applyDoSenkGradient(cornerRadius = 16f)
-        // Pintamos la barra de abajo
+        view.findViewById<View>(R.id.layoutFilterGradient)?.applyDoSenkGradient(cornerRadius = 16f)
         view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.layoutBottomGradient)?.applyDoSenkGradient()
     }
 
-    //  RESPETAR LA BARRA DE ESTADO Y GESTOS
+    // RESPETAR LA BARRA DE ESTADO Y GESTOS
     private fun setupInsets(view: View) {
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(top = insets.top, bottom = insets.bottom)
             WindowInsetsCompat.CONSUMED
         }
-
-
     }
 
     // FORZAR EL COMPORTAMIENTO DEL BOTÓN ATRÁS
@@ -143,44 +218,30 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         }
     }
 
-
     ////////// PINCH - TO - ZOOM
     private fun setupPinchToZoom() {
-        // Configuramos el cerebro matemático que calcula qué tanto separas los dedos
         scaleGestureDetector = ScaleGestureDetector(requireContext(), object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
             override fun onScale(detector: ScaleGestureDetector): Boolean {
-                // Multiplicamos la escala actual por la fuerza del pellizco
                 currentPixelsPerMinute *= detector.scaleFactor
-
-                // Limitamos el valor para que no se rompa la UI (CoerceIn es magia de Kotlin)
                 currentPixelsPerMinute = currentPixelsPerMinute.coerceIn(MIN_PIXELS, MAX_PIXELS)
-
-                // Le avisamos a tu Adapter que redibuje todo
                 adapter.updateScale(currentPixelsPerMinute)
                 return true
             }
         })
 
-        //  Conectamos el cerebro al RecyclerView
         rvTimeline.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                // Le pasamos la información del toque al sensor de pellizcos
                 scaleGestureDetector.onTouchEvent(e)
-
-                //  TRUCO MAESTRO: Si hay más de 1 dedo, retornamos TRUE.
                 return e.pointerCount > 1
             }
 
             override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
-                // Si interceptamos el evento (2 dedos), seguimos mandándole la info al sensor
                 scaleGestureDetector.onTouchEvent(e)
             }
         })
     }
 
-
     private fun setupInteractiveElements(view: View) {
-        // El botón de agregar (+)
         val fabAdd = view.findViewById<View>(R.id.fabAddContainer)
 
         fabAdd.setOnClickListener {
@@ -192,7 +253,6 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
             tvUser.text = "¿A trabajar, @${alias}?"
         }
 
-
         val navBlocks = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_blocks)
 
         view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_home)?.setOnClickListener {
@@ -200,10 +260,73 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
         }
 
         navBlocks?.setOnClickListener {
-            // Viaje al block
             findNavController().navigate(R.id.action_TimeLime_to_BlockZone)
         }
 
+        view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_timeline)?.setOnClickListener {
+            // Regresamos o hacemos popBackStack
+            findNavController().popBackStack()
+        }
+    }
+
+
+
+
+
+
+
+
+    ///////////////CALCULO DE SEMANAS!!!!!!!!!!!
+
+
+
+
+
+
+    private fun setupWeekNavigation(view: View) {
+        val btnPrevWeek = view.findViewById<TextView>(R.id.btnPrevWeek)
+        val btnNextWeek = view.findViewById<TextView>(R.id.btnNextWeek)
+        val tvWeekRange = view.findViewById<TextView>(R.id.tvWeekRange)
+
+        // Pintamos la semana actual al iniciar
+        updateWeekText(tvWeekRange)
+
+        btnPrevWeek?.setOnClickListener {
+            currentWeekOffset--
+            updateWeekText(tvWeekRange)
+            // TODO: En el futuro, aquí le diremos al ViewModel que traiga las misiones de esta semana
+        }
+
+        btnNextWeek?.setOnClickListener {
+            currentWeekOffset++
+            updateWeekText(tvWeekRange)
+            // TODO: En el futuro, aquí le diremos al ViewModel que traiga las misiones de esta semana
+        }
+    }
+
+    private fun updateWeekText(tvWeekRange: TextView?) {
+        val calendar = java.util.Calendar.getInstance()
+
+        // Nos movemos a la semana que el usuario eligió
+        calendar.add(java.util.Calendar.WEEK_OF_YEAR, currentWeekOffset)
+
+        // Calculamos el LUNES de esa semana
+        calendar.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+        val startDay = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        val startMonth = calendar.getDisplayName(java.util.Calendar.MONTH, java.util.Calendar.SHORT, java.util.Locale("es", "ES"))?.replaceFirstChar { it.uppercase() }
+
+        // Calculamos el DOMINGO de esa semana
+        calendar.add(java.util.Calendar.DAY_OF_WEEK, 6)
+        val endDay = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        val endMonth = calendar.getDisplayName(java.util.Calendar.MONTH, java.util.Calendar.SHORT, java.util.Locale("es", "ES"))?.replaceFirstChar { it.uppercase() }
+        val year = calendar.get(java.util.Calendar.YEAR)
+
+        // Mostramos el texto dinámico. Ej: "5 al 11 de Abr, 2026" o "28 Mar al 3 Abr, 2026"
+        if (startMonth == endMonth) {
+            tvWeekRange?.text = "$startDay al $endDay de $startMonth, $year"
+        } else {
+            tvWeekRange?.text = "$startDay $startMonth al $endDay $endMonth, $year"
+        }
     }
 
 
