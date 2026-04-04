@@ -14,7 +14,8 @@ import host.senk.dosenk.util.applyDoSenkGradient
 class TimelineAdapter(
     private var items: List<TimelineItem>,
     private var pixelsPerMinute: Float = 4f,
-    private val onMissionClick: (MissionEntity) -> Unit
+    private val onMissionClick: (MissionEntity) -> Unit,
+    private val onAddClick: () -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -86,6 +87,10 @@ class TimelineAdapter(
         } else if (holder is EmptyViewHolder && item is TimelineItem.EmptySlot) {
             holder.tvTime.text = item.timeLabel
 
+            holder.btnQuickAdd.setOnClickListener {
+                onAddClick()
+            }
+
             val heightInPixels = (item.durationMinutes * pixelMultiplier).toInt()
             val layoutParams = holder.cardEmpty.layoutParams
             layoutParams.height = heightInPixels
@@ -118,5 +123,6 @@ class TimelineAdapter(
     inner class EmptyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvTime: TextView = view.findViewById(R.id.tvStartTime)
         val cardEmpty: View = view.findViewById(R.id.cardEmptySlot)
+        val btnQuickAdd: TextView = view.findViewById(R.id.btnQuickAdd)
     }
 }

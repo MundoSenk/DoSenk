@@ -31,6 +31,14 @@ class WeeklyAdapter(
         holder.tvProjectsCount.text = item.totalProjects.toString()
         holder.tvDayXp.text = item.dayXp.toString()
 
+
+
+        if (item.isToday) {
+            holder.tvDayName.text = "¡HOY! ${item.dayName}"
+        } else {
+            holder.tvDayName.text = "${item.dayName}, ${item.dayNumber}"
+        }
+
         // APLICAR EL COLOR DEL TEMA (GRADIENTES)
 
         // El Header completo

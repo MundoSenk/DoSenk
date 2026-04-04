@@ -124,18 +124,23 @@ class TimelineViewModel @Inject constructor(
                 val newTimeline = mutableListOf<TimelineItem>()
                 val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-                for (i in todaysMissions.indices) {
-                    val currentMission = todaysMissions[i]
-                    newTimeline.add(TimelineItem.MissionCard(timeFormat.format(currentMission.executionDate), currentMission))
+                if (todaysMissions.isEmpty()) {
+                    newTimeline.add(TimelineItem.EmptySlot("08:00", 240))
+                } else {
+                    // El ciclo normal que ya tenías
+                    for (i in todaysMissions.indices) {
+                        val currentMission = todaysMissions[i]
+                        newTimeline.add(TimelineItem.MissionCard(timeFormat.format(currentMission.executionDate), currentMission))
 
-                    if (i < todaysMissions.size - 1) {
-                        val nextMission = todaysMissions[i + 1]
-                        val currentEndTimeMillis = currentMission.executionDate + (currentMission.durationMinutes * 60 * 1000L)
-                        val gapMillis = nextMission.executionDate - currentEndTimeMillis
-                        val gapMinutes = (gapMillis / (1000 * 60)).toInt()
+                        if (i < todaysMissions.size - 1) {
+                            val nextMission = todaysMissions[i + 1]
+                            val currentEndTimeMillis = currentMission.executionDate + (currentMission.durationMinutes * 60 * 1000L)
+                            val gapMillis = nextMission.executionDate - currentEndTimeMillis
+                            val gapMinutes = (gapMillis / (1000 * 60)).toInt()
 
-                        if (gapMinutes > 0) {
-                            newTimeline.add(TimelineItem.EmptySlot(timeFormat.format(currentEndTimeMillis), gapMinutes))
+                            if (gapMinutes > 0) {
+                                newTimeline.add(TimelineItem.EmptySlot(timeFormat.format(currentEndTimeMillis), gapMinutes))
+                            }
                         }
                     }
                 }
