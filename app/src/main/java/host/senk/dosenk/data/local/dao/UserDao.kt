@@ -42,5 +42,8 @@ interface UserDao {
     @Query("SELECT * FROM users LIMIT 1")
     fun getActiveUser(): kotlinx.coroutines.flow.Flow<UserEntity?>
 
+    @Query("SELECT * FROM users LIMIT 1")
+    suspend fun getUserFast(): UserEntity?
+
 
 }

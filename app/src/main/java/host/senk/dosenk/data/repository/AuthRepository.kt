@@ -101,7 +101,9 @@ class AuthRepository @Inject constructor(
                     themeColor = data.themeColor ?: "purple",
                     setupFinished = data.setupFinished ?: 0,
                     dailyWastedHours = data.dailyWastedHours ?: 0f,
-                    rankName = data.rankName ?: "Desconocido"
+                    rankName = data.rankName ?: "Desconocido",
+                    currentXp = data.currentXp ?: 0,
+                    streakDays = data.streakDays ?: 1
                 )
                 userDao.insertUser(loggedInUser)
 
@@ -211,10 +213,16 @@ class AuthRepository @Inject constructor(
             if (response.isSuccessful && response.body()?.success == true) {
                 val currentUser = userDao.getUserByEmailOrUsername(usernameAlias)
                 if (currentUser != null) {
+
+                    // LEEMOS LA XP DEL RANGO DIRECTO DE TU CLASE LOCAL
+                    val startingXp = host.senk.dosenk.util.DoRank.entries.find { it.title == rankName }?.threshold ?: 0
+
+                    // LE INYECTAMOS LA XP AL USUARIO LOCAL
                     val updatedUser = currentUser.copy(
                         rankName = rankName,
                         dailyWastedHours = dailyHours,
-                        setupFinished = 2
+                        setupFinished = 2,
+                        currentXp = startingXp
                     )
                     userDao.updateUser(updatedUser)
                 }

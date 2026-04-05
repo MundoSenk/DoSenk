@@ -71,10 +71,10 @@ class TutorialConclusionFragment : Fragment(R.layout.fragment_tutorial_conclusio
 
             // Determinamos qué tema eligió según el botón que tocó
             val (chosenThemeResId, themeNameStr) = when(v.id) {
-                R.id.btnThemeTeal -> Pair(R.style.Theme_DoSenk_Teal, "Teal") // Asegúrate de que los nombres de los themes coincidan con los de tu app
-                R.id.btnThemeRed -> Pair(R.style.Theme_DoSenk_Red, "Red")
-                R.id.btnThemePurple -> Pair(R.style.Theme_DoSenk_Purple, "Purple")
-                else -> Pair(R.style.Theme_DoSenk_Teal, "Teal")
+                R.id.btnThemeTeal -> Pair(R.style.Theme_DoSenk_Teal, "teal")
+                R.id.btnThemeRed -> Pair(R.style.Theme_DoSenk_Red, "red")
+                R.id.btnThemePurple -> Pair(R.style.Theme_DoSenk_Purple, "purple")
+                else -> Pair(R.style.Theme_DoSenk_Teal, "teal")
             }
 
             // LE CAMBIAMOS EL TEMA A LA ACTIVIDAD EN CALIENTE

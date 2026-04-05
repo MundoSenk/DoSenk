@@ -141,6 +141,20 @@ class MissionBlockerService : Service() {
                 val timeLeftMillis = endTimeRealtime - android.os.SystemClock.elapsedRealtime()
 
                 if (timeLeftMillis <= 0) {
+                    //  Quitamos la pantalla negra
+                    if (::overlayView.isInitialized) {
+                        overlayView.visibility = View.GONE
+                    }
+
+                    // Abrimos la app automáticamente con un "Aviso de Victoria"
+                    val victoryIntent = Intent(this@MissionBlockerService, host.senk.dosenk.ui.MainActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        putExtra("MISSION_VICTORY", true) // El aviso secreto
+                    }
+                    startActivity(victoryIntent)
+
+                    //  Apagamos el servicio
+                    stopSelf()
                     break
                 }
 

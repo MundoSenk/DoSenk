@@ -56,6 +56,7 @@ class HomeViewModel @Inject constructor(
     init {
         loadUserRank()
         checkCurrentMissions()
+        checkAndUpdateDailyStreak()
     }
 
     private fun loadUserRank() {
@@ -65,6 +66,58 @@ class HomeViewModel @Inject constructor(
             if (userEntity != null) {
                 _realRankName.value = userEntity.rankName
             }
+        }
+    }
+
+
+
+    /////Racha de do
+
+    fun checkAndUpdateDailyStreak() {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Asumiendo que en tu UserDao tienes la función getActiveUser()
+            val user = userDao.getActiveUser().first() ?: return@launch
+
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            val todayStr = sdf.format(java.util.Date())
+
+            // Si ya revisamos la racha hoy, no hacemos nada
+            if (user.lastLoginDate == todayStr) {
+                return@launch
+            }
+
+            var newStreak = user.streakDays
+
+            if (user.lastLoginDate.isNotEmpty()) {
+                try {
+                    val lastDate = sdf.parse(user.lastLoginDate)
+                    val todayDate = sdf.parse(todayStr)
+
+                    // Calculamos la diferencia en milisegundos y la pasamos a días
+                    val diffMillis = todayDate.time - lastDate.time
+                    val diffDays = diffMillis / (1000 * 60 * 60 * 24)
+
+                    when {
+                        diffDays == 1L -> newStreak += 1 // Entró ayer, ¡felicidades! Suma 1.
+                        diffDays > 1L -> newStreak = 1   // Perdió un día, racha rota.
+                        else -> {} // Caso extraño (viajes en el tiempo), no hacemos nada
+                    }
+                } catch (e: Exception) {
+                    newStreak = 1
+                }
+            } else {
+                newStreak = 1
+            }
+
+            // Guardamos la nueva racha y la fecha de hoy en Room
+            val updatedUser = user.copy(
+                streakDays = newStreak,
+                lastLoginDate = todayStr
+            )
+            userDao.updateUser(updatedUser)
+
+            // TODO  lanzar una petición a Retrofit
+
         }
     }
 

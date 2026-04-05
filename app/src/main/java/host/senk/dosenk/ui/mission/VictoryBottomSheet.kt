@@ -20,9 +20,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.data.local.dao.UserDao
 import host.senk.dosenk.util.DoRank
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import kotlinx.coroutines.flow.first
 
 @AndroidEntryPoint
 class VictoryBottomSheet : BottomSheetDialogFragment() {
@@ -46,10 +47,10 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
         (dialog as? BottomSheetDialog)?.behavior?.state = BottomSheetBehavior.STATE_EXPANDED
 
         // Extraer los XP del bundle
-        baseXP = arguments?.getInt("baseXP") ?: 45
-        streakXP = arguments?.getInt("streakXP") ?: 5
-        multiplier = arguments?.getDouble("multiplier") ?: 5.0
-        earnedXP = arguments?.getInt("totalXP") ?: 250
+        baseXP = arguments?.getInt("baseXP") ?: 0
+        streakXP = arguments?.getInt("streakXP") ?: 0
+        multiplier = arguments?.getDouble("multiplier") ?: 1.0
+        earnedXP = arguments?.getInt("totalXP") ?: 0
 
         val tvBaseXp = view.findViewById<TextView>(R.id.tvBaseXp)
         val tvStreakXp = view.findViewById<TextView>(R.id.tvStreakXp)
@@ -67,44 +68,70 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
         btnClaimXp.isEnabled = false
         btnClaimXp.alpha = 0.5f
 
+        //  ANIMAMOS EL NÚMERO TOTAL DE INMEDIATO (No depende de la BD)
+        val numberAnimator = ValueAnimator.ofInt(0, earnedXP)
+        numberAnimator.duration = 1500
+        numberAnimator.addUpdateListener { anim ->
+            tvTotalEarned.text = "${anim.animatedValue} XP"
+        }
+        numberAnimator.start()
+
+        // LECTURA DE BD EN SEGUNDO PLANO (A prueba de balas)
         viewLifecycleOwner.lifecycleScope.launch {
-            // LEEMOS AL USUARIO DE FORMA SEGURA 
-            val currentUser = userDao.getActiveUser().first() ?: return@launch
+            try {
+                // Buscamos al usuario en un hilo que no congela la pantalla (IO)
+                val currentUser = withContext(Dispatchers.IO) {
+                    userDao.getUserFast()
+                }
 
-            val oldTotalXp = currentUser.currentXp
-            val newTotalXp = oldTotalXp + earnedXP
+                if (currentUser != null) {
+                    val oldTotalXp = currentUser.currentXp
+                    val newTotalXp = oldTotalXp + earnedXP
 
-            // Animar el número total
-            val numberAnimator = ValueAnimator.ofInt(0, earnedXP)
-            numberAnimator.duration = 1500
-            numberAnimator.addUpdateListener { anim ->
-                tvTotalEarned.text = "${anim.animatedValue} XP"
-            }
-            numberAnimator.start()
+                    // Hacemos la coreografía de la barra en el hilo principal (Main)
+                    withContext(Dispatchers.Main) {
+                        animateProgressBarChoreography(
+                            oldXp = oldTotalXp,
+                            targetXp = newTotalXp,
+                            pbLevelUp = pbLevelUp,
+                            tvCurrentRank = tvCurrentRank,
+                            tvProgressText = tvProgressText,
+                            onComplete = {
+                                // Al terminar la animación, guardamos el nuevo progreso
+                                val finalRank = DoRank.getRankByXp(newTotalXp)
+                                val updatedUser = currentUser.copy(
+                                    currentXp = newTotalXp,
+                                    rankName = finalRank.title
+                                )
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    userDao.updateUser(updatedUser)
+                                }
 
-            animateProgressBarChoreography(
-                oldXp = oldTotalXp,
-                targetXp = newTotalXp,
-                pbLevelUp = pbLevelUp,
-                tvCurrentRank = tvCurrentRank,
-                tvProgressText = tvProgressText,
-                onComplete = {
-                    val finalRank = DoRank.getRankByXp(newTotalXp)
-                    val updatedUser = currentUser.copy(
-                        currentXp = newTotalXp,
-                        rankName = finalRank.title
-                    )
-                    lifecycleScope.launch { userDao.updateUser(updatedUser) }
-
+                                // Encendemos el botón
+                                btnClaimXp.isEnabled = true
+                                btnClaimXp.alpha = 1.0f
+                            }
+                        )
+                    }
+                } else {
+                    // Si el usuario es nulo por alguna razón, no lo dejamos atrapado
+                    withContext(Dispatchers.Main) {
+                        btnClaimXp.isEnabled = true
+                        btnClaimXp.alpha = 1.0f
+                    }
+                }
+            } catch (e: Exception) {
+                // Si la base de datos explota, encendemos el botón de todos modos
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
                     btnClaimXp.isEnabled = true
                     btnClaimXp.alpha = 1.0f
                 }
-            )
+            }
         }
 
         btnClaimXp.setOnClickListener {
             dismiss()
-            // Vuelve al inicio
         }
     }
 
@@ -175,7 +202,6 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
             pbLevelUp.progress = percent
         }
     }
-
 
     private fun flashGold(pb: ProgressBar, onFlashComplete: () -> Unit) {
         val colorAnim = ValueAnimator.ofObject(ArgbEvaluator(), Color.parseColor("#00C853"), Color.parseColor("#FFD700"), Color.parseColor("#00C853"))

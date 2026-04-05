@@ -17,7 +17,9 @@ data class ApiResponse(
 
     // Las listas que nos manda PHP
     val schedules: List<ScheduleDto>?,
-    val blockProfiles: List<BlockProfileDto>?
+    val blockProfiles: List<BlockProfileDto>?,
+    val currentXp: Int?,
+    val streakDays: Int?
 )
 
 // Moldes chiquitos para las listas
