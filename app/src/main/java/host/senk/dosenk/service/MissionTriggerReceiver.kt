@@ -77,8 +77,10 @@ class MissionTriggerReceiver : BroadcastReceiver() {
         // Actualizamos la base de datos
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val mission = missionDao.getNextPendingMission().firstOrNull()
-                if (mission != null && mission.name == missionName) {
+
+                val mission = missionDao.getPendingMissionByNameFast(missionName)
+
+                if (mission != null) {
                     val updatedMission = mission.copy(
                         status = "active",
                         executionDate = System.currentTimeMillis()

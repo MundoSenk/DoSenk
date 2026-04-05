@@ -33,6 +33,7 @@ class UserPreferences @Inject constructor(
         val SETUP_STAGE = intPreferencesKey("setup_stage")
 
         val IS_EMERGENCY_ACTIVE = booleanPreferencesKey("is_emergency_active") //Detectar el modo activado
+        val START_DATE_MS = androidx.datastore.preferences.core.longPreferencesKey("start_date_ms")
 
     }
 
@@ -98,4 +99,12 @@ class UserPreferences @Inject constructor(
         .map { it[IS_EMERGENCY_ACTIVE] ?: false }
 
 
+    // --- GUARDAR FECHA DE INICIO ---
+    suspend fun saveStartDate(timeMs: Long) {
+        context.dataStore.edit { it[START_DATE_MS] = timeMs }
+    }
+
+    // --- LEER FECHA DE INICIO ---
+    val startDateMs: Flow<Long> = context.dataStore.data
+        .map { it[START_DATE_MS] ?: 0L }
 }

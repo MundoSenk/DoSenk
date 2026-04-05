@@ -20,11 +20,13 @@ import javax.inject.Inject
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import dagger.hilt.android.qualifiers.ApplicationContext //
+import dagger.hilt.android.qualifiers.ApplicationContext
 import host.senk.dosenk.service.MissionBlockerService
+import host.senk.dosenk.data.local.dao.BlockProfileDao
+import kotlinx.coroutines.flow.map
 
 
-import host.senk.dosenk.data.local.dao.BlockProfileDao //
+import host.senk.dosenk.data.repository.AuthRepository
 
 sealed class MissionCardState {
     object Idle : MissionCardState()
@@ -38,6 +40,7 @@ class HomeViewModel @Inject constructor(
     private val userDao: UserDao,
     private val missionDao: MissionDao,
     private val blockProfileDao: BlockProfileDao,
+    private val repository: AuthRepository,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -49,6 +52,17 @@ class HomeViewModel @Inject constructor(
 
     private val _missionState = MutableStateFlow<MissionCardState>(MissionCardState.Idle)
     val missionState: StateFlow<MissionCardState> = _missionState
+    val unclaimedMission = missionDao.getFirstUnclaimedMission().asLiveData()
+
+    // LA EDAD DE LA CUENTA (DÍAS CON >DO)
+    val diasConDo = userPreferences.startDateMs.map { startMs ->
+        if (startMs == 0L) {
+            0
+        } else {
+            val diffMs = System.currentTimeMillis() - startMs
+            (diffMs / (1000 * 60 * 60 * 24)).toInt()
+        }
+    }.asLiveData()
 
     // Esta es nuestra "bomba de tiempo"
     private var transitionJob: Job? = null
@@ -71,9 +85,7 @@ class HomeViewModel @Inject constructor(
 
 
 
-    /////Racha de do
-
-    fun checkAndUpdateDailyStreak() {
+    private fun checkAndUpdateDailyStreak() {
         viewModelScope.launch(Dispatchers.IO) {
             // Asumiendo que en tu UserDao tienes la función getActiveUser()
             val user = userDao.getActiveUser().first() ?: return@launch
@@ -109,18 +121,17 @@ class HomeViewModel @Inject constructor(
                 newStreak = 1
             }
 
-            // Guardamos la nueva racha y la fecha de hoy en Room
+            // Guardamos la nueva racha y la fecha de hoy en Room local
             val updatedUser = user.copy(
                 streakDays = newStreak,
                 lastLoginDate = todayStr
             )
             userDao.updateUser(updatedUser)
 
-            // TODO  lanzar una petición a Retrofit
-
+            //
+            repository.syncStatsToCloud(updatedUser.currentXp, newStreak)
         }
     }
-
 
     // EL CEREBRO Pending -> Active -> Completed
 
@@ -157,14 +168,11 @@ class HomeViewModel @Inject constructor(
                             putExtra("DURATION_SECONDS", remainingSeconds)
                             putExtra("MISSION_NAME", active.name)
                             putExtra("IS_TIME_PUNISHMENT", false)
-
-                            // Le mandamos el tipo de bloqueo
                             putExtra("BLOCK_TYPE", active.blockType)
                         }
 
                         //  SI ES PERSONALIZADO, LE CARGAMOS LA LISTA NEGRA DESDE ROOM
                         if (active.blockType != "Dios" && active.blockType != "Humano") {
-                            // Como estamos dentro de una corrutina (collect), podemos usar first() para leer rápido
                             val profile = blockProfileDao.getAllProfiles().first().find { it.name == active.blockType }
                             val jsonList = profile?.blockedAppsJson ?: "[]"
                             serviceIntent.putExtra("BLOCK_LIST_JSON", jsonList)
@@ -264,12 +272,21 @@ class HomeViewModel @Inject constructor(
 
     private fun archiveMission(mission: host.senk.dosenk.data.local.entity.MissionEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            val updatedMission = mission.copy(status = "completed")
+            val updatedMission = mission.copy(
+                status = "completed",
+                earnedXp = mission.potentialXp
+            )
             missionDao.updateMission(updatedMission)
 
             // Apagamos el NUEVO servicio
             val serviceIntent = Intent(appContext, MissionBlockerService::class.java)
             appContext.stopService(serviceIntent)
+
+
+            val user = userDao.getActiveUser().first()
+            if (user != null) {
+                repository.syncStatsToCloud(user.currentXp, user.streakDays)
+            }
         }
     }
 }

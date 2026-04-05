@@ -19,23 +19,24 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.data.local.dao.UserDao
+import host.senk.dosenk.data.local.dao.MissionDao
 import host.senk.dosenk.util.DoRank
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import host.senk.dosenk.util.applyDoSenkGradient
 
 @AndroidEntryPoint
 class VictoryBottomSheet : BottomSheetDialogFragment() {
 
     @Inject lateinit var userDao: UserDao
+    @Inject lateinit var missionDao: MissionDao
 
     private var baseXP: Int = 0
     private var streakXP: Int = 0
     private var multiplier: Double = 1.0
     private var earnedXP: Int = 0
-
-    override fun getTheme(): Int = com.google.android.material.R.style.Theme_Design_BottomSheetDialog
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.layout_bottom_sheet_victory, container, false)
@@ -68,7 +69,11 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
         btnClaimXp.isEnabled = false
         btnClaimXp.alpha = 0.5f
 
-        //  ANIMAMOS EL NÚMERO TOTAL DE INMEDIATO (No depende de la BD)
+        btnClaimXp.post {
+            btnClaimXp.applyDoSenkGradient(cornerRadius = 24f)
+        }
+
+        //  ANIMAMOS EL NÚMERO TOTAL DE INMEDIATO
         val numberAnimator = ValueAnimator.ofInt(0, earnedXP)
         numberAnimator.duration = 1500
         numberAnimator.addUpdateListener { anim ->
@@ -76,10 +81,9 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
         }
         numberAnimator.start()
 
-        // LECTURA DE BD EN SEGUNDO PLANO (A prueba de balas)
+        // LECTURA DE BD EN SEGUNDO PLANO
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // Buscamos al usuario en un hilo que no congela la pantalla (IO)
                 val currentUser = withContext(Dispatchers.IO) {
                     userDao.getUserFast()
                 }
@@ -88,7 +92,6 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
                     val oldTotalXp = currentUser.currentXp
                     val newTotalXp = oldTotalXp + earnedXP
 
-                    // Hacemos la coreografía de la barra en el hilo principal (Main)
                     withContext(Dispatchers.Main) {
                         animateProgressBarChoreography(
                             oldXp = oldTotalXp,
@@ -97,32 +100,35 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
                             tvCurrentRank = tvCurrentRank,
                             tvProgressText = tvProgressText,
                             onComplete = {
-                                // Al terminar la animación, guardamos el nuevo progreso
                                 val finalRank = DoRank.getRankByXp(newTotalXp)
                                 val updatedUser = currentUser.copy(
                                     currentXp = newTotalXp,
                                     rankName = finalRank.title
                                 )
+
                                 lifecycleScope.launch(Dispatchers.IO) {
                                     userDao.updateUser(updatedUser)
+
+
+                                    val missionId = arguments?.getString("MISSION_UUID") ?: ""
+                                    if (missionId.isNotEmpty()) {
+                                        val m = missionDao.getLatestPendingMissionFast() // Temporal: esto es solo para que no marque error, pero lo ideal es buscarla por UUID.
+                                        // Mejor aún, simplemente mandamos actualizar su estado:
+                                        missionDao.markAsReclaimed(missionId)
+                                    }
                                 }
 
-                                // Encendemos el botón
                                 btnClaimXp.isEnabled = true
                                 btnClaimXp.alpha = 1.0f
                             }
                         )
                     }
                 } else {
-                    // Si el usuario es nulo por alguna razón, no lo dejamos atrapado
-                    withContext(Dispatchers.Main) {
-                        btnClaimXp.isEnabled = true
-                        btnClaimXp.alpha = 1.0f
-                    }
+                    btnClaimXp.isEnabled = true
+                    btnClaimXp.alpha = 1.0f
                 }
             } catch (e: Exception) {
-                // Si la base de datos explota, encendemos el botón de todos modos
-                e.printStackTrace()
+                android.util.Log.e("DOSENK_ERROR", "Error en el BottomSheet de Victoria", e)
                 withContext(Dispatchers.Main) {
                     btnClaimXp.isEnabled = true
                     btnClaimXp.alpha = 1.0f
@@ -204,7 +210,11 @@ class VictoryBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun flashGold(pb: ProgressBar, onFlashComplete: () -> Unit) {
-        val colorAnim = ValueAnimator.ofObject(ArgbEvaluator(), Color.parseColor("#00C853"), Color.parseColor("#FFD700"), Color.parseColor("#00C853"))
+        val colorAnim = ValueAnimator.ofArgb(
+            Color.parseColor("#00C853"),
+            Color.parseColor("#FFD700"),
+            Color.parseColor("#00C853")
+        )
         colorAnim.duration = 400
         colorAnim.repeatCount = 1
         colorAnim.addUpdateListener { animator ->

@@ -1,6 +1,6 @@
 package host.senk.dosenk.data.remote.model
 
-// 🚨  Regresamos rankName a String
+
 data class ApiResponse(
     val success: Boolean,
     val message: String?,
@@ -19,7 +19,8 @@ data class ApiResponse(
     val schedules: List<ScheduleDto>?,
     val blockProfiles: List<BlockProfileDto>?,
     val currentXp: Int?,
-    val streakDays: Int?
+    val streakDays: Int?,
+    val createdAt: String?
 )
 
 // Moldes chiquitos para las listas
@@ -37,6 +38,12 @@ data class BlockProfileDto(
 data class SyncBlocksRequest(
     val uuid: String,
     val blocks: List<BlockProfileDto>
+)
+
+data class SyncStatsRequest(
+    val uuid: String,
+    val current_xp: Int,
+    val streak_days: Int
 )
 
 

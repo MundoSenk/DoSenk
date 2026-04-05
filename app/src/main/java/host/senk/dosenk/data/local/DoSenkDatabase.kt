@@ -14,7 +14,7 @@ import host.senk.dosenk.data.local.entity.BlockProfileEntity
 
 @Database(
     entities = [UserEntity::class, ScheduleEntity::class, MissionEntity::class, BlockProfileEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

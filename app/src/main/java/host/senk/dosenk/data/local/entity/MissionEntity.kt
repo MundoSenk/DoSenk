@@ -24,5 +24,6 @@ data class MissionEntity(
 
     val potentialXp: Int = 0,         // Lo que se le prometió en el ticket
     val earnedXp: Int = 0,            // Lo que realmente ganó al terminar (0 si falla)
-    val multiplierApplied: Double = 1.0 // El multiplicador que se usó (para historial)
+    val multiplierApplied: Double = 1.0, // El multiplicador que se usó (para historial)
+    val isReclaimed: Boolean = false
 )

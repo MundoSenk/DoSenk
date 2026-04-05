@@ -13,11 +13,14 @@ import host.senk.dosenk.R
 import host.senk.dosenk.service.BlockerEngineService
 import host.senk.dosenk.util.applyDoSenkGradient
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class TutorialConclusionFragment : Fragment(R.layout.fragment_tutorial_conclusion) {
 
     private val viewModel: TutorialMissionViewModel by viewModels()
+    @Inject
+    lateinit var userPreferences: host.senk.dosenk.data.local.UserPreferences
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -108,9 +111,13 @@ class TutorialConclusionFragment : Fragment(R.layout.fragment_tutorial_conclusio
 
         // GRADUACIÓN AL HOME REAL
         btnEnterHome.setOnClickListener {
-            // Pasamos al Estado 4 y lo mandamos al Dashboard real
-            viewModel.finishOnboarding {
-                findNavController().navigate(R.id.action_TutoConclusion_to_home)
+            viewLifecycleOwner.lifecycleScope.launch {
+                userPreferences.saveStartDate(System.currentTimeMillis())
+
+                // Pasamos al Estado 4 y lo mandamos al Dashboard real
+                viewModel.finishOnboarding {
+                    findNavController().navigate(R.id.action_TutoConclusion_to_home)
+                }
             }
         }
     }

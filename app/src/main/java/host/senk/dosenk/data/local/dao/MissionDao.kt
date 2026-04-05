@@ -39,4 +39,23 @@ interface MissionDao {
 
     @Query("UPDATE missions SET blockType = :newBlockName WHERE blockType = :oldBlockName AND status = 'pending'")
     suspend fun reassignMissions(oldBlockName: String, newBlockName: String)
+
+
+
+    @Query("SELECT * FROM missions WHERE status = 'pending' AND name = :missionName LIMIT 1")
+    suspend fun getPendingMissionByNameFast(missionName: String): MissionEntity?
+
+
+    @Query("SELECT * FROM missions WHERE status = 'active' LIMIT 1")
+    suspend fun getActiveMissionFast(): MissionEntity?
+
+    @Query("SELECT * FROM missions WHERE status = 'pending' ORDER BY executionDate ASC LIMIT 1")
+    suspend fun getLatestPendingMissionFast(): MissionEntity?
+
+
+    @Query("SELECT * FROM missions WHERE status = 'completed' AND isReclaimed = 0 ORDER BY executionDate ASC LIMIT 1")
+    fun getFirstUnclaimedMission(): Flow<MissionEntity?>
+
+    @Query("UPDATE missions SET isReclaimed = 1 WHERE uuid = :uuid")
+    suspend fun markAsReclaimed(uuid: String)
 }

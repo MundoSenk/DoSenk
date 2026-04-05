@@ -142,8 +142,12 @@ class CreateMissionViewModel @Inject constructor(
         }
     }
 
-
+    private var isSaving = false
     fun saveMissionToDatabase(blockTypeChosen: String, onComplete: () -> Unit) {
+
+        if (isSaving) return
+        isSaving = true
+
         viewModelScope.launch(Dispatchers.IO) {
 
             val ownerUuid = userPreferences.userToken.first()
@@ -226,7 +230,10 @@ class CreateMissionViewModel @Inject constructor(
                 missionDao.insertMission(newMission)
             }
 
-            withContext(Dispatchers.Main) { onComplete() }
+            withContext(Dispatchers.Main) {
+                isSaving = false
+                onComplete()
+            }
         }
     }
 

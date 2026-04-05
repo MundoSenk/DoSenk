@@ -138,6 +138,21 @@ class AuthRepository @Inject constructor(
                 userPreferences.saveTheme(themeIndex)
                 userPreferences.saveSetupFinished(loggedInUser.setupFinished ?: 0)
 
+
+                if (!data.createdAt.isNullOrEmpty()) {
+                    try {
+                        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                        val serverDate = sdf.parse(data.createdAt)
+                        if (serverDate != null) {
+                            userPreferences.saveStartDate(serverDate.time)
+                        }
+                    } catch (e: Exception) { e.printStackTrace() }
+                }
+
+
+
+
                 Pair(true, "Bienvenido")
             } else {
                 val msg = response.body()?.message ?: "Error de credenciales"
@@ -290,4 +305,65 @@ class AuthRepository @Inject constructor(
             false
         }
     }
+
+
+
+    /**
+     * Respalda las misiones locales en la nube.
+     */
+    suspend fun syncMissionsToCloud(missions: List<host.senk.dosenk.data.local.entity.MissionEntity>): Boolean {
+        return try {
+            val uuid = userPreferences.userToken.first()
+            if (uuid.isEmpty() || missions.isEmpty()) return false
+
+            // Transformamos las misiones locales al molde de la API
+            val dtoList = missions.map {
+                host.senk.dosenk.data.remote.model.MissionDto(
+                    uuid = it.uuid,
+                    name = it.name,
+                    description = it.description,
+                    durationMinutes = it.durationMinutes,
+                    executionDate = it.executionDate,
+                    assignmentType = it.assignmentType,
+                    blockType = it.blockType,
+                    status = it.status,
+                    potentialXp = it.potentialXp,
+                    earnedXp = it.earnedXp,
+                    multiplierApplied = it.multiplierApplied
+                )
+            }
+
+            // Armamos la caja
+            val request = host.senk.dosenk.data.remote.model.SyncMissionsRequest(
+                user_uuid = uuid,
+                missions = dtoList
+            )
+
+            // ¡Fuego!
+            val response = api.syncMissions(request)
+
+            response.isSuccessful && response.body()?.success == true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+
+
+
+    ///// MANDAR RACHA Y SXP A LA REMOTA!
+
+    suspend fun syncStatsToCloud(xp: Int, streak: Int): Boolean {
+        return try {
+            val uuid = userPreferences.userToken.first()
+            if (uuid.isEmpty()) return false
+
+            val request = host.senk.dosenk.data.remote.model.SyncStatsRequest(uuid, xp, streak)
+            val response = api.syncUserStats(request)
+            response.isSuccessful && response.body()?.success == true
+        } catch (e: Exception) { false }
+    }
+
+
 }

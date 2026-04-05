@@ -23,6 +23,7 @@ import host.senk.dosenk.util.AppUsageManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import host.senk.dosenk.ui.mission.VictoryBottomSheet
 
 import host.senk.dosenk.ui.nav.AddMenuBottomSheet
 import kotlinx.coroutines.launch
@@ -40,8 +41,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private lateinit var missionTimerManager: MissionTimerManager
 
-
-    // Cuando el usuario regresa de la pantalla de ajustes, volvemos a checar
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -51,7 +50,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Todo en orden, como un buen libro
         setupInsets(view)
         setupGradients(view)
         setupHeaderClock(view)
@@ -59,16 +57,32 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         setupFab(view)
         setupBottomNav(view)
 
-        // DELEGAMOS LA TARJETA DE MISIÓN A SU MANAGER
         val cardsGrid = view.findViewById<View>(R.id.cards_grid)
         missionTimerManager = MissionTimerManager(cardsGrid, viewLifecycleOwner, requireContext())
         missionTimerManager.bindMissionState(viewModel.missionState)
 
-        //  LLAMAMOS AL CADENERO DE PERMISOS
+        // EL RECEPTOR DE PREMIOS (Vigila la BD y abre el BottomSheet)
+        viewModel.unclaimedMission.observe(viewLifecycleOwner) { mission ->
+            if (mission != null) {
+                // Evitamos que se abran clones si ya hay un ticket en pantalla
+                if (parentFragmentManager.findFragmentByTag("VictorySheet") == null) {
+                    val bottomSheet = VictoryBottomSheet().apply {
+                        arguments = Bundle().apply {
+                            putString("MISSION_UUID", mission.uuid) // Pasamos el ID para saber cuál cobrar
+                            putInt("baseXP", mission.durationMinutes)
+                            putInt("streakXP", mission.potentialXp - mission.durationMinutes)
+                            putDouble("multiplier", mission.multiplierApplied)
+                            putInt("totalXP", mission.earnedXp)
+                        }
+                    }
+                    bottomSheet.show(parentFragmentManager, "VictorySheet")
+                }
+            }
+        }
+
         enforcePermissions()
     }
 
-    //  LA LÓGICA DEL CADENERO
     private fun enforcePermissions() {
         val context = requireContext()
         val hasUsageStats = AppUsageManager.hasUsageStatsPermission(context)
@@ -80,7 +94,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 message = "Como acabas de re-instalar >Do necesito ver tus apps más usadas.",
                 intent = AppUsageManager.getPermissionSettingsIntent()
             )
-            return // Pausamos hasta que nos dé el primer permiso
+            return
         }
 
         if (!hasOverlay) {
@@ -96,29 +110,25 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-    //  EL POP-UP
     private fun showPermissionDialog(title: String, message: String, intent: Intent) {
         AlertDialog.Builder(requireContext())
             .setTitle(title)
             .setMessage(message)
-            .setCancelable(false) // No puede tocar afuera para ignorarlo
+            .setCancelable(false)
             .setPositiveButton("¡DAR PERMISO!") { _, _ ->
                 permissionLauncher.launch(intent)
             }
             .show()
     }
 
-    // AGREGAR MISIONES Y RECORDATORIOS  / PROYECTO
     private fun setupFab(view: View) {
         val fabAdd = view.findViewById<View>(R.id.fabAddContainer)
-
         fabAdd.setOnClickListener {
             val bottomSheet = AddMenuBottomSheet()
             bottomSheet.show(parentFragmentManager, "AddMenuBottomSheet")
         }
     }
 
-    // CONFIGURACIONES DE UI DE PINTADOS Y ETC
     private fun setupInsets(view: View) {
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -140,6 +150,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val tvUser = view.findViewById<View>(R.id.header).findViewById<TextView>(R.id.tvUsername)
         val tvRankStat = view.findViewById<View>(R.id.stats).findViewById<TextView>(R.id.tvDisciplinaStatus)
 
+        val tvDiasDo = view.findViewById<View>(R.id.stats).findViewById<TextView>(R.id.tvDiasDo)
+
         tvDate.text = SimpleDateFormat("EEEE d MMMM yyyy", Locale.getDefault()).format(Date())
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
@@ -159,6 +171,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             viewModel.realRankName.collect { rank ->
                 tvRankStat.text = rank
             }
+        }
+
+
+        viewModel.diasConDo.observe(viewLifecycleOwner) { dias ->
+            tvDiasDo?.text = dias.toString()
         }
     }
 
@@ -180,16 +197,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun setupBottomNav(view: View) {
         val navTimeline = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_timeline)
-
         navTimeline?.setOnClickListener {
-            // Viaje al Timeline
             findNavController().navigate(R.id.action_homeFragment_to_TimeLime)
         }
 
         val navBlocks = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_blocks)
-
         navBlocks?.setOnClickListener {
-            // Viaje al blocks
             findNavController().navigate(R.id.action_homeFragment_to_BlockZone)
         }
     }

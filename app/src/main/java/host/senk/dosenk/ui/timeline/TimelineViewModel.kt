@@ -38,6 +38,7 @@ class TimelineViewModel @Inject constructor(
         _weekOffset.value = offset
     }
 
+
     //  Si la DB cambia o el offset cambia, esto se recalcula automático
     val weeklyItems: Flow<List<WeeklyCardItem>> = combine(
         missionDao.getAllMissions(),
@@ -74,14 +75,27 @@ class TimelineViewModel @Inject constructor(
 
             val isToday = (Calendar.getInstance().timeInMillis in dayStart..dayEnd)
 
-            //  CÁLCULO DE XP (1 min = 1 XP)
-            val totalDayXp = dayMissions.sumOf { it.durationMinutes }
 
-            // Tomamos las 3 más largas (Más XP)
+            // Ya no es 1 min = 1 XP. Ahora leemos la base de datos.
+            val totalDayXp = dayMissions.sumOf { mission ->
+                val xp = when (mission.status) {
+                    "completed" -> mission.earnedXp
+                    "pending", "active" -> mission.potentialXp
+                    else -> 0
+                }
+                // Si es vieja y tiene 0, le damos sus minutos base como XP
+                if (xp == 0 && (mission.status == "completed" || mission.status == "pending")) mission.durationMinutes else xp
+            }
+
+
             val topMissions = dayMissions
-                .sortedByDescending { it.durationMinutes }
+                .sortedByDescending { if (it.status == "completed") it.earnedXp else it.potentialXp }
                 .take(3)
-                .map { "${it.durationMinutes} Xp   ${it.name}" }
+                .map { mission ->
+                    var xpToShow = if (mission.status == "completed") mission.earnedXp else mission.potentialXp
+                    if (xpToShow == 0) xpToShow = mission.durationMinutes // Seguro de vida
+                    "$xpToShow XP   ${mission.name}"
+                }
 
             weekCards.add(
                 WeeklyCardItem(

@@ -8,6 +8,8 @@ import host.senk.dosenk.data.remote.model.ScheduleBatchRequest
 import host.senk.dosenk.data.remote.model.SaveVicesRequest
 import host.senk.dosenk.data.remote.model.SyncBlocksRequest
 import host.senk.dosenk.data.remote.model.UpdateStageRequest
+import host.senk.dosenk.data.remote.model.SyncMissionsRequest
+import host.senk.dosenk.data.remote.model.SyncStatsRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -39,9 +41,17 @@ interface ApiService {
 
 
     @POST("auth/update_stage.php")
-    suspend fun updateSetupStage(@Body request: UpdateStageRequest): retrofit2.Response<ApiResponse>
+    suspend fun updateSetupStage(@Body request: UpdateStageRequest): Response<ApiResponse>
 
     @POST("user/sync_blocks.php")
-    suspend fun syncBlocks(@Body request: SyncBlocksRequest): retrofit2.Response<ApiResponse>
+    suspend fun syncBlocks(@Body request: SyncBlocksRequest): Response<ApiResponse>
+
+    // Sincronizar las misiones completadas/pendientes a la nube
+    @POST("user/sync_missions.php")
+    suspend fun syncMissions(@Body request: SyncMissionsRequest): Response<ApiResponse>
+
+
+    @POST("user/sync_user_stats.php")
+    suspend fun syncUserStats(@Body request: SyncStatsRequest): Response<ApiResponse>
 
 }
