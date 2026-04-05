@@ -119,7 +119,7 @@ class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
                                 if (activeMission != null && activeMission.blockType == profile.name) {
                                     Toast.makeText(requireContext(), "¡Tramposo! No puedes editar un bloqueo mientras cumples castigo con él.", Toast.LENGTH_LONG).show()
                                 } else {
-                                    // 🚨 ¡AQUÍ ESTABA EL ERROR! Asegúrate de que el Bundle empaca los datos exactos:
+                                    //  Asegúrate de que el Bundle empaca los datos exactos:
                                     val bundle = Bundle().apply {
                                         putString("profileName", profile.name)
                                         putString("profileAppsJson", profile.blockedAppsJson)
@@ -194,13 +194,12 @@ class BlockZoneFragment : Fragment(R.layout.fragment_block_zone) {
     }
 
     private fun saveAndNavigate(blockType: String, clickedButton: View) {
-        clickedButton.isEnabled = false
 
-        viewModel.saveMissionToDatabase(blockType) {
-            Toast.makeText(requireContext(), "¡Misión $blockType programada!", Toast.LENGTH_SHORT).show()
-            clickedButton.isEnabled = true
-            // Viajamos al Timeline para ver nuestra obra de arte
-            findNavController().navigate(R.id.action_BlockZone_to_TimeLime)
+        val bundle = Bundle().apply {
+            putString("blockType", blockType)
         }
+
+        //  Asegúrate de tener esta acción (flecha) en tu nav_graph.xml
+        findNavController().navigate(R.id.action_blockZoneFragment_to_missionSummaryFragment, bundle)
     }
 }

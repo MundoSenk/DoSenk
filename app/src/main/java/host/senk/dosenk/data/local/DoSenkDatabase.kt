@@ -11,9 +11,10 @@ import host.senk.dosenk.data.local.entity.UserEntity
 import host.senk.dosenk.data.local.entity.MissionEntity
 import host.senk.dosenk.data.local.entity.BlockProfileEntity
 
+
 @Database(
     entities = [UserEntity::class, ScheduleEntity::class, MissionEntity::class, BlockProfileEntity::class],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

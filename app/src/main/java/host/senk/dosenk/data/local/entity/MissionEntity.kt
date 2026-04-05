@@ -10,15 +10,19 @@ data class MissionEntity(
     val userUuid: String,
 
     // Lo que viene del Formulario
-    val name: String,               // Estudiar Programación
+    val name: String,
     val description: String = "",
-    val durationMinutes: Int,       //  45
-    val executionDate: Long,        // Timestamp (Cuándo toca sufrir)
-    val assignmentType: String,     // Manual o Auto
+    val durationMinutes: Int,
+    val executionDate: Long,
+    val assignmentType: String,
 
     // Lo que viene de la Zona de Bloqueos
-    val blockType: String,          // Humano, Dios
+    val blockType: String,
 
-    // El motor del HomeFragment necesita saber esto:
-    val status: String = "pending"  // Puede ser: "pending", "active", "completed", "failed"
+    val status: String = "pending",
+
+
+    val potentialXp: Int = 0,         // Lo que se le prometió en el ticket
+    val earnedXp: Int = 0,            // Lo que realmente ganó al terminar (0 si falla)
+    val multiplierApplied: Double = 1.0 // El multiplicador que se usó (para historial)
 )

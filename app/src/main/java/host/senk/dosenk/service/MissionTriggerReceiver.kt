@@ -32,8 +32,11 @@ class MissionTriggerReceiver : BroadcastReceiver() {
         )
         val missionDao = hiltEntryPoint.getMissionDao()
 
+
         val missionName = intent.getStringExtra("MISSION_NAME") ?: return
         val durationMinutes = intent.getIntExtra("DURATION_MINUTES", 0)
+        val blockType = intent.getStringExtra("BLOCK_TYPE") ?: "Dios"
+        val jsonBlockList = intent.getStringExtra("BLOCK_LIST_JSON") ?: "[]"
 
         //  LA AUDITORÍA DE LA HORA EN PLENA MADRUGADA
         val isAutoTime = android.provider.Settings.Global.getInt(
@@ -41,7 +44,7 @@ class MissionTriggerReceiver : BroadcastReceiver() {
             android.provider.Settings.Global.AUTO_TIME, 0
         ) == 1
 
-        // Preparamos el golpe Lanzar el servicio de Bloqueo
+        // Preparamos el golpe: Lanzar el servicio de Bloqueo
         val serviceIntent = Intent(context, MissionBlockerService::class.java).apply {
             if (!isAutoTime) {
                 // MODO TRAMPA
@@ -54,6 +57,10 @@ class MissionTriggerReceiver : BroadcastReceiver() {
                 putExtra("MISSION_NAME", missionName)
                 putExtra("IS_TIME_PUNISHMENT", false)
             }
+
+
+            putExtra("BLOCK_TYPE", blockType)
+            putExtra("BLOCK_LIST_JSON", jsonBlockList)
         }
 
         // AQUÍ LANZAMOS EL BLOQUEO DIRECTAMENTE
@@ -64,7 +71,6 @@ class MissionTriggerReceiver : BroadcastReceiver() {
                 context.startService(serviceIntent)
             }
         } catch (e: Exception) {
-            // Bypass para restricciones raras en segundo plano
             context.startService(serviceIntent)
         }
 

@@ -365,6 +365,9 @@
         <action
             android:id="@+id/action_BlockZone_to_editBlock"
             app:destination="@id/editBlock" />
+        <action
+            android:id="@+id/action_blockZoneFragment_to_missionSummaryFragment"
+            app:destination="@id/summary" />
     </fragment>
 
     <fragment
@@ -407,6 +410,23 @@
         <action
             android:id="@+id/action_editBlock_to_BlockZone"
             app:destination="@id/BlockZone" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/summary"
+        android:name="host.senk.dosenk.ui.mission.MissionSummaryFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_mission_summary" >
+
+
+        <action
+            android:id="@+id/action_summary_to_TimeLime"
+            app:destination="@id/TimeLime"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"/>
     </fragment>
 
 </navigation>

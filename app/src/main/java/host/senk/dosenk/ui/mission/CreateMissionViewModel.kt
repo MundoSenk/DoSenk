@@ -58,6 +58,8 @@ class CreateMissionViewModel @Inject constructor(
     private val _startHour = MutableStateFlow<Int?>(null)
     private val _startMinute = MutableStateFlow<Int?>(null)
 
+    var currentTicket: host.senk.dosenk.util.MissionTicket? = null
+
 
     val allCustomBlocks = blockProfileDao.getAllProfiles()
 
@@ -146,7 +148,6 @@ class CreateMissionViewModel @Inject constructor(
 
             val ownerUuid = userPreferences.userToken.first()
 
-
             // Unimos el Día (del calendario UTC) con la Hora local
             val utcDate = executionDate.value ?: System.currentTimeMillis()
             val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
@@ -159,6 +160,7 @@ class CreateMissionViewModel @Inject constructor(
             localCalendar.set(java.util.Calendar.HOUR_OF_DAY, _startHour.value ?: 0)
             localCalendar.set(java.util.Calendar.MINUTE, _startMinute.value ?: 0)
             localCalendar.set(java.util.Calendar.SECOND, 0)
+            localCalendar.set(java.util.Calendar.MILLISECOND, 0)
 
             val finalTimestamp = localCalendar.timeInMillis
 
@@ -171,19 +173,31 @@ class CreateMissionViewModel @Inject constructor(
                 executionDate = finalTimestamp,
                 assignmentType = assignmentType.value,
                 blockType = blockTypeChosen,
-                status = "pending"
+                status = "pending",
+                potentialXp = currentTicket?.totalXP ?: 0,
+                multiplierApplied = currentTicket?.multiplier ?: 1.0
             )
 
-
-
+            // BUSCAMOS EL JSON DEL BLOQUEO PERSONALIZADO EN LA BD
+            var jsonBlockList = "[]"
+            if (blockTypeChosen != "Dios" && blockTypeChosen != "Humano" && blockTypeChosen != "Adicto") {
+                val profiles = allCustomBlocks.first()
+                val profile = profiles.find { it.name == blockTypeChosen }
+                if (profile != null) {
+                    jsonBlockList = profile.blockedAppsJson
+                }
+            }
 
             val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+
             val intent = Intent(appContext, MissionTriggerReceiver::class.java).apply {
                 putExtra("MISSION_NAME", missionName)
                 putExtra("DURATION_MINUTES", durationMinutes.value)
+                putExtra("BLOCK_TYPE", blockTypeChosen) // Pasamos el tipo
+                putExtra("BLOCK_LIST_JSON", jsonBlockList) // Pasamos las apps
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
             }
-
 
             if (oldExecutionDate != 0L && oldExecutionDate != finalTimestamp) {
                 val oldIntent = Intent(appContext, MissionTriggerReceiver::class.java)
@@ -194,24 +208,17 @@ class CreateMissionViewModel @Inject constructor(
                 alarmManager.cancel(oldPendingIntent)
             }
 
-
-            // Creamos un intent pendiente único
             val pendingIntent = PendingIntent.getBroadcast(
                 appContext,
-                (finalTimestamp / 1000).toInt(), // ID único
+                (finalTimestamp / 1000).toInt(),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-
-
             try {
                 val alarmClockInfo = AlarmManager.AlarmClockInfo(finalTimestamp, null)
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-
-            } catch (e: SecurityException) {
-
-            }
+            } catch (e: SecurityException) { }
 
             if (currentEditingMissionId != null) {
                 missionDao.updateMission(newMission)
@@ -246,6 +253,49 @@ class CreateMissionViewModel @Inject constructor(
                 _missionLoaded.emit(mission)
             }
         }
+    }
+
+
+    ////////TICKETTTTT DE COMPRAAAAAA ANTES DE MIISON
+
+    suspend fun generateRealTicket(blockType: String, context: Context): host.senk.dosenk.util.MissionTicket {
+        // 1. Obtener Top 5 Vicios reales del celular
+        val report = host.senk.dosenk.util.AppUsageManager.getTopVices(context, 7, 5)
+        val topVicesPackages = report.topVices.map { it.packageName }
+
+        // 2. Extraer las apps bloqueadas reales de la BD
+        val blockedApps = mutableSetOf<String>()
+
+        if (blockType == "Dios") {
+            // Dios bloquea todo, cuenta como si bloquearas todos tus vicios máximos
+            blockedApps.addAll(topVicesPackages)
+        } else if (blockType != "Humano" && blockType != "Adicto") {
+            // Es un bloqueo personalizado, lo buscamos en la BD y lo DESEMPAQUETAMOS
+            val profiles = allCustomBlocks.first() // Toma la lista actual de Room
+            val selectedProfile = profiles.find { it.name == blockType }
+
+            if (selectedProfile != null) {
+                try {
+                    val type = object : com.google.gson.reflect.TypeToken<Set<String>>() {}.type
+                    val parsed: Set<String> = com.google.gson.Gson().fromJson(selectedProfile.blockedAppsJson, type)
+                    blockedApps.addAll(parsed)
+                } catch (e: Exception) {}
+            }
+        }
+
+        // 3. Racha (Por ahora en 1, luego lo conectamos a la BD del UserEntity)
+        val streakDays = 1
+
+        // 4. Calcular con el GameEngine
+        val ticket = host.senk.dosenk.util.GameEngine.calculateTicket(
+            durationMinutes = durationMinutes.value,
+            streakDays = streakDays,
+            topVices = topVicesPackages,
+            blockedApps = blockedApps
+        )
+
+        currentTicket = ticket // Lo guardamos en la mochila
+        return ticket
     }
 
 }

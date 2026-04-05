@@ -87,5 +87,8 @@ dependencies {
     // LOGGING (Para ver qué manda y qué responde el server en el Logcat)
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
+    ///Animaciones
+    implementation("com.airbnb.android:lottie:6.1.0")
+
 
 }

@@ -3,29 +3,34 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/transparent"
+    android:background="@drawable/bg_top_rounded_white"
     android:orientation="vertical"
     android:paddingHorizontal="24dp"
     android:paddingBottom="32dp"
-    android:paddingTop="16dp">
+    android:paddingTop="24dp">
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="#E0E0E0"
+        android:layout_marginBottom="24dp"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fontFamily="@font/anton_regular"
         android:text="¿QUÉ DESEA AGREGAR?"
-        android:textAlignment="center"
-        android:textColor="@color/white"
-        android:textSize="28sp"
-        android:layout_marginBottom="16dp" />
+        android:textColor="#333333"
+        android:textSize="26sp"
+        android:layout_marginBottom="24dp" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/btnOptionMission"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
+        app:cardElevation="6dp"
         android:clickable="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground">
@@ -33,24 +38,18 @@
         <LinearLayout
             android:id="@+id/bgMissionGradient"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:padding="16dp">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                app:cardCornerRadius="16dp"
-                app:cardBackgroundColor="@color/white"
-                app:cardElevation="0dp">
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="12dp"
-                    android:src="@android:drawable/ic_menu_my_calendar"
-                    app:tint="?attr/doSkinButton" />
-            </androidx.cardview.widget.CardView>
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:background="@drawable/bg_capsule_white"
+                android:src="@drawable/ic_check_circle_outline"
+                app:tint="?attr/doSkinButton" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -64,48 +63,42 @@
                     android:text="Misión Diaria"
                     android:textColor="@color/white"
                     android:fontFamily="@font/anton_regular"
-                    android:textSize="24sp" />
+                    android:textSize="22sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cosas simples: Lavar, estudiar, tareas.\nConfigura hora y bloqueo."
+                    android:text="Cosas simples: Lavar, estudiar, tareas."
                     android:textColor="#E6FFFFFF"
                     android:fontFamily="@font/poppins_medium"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         app:cardCornerRadius="20dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
         android:alpha="0.6">
 
         <LinearLayout
             android:id="@+id/bgPurposeGradient"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:padding="16dp">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                app:cardCornerRadius="16dp"
-                app:cardBackgroundColor="@color/white"
-                app:cardElevation="0dp">
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="12dp"
-                    android:src="@android:drawable/ic_menu_agenda"
-                    app:tint="?attr/doSkinButton" />
-            </androidx.cardview.widget.CardView>
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:background="@drawable/bg_capsule_white"
+                android:src="@drawable/ic_mountain_flag"
+                app:tint="?attr/doSkinButton" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -116,51 +109,45 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Propósito"
+                    android:text="Propósito (Próximamente)"
                     android:textColor="@color/white"
                     android:fontFamily="@font/anton_regular"
-                    android:textSize="24sp" />
+                    android:textSize="22sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Algo grande: Escribir libro, planear empresa."
+                    android:text="Proyectos grandes con fecha de entrega."
                     android:textColor="#E6FFFFFF"
                     android:fontFamily="@font/poppins_medium"
-                    android:textSize="11sp" />
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_marginBottom="16dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         app:cardCornerRadius="20dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
         android:alpha="0.6">
 
         <LinearLayout
             android:id="@+id/bgReminderGradient"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:padding="16dp">
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                app:cardCornerRadius="16dp"
-                app:cardBackgroundColor="@color/white"
-                app:cardElevation="0dp">
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="12dp"
-                    android:src="@android:drawable/ic_lock_idle_alarm"
-                    app:tint="?attr/doSkinButton" />
-            </androidx.cardview.widget.CardView>
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:background="@drawable/bg_capsule_white"
+                android:src="@drawable/ic_bell_ring"
+                app:tint="?attr/doSkinButton" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -171,31 +158,23 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Recordatorio"
+                    android:text="Recordatorio (Próximamente)"
                     android:textColor="@color/white"
                     android:fontFamily="@font/anton_regular"
-                    android:textSize="24sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Lo que no puedes olvidar: Cumpleaños, aniversario de tu novia, sacar el pollo!"
-                    android:textColor="#E6FFFFFF"
-                    android:fontFamily="@font/poppins_medium"
-                    android:textSize="11sp" />
+                    android:textSize="22sp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <ImageView
+    <TextView
         android:id="@+id/btnClose"
-        android:layout_width="50dp"
+        android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_capsule_white"
-        android:padding="12dp"
-        android:src="@android:drawable/ic_menu_close_clear_cancel"
-        app:tint="?attr/doSkinButton" />
+        android:layout_marginTop="16dp"
+        android:text="Cancelar"
+        android:textColor="#888888"
+        android:fontFamily="@font/poppins_bold"
+        android:textSize="14sp"
+        android:gravity="center"/>
 
 </LinearLayout>

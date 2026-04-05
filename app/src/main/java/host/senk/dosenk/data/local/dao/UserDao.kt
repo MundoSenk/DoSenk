@@ -39,5 +39,8 @@ interface UserDao {
     @Query("DELETE FROM schedules")
     suspend fun deleteAllSchedules()
 
+    @Query("SELECT * FROM users LIMIT 1")
+    fun getActiveUser(): kotlinx.coroutines.flow.Flow<UserEntity?>
+
 
 }

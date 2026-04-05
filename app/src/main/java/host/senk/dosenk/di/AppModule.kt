@@ -25,7 +25,9 @@ object AppModule {
             context,
             DoSenkDatabase::class.java,
             "dosenk_local.db" // Nombre del archivo en el cel
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     // Para no llamar a la db entera siempre (Usuarios)

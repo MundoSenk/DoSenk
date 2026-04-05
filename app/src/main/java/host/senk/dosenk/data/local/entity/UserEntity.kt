@@ -24,5 +24,10 @@ data class UserEntity(
     // Rangos
     val rankName: String = "Desconocido",
     val dailyWastedHours: Float? = 0f,
-    val setupFinished: Int? = 0
+    val setupFinished: Int? = 0,
+
+    ///XP
+    val currentXp: Int = 0,
+    val streakDays: Int = 1,
+    val lastLoginDate: String = ""
 )

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F4F4F9">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/anton_regular"
+        android:text="RESUMEN DE MISIÓN"
+        android:textColor="?attr/doSkinButton"
+        android:textSize="32sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="24dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:id="@+id/tvMissionName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Estudiar Programación"
+                android:fontFamily="@font/poppins_bold"
+                android:textColor="#333333"
+                android:textSize="18sp"/>
+
+            <TextView
+                android:id="@+id/tvMissionDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Terminar el módulo de Room Database"
+                android:fontFamily="@font/poppins_regular"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:layout_marginBottom="16dp"/>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="16dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="XP por duración (min)" android:fontFamily="@font/poppins_medium" android:textColor="#555555"/>
+                <TextView android:id="@+id/tvBaseXp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="60 XP" android:fontFamily="@font/poppins_bold" android:textColor="#333333"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+                <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Bono por Racha (Días)" android:fontFamily="@font/poppins_medium" android:textColor="#555555"/>
+                <TextView android:id="@+id/tvStreakXp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="+ 6 XP" android:fontFamily="@font/poppins_bold" android:textColor="#00C853"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+                <TextView android:id="@+id/tvMultiplierLabel" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Multiplicador (Top Vicios)" android:fontFamily="@font/poppins_medium" android:textColor="#555555"/>
+                <TextView android:id="@+id/tvMultiplierValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="x5" android:fontFamily="@font/poppins_bold" android:textColor="#00C853"/>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="2dp" android:background="#333333" android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="TOTAL A GANAR:"
+                android:textAlignment="center"
+                android:fontFamily="@font/poppins_bold"
+                android:textColor="#888888"
+                android:textSize="12sp"/>
+
+            <TextView
+                android:id="@+id/tvTotalXp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0 XP"
+                android:textAlignment="center"
+                android:fontFamily="@font/anton_regular"
+                android:textColor="?attr/doSkinButton"
+                android:textSize="48sp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="(Si fallas la misión, no ganas nada)"
+                android:textAlignment="center"
+                android:fontFamily="@font/poppins_regular"
+                android:textColor="#FF3B30"
+                android:textSize="10sp"
+                android:layout_marginTop="8dp"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:id="@+id/btnAcceptMission"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="24dp"
+        android:gravity="center"
+        android:text="¡ACEPTAR MISIÓN!"
+        android:textColor="@color/white"
+        android:fontFamily="@font/poppins_bold"
+        android:textSize="16sp"
+        android:elevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,10 +1,15 @@
 package host.senk.dosenk.ui.home
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.View
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -14,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import host.senk.dosenk.R
 import host.senk.dosenk.util.applyDoSenkGradient
+import host.senk.dosenk.util.AppUsageManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,10 +40,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private lateinit var missionTimerManager: MissionTimerManager
 
+
+    // Cuando el usuario regresa de la pantalla de ajustes, volvemos a checar
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        enforcePermissions()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // To_do en orden, como un buen libro
+        // Todo en orden, como un buen libro
         setupInsets(view)
         setupGradients(view)
         setupHeaderClock(view)
@@ -50,12 +64,51 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         missionTimerManager = MissionTimerManager(cardsGrid, viewLifecycleOwner, requireContext())
         missionTimerManager.bindMissionState(viewModel.missionState)
 
-
+        //  LLAMAMOS AL CADENERO DE PERMISOS
+        enforcePermissions()
     }
 
+    //  LA LÓGICA DEL CADENERO
+    private fun enforcePermissions() {
+        val context = requireContext()
+        val hasUsageStats = AppUsageManager.hasUsageStatsPermission(context)
+        val hasOverlay = Settings.canDrawOverlays(context)
 
-    // AGREGAR MISIONES Y RECORDATORIOS  / PROEWYECTO
+        if (!hasUsageStats) {
+            showPermissionDialog(
+                title = "Necesito ver tus pecados",
+                message = "Como acabas de re-instalar >Do necesito ver tus apps más usadas.",
+                intent = AppUsageManager.getPermissionSettingsIntent()
+            )
+            return // Pausamos hasta que nos dé el primer permiso
+        }
 
+        if (!hasOverlay) {
+            showPermissionDialog(
+                title = "Necesito el poder absoluto",
+                message = "Sin el permiso de 'Mostrar sobre otras apps', no puedo encerrarte en la pantalla negra cuando falles. ¡Ve a los ajustes y dame el control!",
+                intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:${context.packageName}")
+                )
+            )
+            return
+        }
+    }
+
+    //  EL POP-UP
+    private fun showPermissionDialog(title: String, message: String, intent: Intent) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(title)
+            .setMessage(message)
+            .setCancelable(false) // No puede tocar afuera para ignorarlo
+            .setPositiveButton("¡DAR PERMISO!") { _, _ ->
+                permissionLauncher.launch(intent)
+            }
+            .show()
+    }
+
+    // AGREGAR MISIONES Y RECORDATORIOS  / PROYECTO
     private fun setupFab(view: View) {
         val fabAdd = view.findViewById<View>(R.id.fabAddContainer)
 
@@ -65,9 +118,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-
     // CONFIGURACIONES DE UI DE PINTADOS Y ETC
-
     private fun setupInsets(view: View) {
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -127,9 +178,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-
     private fun setupBottomNav(view: View) {
-
         val navTimeline = view.findViewById<View>(R.id.bottomNav)?.findViewById<View>(R.id.nav_timeline)
 
         navTimeline?.setOnClickListener {
