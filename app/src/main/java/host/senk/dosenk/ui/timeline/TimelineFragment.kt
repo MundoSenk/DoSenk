@@ -72,16 +72,37 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
                     onMissionClick = { clickedMission ->
                         val currentTime = System.currentTimeMillis()
                         if (clickedMission.status == "pending" && clickedMission.executionDate > currentTime) {
-                            val bundle = Bundle().apply {
-                                putString("missionId", clickedMission.uuid)
+
+                            // ¿ES UN CLON DE UNA RUTINA REPETITIVA?
+                            if (clickedMission.templateUuid != null) {
+                                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                                    .setTitle("Misión Repetitiva")
+                                    .setMessage("¿Quieres editar solo el castigo de este día, o quieres cambiar la rutina completa?")
+                                    .setPositiveButton("Solo este día") { _, _ ->
+                                        // Rompemos la cadena: Se edita como misión única
+                                        val bundle = Bundle().apply { putString("missionId", clickedMission.uuid) }
+                                        findNavController().navigate(R.id.createMissionFragment, bundle)
+                                    }
+                                    .setNegativeButton("Toda la rutina") { _, _ ->
+                                        // Viajamos al origen: Editamos el molde padre
+                                        val bundle = Bundle().apply { putString("templateId", clickedMission.templateUuid) }
+                                        findNavController().navigate(R.id.createMissionFragment, bundle)
+                                    }
+                                    .setNeutralButton("Cancelar", null)
+                                    .show()
+                            } else {
+                                // ES UNA MISIÓN NORMAL, VIAJE DIRECTO
+                                val bundle = Bundle().apply { putString("missionId", clickedMission.uuid) }
+
+                                findNavController().navigate(R.id.createMissionFragment, bundle)
                             }
-                            findNavController().navigate(R.id.createMissionFragment, bundle)
+
                         } else {
                             Toast.makeText(requireContext(), "El pasado pisado, gallo. Esta misión ya no se puede alterar.", Toast.LENGTH_LONG).show()
                         }
                     },
                     onAddClick = {
-                        // 🚨 ¡MANDAMOS A LLAMAR AL MENÚ BOTTOM SHEET CUANDO TOCAN LA TARJETA VACÍA!
+                        // MANDAMOS A LLAMAR AL MENÚ BOTTOM SHEET CUANDO TOCAN LA TARJETA VACÍA
                         val bottomSheet = AddMenuBottomSheet()
                         bottomSheet.show(parentFragmentManager, "AddMenuBottomSheet")
                     }

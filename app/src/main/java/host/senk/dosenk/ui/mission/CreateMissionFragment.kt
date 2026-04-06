@@ -118,10 +118,22 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         }
 
         //  MODO EDICIÓN O CREACIÓN
-        val missionId = arguments?.getString("missionId") ?: null
-        if (missionId != null) {
+        val missionId = arguments?.getString("missionId")
+        val templateId = arguments?.getString("templateId")
+        val btnDelete = view.findViewById<View>(R.id.btnDelete)
+
+        if (templateId != null) {
+            tvTitle.text = "Editar Rutina"
+            btnNext.text = "¡Actualizar Rutina!"
+            btnDelete.visibility = View.VISIBLE
+
+            if (viewModel.currentEditingTemplateId != templateId) {
+                viewModel.loadTemplateForEditing(templateId)
+            }
+        } else if (missionId != null) {
             tvTitle.text = "Editar Misión"
             btnNext.text = "¡Actualizar Misión!"
+            btnDelete.visibility = View.VISIBLE
 
             if (viewModel.currentEditingMissionId != missionId) {
                 viewModel.loadMissionForEditing(missionId)
@@ -129,6 +141,26 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
         } else {
             tvTitle.text = "Nueva Misión"
             btnNext.text = "¡A asignar el bloqueo!"
+            btnDelete.visibility = View.GONE
+        }
+
+
+        btnDelete.setOnClickListener {
+            val isRoutine = templateId != null
+            val msg = if (isRoutine) "Vas a eliminar TODA LA RUTINA y sus misiones futuras. ¿Estás seguro, gallo cobarde?"
+            else "¿Te vas a rajar y eliminar este castigo?"
+
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("¿Destruir misión?")
+                .setMessage(msg)
+                .setPositiveButton("Sí, soy débil") { _, _ ->
+                    viewModel.deleteCurrentTask {
+                        Toast.makeText(requireContext(), "Misión aniquilada.", Toast.LENGTH_SHORT).show()
+                        findNavController().popBackStack()
+                    }
+                }
+                .setNegativeButton("No, soy fuerte", null)
+                .show()
         }
 
         // ESCUCHAMOS CUANDO LOS DATOS ESTÉN LISTOS PARA RELLENAR LOS TEXTOS
@@ -137,7 +169,7 @@ class CreateMissionFragment : Fragment(R.layout.fragment_create_mission) {
                 etMissionName.setText(mission.name)
                 view.findViewById<EditText>(R.id.etMissionDescription).setText(mission.description)
 
-                val sdf = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
+                val sdf = SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
                 sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
                 btnDatePicker.text = sdf.format(java.util.Date(mission.executionDate))
                 btnDatePicker.applyDoSenkGradient(cornerRadius = 16f)

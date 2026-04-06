@@ -74,6 +74,8 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             cloneManager.generateClonesForNext7Days()
 
+            repository.syncMissionsToCloud()
+
             checkCurrentMissions()
         }
 
@@ -142,21 +144,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // EL CEREBRO Pending -> Active -> Completed
 
+
+    // EL CEREBRO Pending -> Active -> Completed
     private fun checkCurrentMissions() {
         viewModelScope.launch {
-            // Escuchamos AL MISMO TIEMPO si hay una misión Activa o una Pendiente
             combine(
                 missionDao.getActiveMission(),
                 missionDao.getNextPendingMission()
-            ) { active, pending ->
-                Pair(active, pending)
+            ) { active, pending -> Pair(active, pending)
             }.collect { (active, pending) ->
 
-                // Cancelamos cualquier reloj anterior para que no choquen
                 transitionJob?.cancel()
-
                 val currentTime = System.currentTimeMillis()
 
                 if (active != null) {
@@ -164,7 +163,8 @@ class HomeViewModel @Inject constructor(
                     val endTime = active.executionDate + (active.durationMinutes * 60 * 1000L)
                     val timeLeftMillis = endTime - currentTime
 
-                    if (timeLeftMillis > 0) {
+                    //  ESCUDO ANTI-CRASHEOS: Solo prendemos el servicio si le quedan más de 2 segundos
+                    if (timeLeftMillis > 2000) {
                         val remainingSeconds = (timeLeftMillis / 1000).toInt()
 
                         _missionState.value = MissionCardState.Active(
@@ -172,22 +172,26 @@ class HomeViewModel @Inject constructor(
                             blockType = active.blockType
                         )
 
-                        // PREPARAMOS LAS BALAS PARA EL CADENERO
                         val serviceIntent = Intent(appContext, MissionBlockerService::class.java).apply {
                             putExtra("DURATION_SECONDS", remainingSeconds)
                             putExtra("MISSION_NAME", active.name)
-                            putExtra("IS_TIME_PUNISHMENT", false)
                             putExtra("BLOCK_TYPE", active.blockType)
+
+                            val isAutoTime = android.provider.Settings.Global.getInt(appContext.contentResolver, android.provider.Settings.Global.AUTO_TIME, 0) == 1
+                            if (!isAutoTime) {
+                                putExtra("IS_TIME_PUNISHMENT", true)
+                                putExtra("DURATION_SECONDS", 99999)
+                                putExtra("MISSION_NAME", "¡Trampa! Prende la Hora Automática.")
+                            } else {
+                                putExtra("IS_TIME_PUNISHMENT", false)
+                            }
                         }
 
-                        //  SI ES PERSONALIZADO, LE CARGAMOS LA LISTA NEGRA DESDE ROOM
                         if (active.blockType != "Dios" && active.blockType != "Humano") {
                             val profile = blockProfileDao.getAllProfiles().first().find { it.name == active.blockType }
-                            val jsonList = profile?.blockedAppsJson ?: "[]"
-                            serviceIntent.putExtra("BLOCK_LIST_JSON", jsonList)
+                            serviceIntent.putExtra("BLOCK_LIST_JSON", profile?.blockedAppsJson ?: "[]")
                         }
 
-                        // LANZAMOS EL BLOQUEO INMEDIATO PARA REANUDAR EL CASTIGO
                         try {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) appContext.startForegroundService(serviceIntent)
                             else appContext.startService(serviceIntent)
@@ -204,26 +208,19 @@ class HomeViewModel @Inject constructor(
                     }
 
                 } else if (pending != null) {
-                    // HAY UNA MISIÓN PENDIENTE (ESPERANDO)
                     val timeToStartMillis = pending.executionDate - currentTime
-
                     if (timeToStartMillis > 0) {
-                        // Le pasamos los datos a tu MissionTimerManager para que cuente los minutos que faltan
                         _missionState.value = MissionCardState.Pending(
                             secondsUntilStart = (timeToStartMillis / 1000).toInt(),
                             missionName = pending.name
                         )
-
-                        // Programamos la bomba: Cuando el tiempo llegue a cero, ACTÍVALA
                         transitionJob = viewModelScope.launch {
                             delay(timeToStartMillis)
                             activateMission(pending)
                         }
                     } else {
-                        // Si el tiempo ya pasó o es cero, actívala inmediatamente
                         activateMission(pending)
                     }
-
                 } else {
                     _missionState.value = MissionCardState.Idle
                 }
@@ -233,49 +230,9 @@ class HomeViewModel @Inject constructor(
 
     private fun activateMission(mission: host.senk.dosenk.data.local.entity.MissionEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-
             val updatedMission = mission.copy(status = "active")
             missionDao.updateMission(updatedMission)
 
-            val serviceIntent = Intent(appContext, MissionBlockerService::class.java)
-
-            val isAutoTime = android.provider.Settings.Global.getInt(
-                appContext.contentResolver,
-                android.provider.Settings.Global.AUTO_TIME, 0
-            ) == 1
-
-            if (!isAutoTime) {
-                serviceIntent.putExtra("DURATION_SECONDS", 99999)
-                serviceIntent.putExtra("MISSION_NAME", "¡Trampa!\nPrende la Hora Automática.")
-                serviceIntent.putExtra("IS_TIME_PUNISHMENT", true)
-            } else {
-                val durationSeconds = mission.durationMinutes * 60
-                serviceIntent.putExtra("DURATION_SECONDS", durationSeconds)
-                serviceIntent.putExtra("MISSION_NAME", mission.name)
-                serviceIntent.putExtra("IS_TIME_PUNISHMENT", false)
-
-                // LE MANDAMOS EL TIPO DE BLOQUEO
-                serviceIntent.putExtra("BLOCK_TYPE", mission.blockType)
-
-                // SI ES PERSONALIZADO, BUSCAMOS LA LISTA NEGRA EN ROOM Y SE LA MANDAMOS
-                if (mission.blockType != "Dios" && mission.blockType != "Humano") {
-                    val profile = blockProfileDao.getAllProfiles().first().find { it.name == mission.blockType }
-                    val jsonList = profile?.blockedAppsJson ?: "[]"
-                    serviceIntent.putExtra("BLOCK_LIST_JSON", jsonList)
-                }
-            }
-
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    appContext.startForegroundService(serviceIntent)
-                } else {
-                    appContext.startService(serviceIntent)
-                }
-            } catch (e: Exception) {
-                if (e.javaClass.simpleName == "ForegroundServiceStartNotAllowedException") {
-                    appContext.startService(serviceIntent)
-                }
-            }
         }
     }
 
@@ -296,6 +253,8 @@ class HomeViewModel @Inject constructor(
             if (user != null) {
                 repository.syncStatsToCloud(user.currentXp, user.streakDays)
             }
+
+            repository.syncMissionsToCloud()
         }
     }
 }

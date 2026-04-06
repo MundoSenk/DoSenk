@@ -34,9 +34,7 @@ interface MissionDao {
     @Query("SELECT * FROM missions WHERE status = 'pending' ORDER BY executionDate ASC LIMIT 1")
     fun getNextPendingMission(): Flow<MissionEntity?>
 
-    // Historial
-    @Query("SELECT * FROM missions ORDER BY executionDate DESC")
-    fun getAllMissions(): Flow<List<MissionEntity>>
+
 
 
     @Query("SELECT * FROM missions WHERE uuid = :uuid LIMIT 1")
@@ -77,6 +75,43 @@ interface MissionDao {
     // Trae todas las plantillas activas
     @Query("SELECT * FROM mission_templates WHERE isActive = 1")
     suspend fun getActiveTemplates(): List<MissionTemplateEntity>
+
+
+    @Query("SELECT * FROM mission_templates WHERE uuid = :uuid LIMIT 1")
+    suspend fun getTemplateById(uuid: String): MissionTemplateEntity?
+
+    @Update
+    suspend fun updateTemplate(template: MissionTemplateEntity)
+
+
+
+
+
+
+
+
+
+    // EL BORRADO LÓGICO (Lápidas)
+    @Query("UPDATE missions SET status = 'deleted' WHERE uuid = :uuid")
+    suspend fun deleteMissionByUuid(uuid: String)
+
+    @Query("UPDATE mission_templates SET isActive = 0 WHERE uuid = :uuid")
+    suspend fun deleteTemplateByUuid(uuid: String)
+
+    @Query("UPDATE missions SET status = 'deleted' WHERE templateUuid = :templateId AND status = 'pending'")
+    suspend fun deletePendingClonesByTemplate(templateId: String)
+
+    //  ESCONDER LOS MUERTOS DE LA APP
+    @Query("SELECT * FROM missions WHERE status != 'deleted' ORDER BY executionDate DESC")
+    fun getAllMissions(): Flow<List<MissionEntity>>
+
+    //  LOS RECOLECTORES DE CADÁVERES (Para AuthRepository)
+    @Query("SELECT * FROM missions")
+    suspend fun getAllMissionsForSync(): List<MissionEntity>
+
+    @Query("SELECT * FROM mission_templates")
+    suspend fun getAllTemplatesForSync(): List<MissionTemplateEntity>
+
 
 
 

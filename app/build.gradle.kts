@@ -1,7 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt")
+
+    id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
 
@@ -36,14 +37,12 @@ android {
         jvmTarget = "17"
     }
 
-    kapt {
-        correctErrorTypes = true
-    }
+
 }
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.13.1") // Versión estable
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
 
@@ -51,16 +50,17 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     // Hilt Inyección de Dependencias
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-compiler:2.48")
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    ksp("com.google.dagger:hilt-compiler:2.51.1")
 
     // Room Base de datos Offline
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
 
-    implementation("com.google.code.gson:gson:2.10.1")///grid a json
+    ksp("androidx.room:room-compiler:$roomVersion")
+
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // DataStore (Preferencias)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
@@ -89,6 +89,4 @@ dependencies {
 
     ///Animaciones
     implementation("com.airbnb.android:lottie:6.1.0")
-
-
 }

@@ -20,6 +20,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageView
+        android:id="@+id/btnDelete"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/bg_capsule_white"
+        android:padding="12dp"
+        android:src="@android:drawable/ic_menu_delete"
+        android:elevation="4dp"
+        app:tint="#FF3B30"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"

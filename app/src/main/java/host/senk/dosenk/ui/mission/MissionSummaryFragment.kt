@@ -82,6 +82,7 @@ class MissionSummaryFragment : Fragment(R.layout.fragment_mission_summary) {
 
             viewModel.saveMissionToDatabase(selectedBlockType) {
                 Toast.makeText(requireContext(), "¡Contrato firmado! No te rajes.", Toast.LENGTH_SHORT).show()
+                viewModel.resetForNewMission()
                 findNavController().navigate(R.id.action_summary_to_TimeLime)
             }
         }

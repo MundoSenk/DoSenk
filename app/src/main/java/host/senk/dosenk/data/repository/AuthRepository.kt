@@ -2,6 +2,7 @@ package host.senk.dosenk.data.repository
 
 import host.senk.dosenk.data.local.UserPreferences
 import host.senk.dosenk.data.local.dao.UserDao
+import host.senk.dosenk.data.local.dao.MissionDao
 import host.senk.dosenk.data.local.dao.BlockProfileDao
 import host.senk.dosenk.data.local.entity.UserEntity
 import host.senk.dosenk.data.local.entity.ScheduleEntity
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class AuthRepository @Inject constructor(
     private val api: ApiService,
     private val userDao: UserDao,
+    private val missionDao: MissionDao,
     private val blockProfileDao: BlockProfileDao,
     private val userPreferences: UserPreferences
 ) {
@@ -309,15 +311,40 @@ class AuthRepository @Inject constructor(
 
 
     /**
-     * Respalda las misiones locales en la nube.
+     * Respalda las misiones locales (Esqueletos y Clones vitales) en la nube.
      */
-    suspend fun syncMissionsToCloud(missions: List<host.senk.dosenk.data.local.entity.MissionEntity>): Boolean {
+    suspend fun syncMissionsToCloud(): Boolean {
         return try {
             val uuid = userPreferences.userToken.first()
-            if (uuid.isEmpty() || missions.isEmpty()) return false
+            if (uuid.isEmpty()) return false
 
-            // Transformamos las misiones locales al molde de la API
-            val dtoList = missions.map {
+            // 1. Recolectamos todas las plantillas (Rutinas)
+
+
+            val localTemplates = missionDao.getAllTemplatesForSync()
+
+            val templateDtoList = localTemplates.map {
+                host.senk.dosenk.data.remote.model.MissionTemplateDto(
+                    uuid = it.uuid,
+                    name = it.name,
+                    description = it.description,
+                    durationMinutes = it.durationMinutes,
+                    daysOfWeek = it.daysOfWeek,
+                    startTimeMin = it.startTimeMin,
+                    assignmentType = it.assignmentType,
+                    blockType = it.blockType,
+                    potentialXp = it.potentialXp,
+                    isActive = it.isActive
+                )
+            }
+
+            // 2. Recolectamos las misiones físicas (PERO SOLO LAS QUE IMPORTAN)
+            val allMissions = missionDao.getAllMissionsForSync()
+            val vitalMissions = allMissions.filter { mission ->
+                mission.status == "pending" || mission.status == "active" || mission.status == "deleted" || !mission.isReclaimed
+            }
+
+            val missionDtoList = vitalMissions.map {
                 host.senk.dosenk.data.remote.model.MissionDto(
                     uuid = it.uuid,
                     name = it.name,
@@ -329,17 +356,25 @@ class AuthRepository @Inject constructor(
                     status = it.status,
                     potentialXp = it.potentialXp,
                     earnedXp = it.earnedXp,
-                    multiplierApplied = it.multiplierApplied
+                    multiplierApplied = it.multiplierApplied,
+                    isReclaimed = it.isReclaimed,
+                    templateUuid = it.templateUuid,
+                    isManualOverride = it.isManualOverride
                 )
             }
 
-            // Armamos la caja
+
+
+            // Si no hay nada que sincronizar, nos ahorramos el viaje al servidor
+            if (templateDtoList.isEmpty() && missionDtoList.isEmpty()) return true
+
+            // Armamos la caja maestra
             val request = host.senk.dosenk.data.remote.model.SyncMissionsRequest(
                 user_uuid = uuid,
-                missions = dtoList
+                missions = missionDtoList,
+                templates = templateDtoList
             )
 
-            // ¡Fuego!
             val response = api.syncMissions(request)
 
             response.isSuccessful && response.body()?.success == true

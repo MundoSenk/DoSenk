@@ -22,8 +22,8 @@ class MissionCloneManager @Inject constructor(
         calendar.set(java.util.Calendar.SECOND, 0)
         calendar.set(java.util.Calendar.MILLISECOND, 0)
 
-        // Miramos 7 días al futuro
-        for (i in 0..6) {
+        // Miramos 30 días al futuro
+        for (i in 0..30) {
             val currentDayMs = calendar.timeInMillis
 
             // Ajuste: Calendar en Java el Domingo es 1.

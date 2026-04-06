@@ -4,12 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.activityViewModels
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import host.senk.dosenk.R
 import host.senk.dosenk.util.applyDoSenkGradient
 import androidx.navigation.fragment.findNavController
+import host.senk.dosenk.ui.mission.CreateMissionViewModel
+import kotlin.getValue
+
+
 
 class AddMenuBottomSheet : BottomSheetDialogFragment() {
+
+    private val viewModel: CreateMissionViewModel by activityViewModels()
+
 
 
     override fun getTheme(): Int = com.google.android.material.R.style.Theme_Design_BottomSheetDialog
@@ -40,6 +48,7 @@ class AddMenuBottomSheet : BottomSheetDialogFragment() {
 
 
             findNavController().navigate(R.id.createMissionFragment)
+            viewModel.resetForNewMission()
         }
 
 

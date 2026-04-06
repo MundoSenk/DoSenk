@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import host.senk.dosenk.data.local.dao.BlockProfileDao
 import host.senk.dosenk.data.local.UserPreferences
+import host.senk.dosenk.data.repository.AuthRepository
 import host.senk.dosenk.domain.MissionCloneManager
 import java.util.UUID
 
@@ -32,6 +33,7 @@ class CreateMissionViewModel @Inject constructor(
     private val blockProfileDao: BlockProfileDao,
     private val userPreferences: UserPreferences,
     private val cloneManager: MissionCloneManager,
+    private val repository: AuthRepository,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -65,6 +67,7 @@ class CreateMissionViewModel @Inject constructor(
 
     var currentTicket: host.senk.dosenk.util.MissionTicket? = null
     val allCustomBlocks = blockProfileDao.getAllProfiles()
+    var currentEditingTemplateId: String? = null
 
     // --- FUNCIONES DE LA MOCHILA ---
 
@@ -167,12 +170,19 @@ class CreateMissionViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val ownerUuid = userPreferences.userToken.first()
 
+            //  Si era rutina pero le quitaron todos los días, la degradamos a Misión Única
+            if (currentEditingTemplateId != null && _selectedRepeatDays.value.isEmpty()) {
+                missionDao.deleteTemplateByUuid(currentEditingTemplateId!!)
+                missionDao.deletePendingClonesByTemplate(currentEditingTemplateId!!)
+                currentEditingTemplateId = null
+            }
+
             // ¿ES UNA RUTINA O UNA MISIÓN ÚNICA?
             if (_selectedRepeatDays.value.isNotEmpty()) {
-
                 val startMin = (_startHour.value ?: 0) * 60 + (_startMinute.value ?: 0)
 
                 val newTemplate = MissionTemplateEntity(
+                    uuid = currentEditingTemplateId ?: UUID.randomUUID().toString(),
                     userUuid = ownerUuid,
                     name = missionName,
                     description = missionDescription,
@@ -184,10 +194,13 @@ class CreateMissionViewModel @Inject constructor(
                     potentialXp = currentTicket?.totalXP ?: 0
                 )
 
-                // Guardamos la plantilla base
-                missionDao.insertTemplate(newTemplate)
+                if (currentEditingTemplateId != null) {
+                    missionDao.updateTemplate(newTemplate)
+                    missionDao.deletePendingClonesByTemplate(newTemplate.uuid)
+                } else {
+                    missionDao.insertTemplate(newTemplate)
+                }
 
-                // Disparamos la generación de clones físicos para los próximos 7 días
                 cloneManager.generateClonesForNext7Days()
 
             } else {
@@ -206,7 +219,7 @@ class CreateMissionViewModel @Inject constructor(
                     status = "pending",
                     potentialXp = currentTicket?.totalXP ?: 0,
                     multiplierApplied = currentTicket?.multiplier ?: 1.0,
-                    isManualOverride = isManualOverride // <-- Aplicamos la decisión del usuario
+                    isManualOverride = isManualOverride
                 )
 
                 // ALARM MANAGER PARA MISIÓN ÚNICA
@@ -243,8 +256,44 @@ class CreateMissionViewModel @Inject constructor(
                     alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(finalTimestamp, null), pendingIntent)
                 } catch (e: SecurityException) { }
 
-                if (currentEditingMissionId != null) missionDao.updateMission(newMission)
-                else missionDao.insertMission(newMission)
+
+                if (isManualOverride) {
+                    val requestedStart = finalTimestamp
+                    val requestedEnd = requestedStart + (durationMinutes.value * 60 * 1000L)
+
+                    // Buscamos a los infelices que están en nuestro camino
+                    val collidingMissions = missionDao.getCollidingMissions(requestedStart, requestedEnd)
+
+                    for (conflict in collidingMissions) {
+                        // Asegurarnos de no borrarnos a nosotros mismos si estamos en modo edición
+                        if (conflict.uuid != currentEditingMissionId) {
+
+                            // 1. Lo borramos de la Base de Datos
+                            missionDao.deleteMissionByUuid(conflict.uuid)
+
+                            // 2. Le cancelamos su alarma a Android para que no despierte
+                            val conflictIntent = Intent(appContext, MissionTriggerReceiver::class.java)
+                            val conflictPendingIntent = PendingIntent.getBroadcast(
+                                appContext, (conflict.executionDate / 1000).toInt(), conflictIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                            )
+                            alarmManager.cancel(conflictPendingIntent)
+                        }
+                    }
+                }
+
+                // Ahora sí, insertamos al ganador absoluto
+                if (currentEditingMissionId != null) {
+                    missionDao.updateMission(newMission)
+                } else {
+                    missionDao.insertMission(newMission)
+                }
+
+
+            }
+
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.syncMissionsToCloud()
             }
 
             withContext(Dispatchers.Main) {
@@ -325,6 +374,75 @@ class CreateMissionViewModel @Inject constructor(
     }
 
 
+    ///para limpiar basura
+    fun resetForNewMission() {
+        currentEditingMissionId = null
+        currentEditingTemplateId = null
+        missionName = ""
+        missionDescription = ""
+        oldExecutionDate = 0L
+        isManualOverride = false
+        _durationMinutes.value = 45
+        _executionDate.value = null
+        _selectedRepeatDays.value = emptySet()
+        _startHour.value = null
+        _startMinute.value = null
+        _assignmentType.value = "manual"
+        currentTicket = null
+    }
+
+
+    /// Cargar las rutinas par aeditarlas
+
+    fun loadTemplateForEditing(templateId: String) {
+        currentEditingTemplateId = templateId
+        viewModelScope.launch {
+            val template = missionDao.getTemplateById(templateId)
+            if (template != null) {
+                missionName = template.name
+                missionDescription = template.description
+                _durationMinutes.value = template.durationMinutes
+                _selectedRepeatDays.value = template.daysOfWeek.toSet()
+                _assignmentType.value = template.assignmentType
+
+                _startHour.value = template.startTimeMin / 60
+                _startMinute.value = template.startTimeMin % 60
+
+                // Hack para reciclar tu canal de UI actual
+                val fakeMission = MissionEntity(userUuid = "", name = template.name, description = template.description, durationMinutes = template.durationMinutes, executionDate = System.currentTimeMillis(), assignmentType = template.assignmentType, blockType = template.blockType)
+                _missionLoaded.emit(fakeMission)
+            }
+        }
+    }
+
+
+
+    //  EL ANIQUILADOR DE MISIONES
+    fun deleteCurrentTask(onComplete: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (currentEditingTemplateId != null) {
+                // Es una rutina Destruimos la madre y a todos sus hijos pendientes
+                missionDao.deleteTemplateByUuid(currentEditingTemplateId!!)
+                missionDao.deletePendingClonesByTemplate(currentEditingTemplateId!!)
+            } else if (currentEditingMissionId != null) {
+                // Es misión única La borramos y cancelamos su alarma en Android
+                missionDao.deleteMissionByUuid(currentEditingMissionId!!)
+
+                val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val oldIntent = Intent(appContext, MissionTriggerReceiver::class.java)
+                val oldPendingIntent = PendingIntent.getBroadcast(
+                    appContext, (oldExecutionDate / 1000).toInt(), oldIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                alarmManager.cancel(oldPendingIntent)
+            }
+
+            withContext(Dispatchers.Main) {
+                resetForNewMission()
+                onComplete()
+            }
+        }
+    }
 
 
 
