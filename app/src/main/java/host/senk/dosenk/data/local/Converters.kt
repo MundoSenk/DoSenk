@@ -17,4 +17,16 @@ class Converters {
         val type = object : TypeToken<Array<IntArray>>() {}.type
         return Gson().fromJson(json, type)
     }
+
+
+    @TypeConverter
+    fun fromIntegerList(value: List<Int>?): String {
+        return Gson().toJson(value)
+    }
+
+    @TypeConverter
+    fun toIntegerList(value: String): List<Int> {
+        val listType = object : TypeToken<List<Int>>() {}.type
+        return Gson().fromJson(value, listType) ?: emptyList()
+    }
 }

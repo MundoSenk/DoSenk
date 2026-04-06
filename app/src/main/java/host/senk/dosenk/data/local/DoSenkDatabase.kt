@@ -9,12 +9,13 @@ import host.senk.dosenk.data.local.dao.MissionDao
 import host.senk.dosenk.data.local.entity.ScheduleEntity
 import host.senk.dosenk.data.local.entity.UserEntity
 import host.senk.dosenk.data.local.entity.MissionEntity
+import host.senk.dosenk.data.local.entity.MissionTemplateEntity
 import host.senk.dosenk.data.local.entity.BlockProfileEntity
 
 
 @Database(
-    entities = [UserEntity::class, ScheduleEntity::class, MissionEntity::class, BlockProfileEntity::class],
-    version = 6,
+    entities = [UserEntity::class, ScheduleEntity::class, MissionEntity::class, MissionTemplateEntity::class, BlockProfileEntity::class],
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

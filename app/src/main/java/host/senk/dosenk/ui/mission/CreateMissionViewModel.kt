@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import host.senk.dosenk.data.local.dao.MissionDao
 import host.senk.dosenk.data.local.entity.MissionEntity
+import host.senk.dosenk.data.local.entity.MissionTemplateEntity // 🚨 IMPORTANTE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,9 +22,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import host.senk.dosenk.data.local.dao.BlockProfileDao
-
-
 import host.senk.dosenk.data.local.UserPreferences
+import host.senk.dosenk.domain.MissionCloneManager
 import java.util.UUID
 
 @HiltViewModel
@@ -31,203 +31,220 @@ class CreateMissionViewModel @Inject constructor(
     val missionDao: MissionDao,
     private val blockProfileDao: BlockProfileDao,
     private val userPreferences: UserPreferences,
+    private val cloneManager: MissionCloneManager,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
-    // Slibgeton como mochilita para guardar datos antes de hacer una mision en la room
-
+    // Mochilita
     var missionName = ""
     var missionDescription = ""
-
     var currentEditingMissionId: String? = null
+    private var oldExecutionDate: Long = 0L
 
-    private var oldExecutionDate: Long = 0L ///ppara cancelar la alarma
+    // 🚨 LA DECISIÓN DEL USUARIO: ¿Forzó el horario?
+    var isManualOverride: Boolean = false
 
-    // Un canal de comunicación para avisarle a la pantalla que ya cargamos los datos
     private val _missionLoaded = MutableSharedFlow<MissionEntity>()
     val missionLoaded = _missionLoaded.asSharedFlow()
 
     private val _durationMinutes = MutableStateFlow(45)
     val durationMinutes: StateFlow<Int> = _durationMinutes
 
-    private val _executionDate = MutableStateFlow<Long?>(null) //
+    private val _executionDate = MutableStateFlow<Long?>(null)
     val executionDate: StateFlow<Long?> = _executionDate
 
-    private val _assignmentType = MutableStateFlow("manual") //
+    // 🚨 LOS CHIPS DE REPETICIÓN
+    private val _selectedRepeatDays = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedRepeatDays: StateFlow<Set<Int>> = _selectedRepeatDays
+
+    private val _assignmentType = MutableStateFlow("manual")
     val assignmentType: StateFlow<String> = _assignmentType
+
     private val _startHour = MutableStateFlow<Int?>(null)
     private val _startMinute = MutableStateFlow<Int?>(null)
 
     var currentTicket: host.senk.dosenk.util.MissionTicket? = null
-
-
     val allCustomBlocks = blockProfileDao.getAllProfiles()
 
-    // FUNCIONES PARA ACTUALIZAR LA MOCHILA
+    // --- FUNCIONES DE LA MOCHILA ---
 
-    fun setDuration(minutes: Int) {
-        _durationMinutes.value = minutes
-    }
-
-    fun setExecutionDate(timestamp: Long) {
-        _executionDate.value = timestamp
-    }
-
-    fun setAssignmentType(type: String) {
-        _assignmentType.value = type
-    }
-
+    fun setDuration(minutes: Int) { _durationMinutes.value = minutes }
+    fun setExecutionDate(timestamp: Long) { _executionDate.value = timestamp }
+    fun setAssignmentType(type: String) { _assignmentType.value = type }
     fun setStartTime(hour: Int, minute: Int) {
         _startHour.value = hour
         _startMinute.value = minute
     }
 
-    // Validar antes de pasar a la Zona de Bloqueos
-    fun isFormValid(): Boolean {
-        return missionName.isNotBlank() &&
-                _executionDate.value != null &&
-                _startHour.value != null
-    }
+    // LÓGICA DE DÍAS DE REPETICIÓN
+    fun toggleRepeatDay(day: Int) {
+        val current = _selectedRepeatDays.value.toMutableSet()
+        if (current.contains(day)) current.remove(day) else current.add(day)
+        _selectedRepeatDays.value = current
 
-
-    fun isTimeValid(): Boolean {
-        val utcDate = executionDate.value ?: System.currentTimeMillis()
-        val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
-        calendarUTC.timeInMillis = utcDate
-
-        val localCalendar = java.util.Calendar.getInstance()
-        localCalendar.set(java.util.Calendar.YEAR, calendarUTC.get(java.util.Calendar.YEAR))
-        localCalendar.set(java.util.Calendar.MONTH, calendarUTC.get(java.util.Calendar.MONTH))
-        localCalendar.set(java.util.Calendar.DAY_OF_MONTH, calendarUTC.get(java.util.Calendar.DAY_OF_MONTH))
-        localCalendar.set(java.util.Calendar.HOUR_OF_DAY, _startHour.value ?: 0)
-        localCalendar.set(java.util.Calendar.MINUTE, _startMinute.value ?: 0)
-        localCalendar.set(java.util.Calendar.SECOND, 0)
-        localCalendar.set(java.util.Calendar.MILLISECOND, 0)
-
-        // ¿El momento que armó el usuario es mayor al segundo actual?
-        return localCalendar.timeInMillis > System.currentTimeMillis()
-    }
-
-
-    // pa que nos e encimen las misiones
-    suspend fun hasTimeConflict(): Boolean {
-        val utcDate = executionDate.value ?: System.currentTimeMillis()
-        val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
-        calendarUTC.timeInMillis = utcDate
-
-        val localCalendar = java.util.Calendar.getInstance()
-        localCalendar.set(java.util.Calendar.YEAR, calendarUTC.get(java.util.Calendar.YEAR))
-        localCalendar.set(java.util.Calendar.MONTH, calendarUTC.get(java.util.Calendar.MONTH))
-        localCalendar.set(java.util.Calendar.DAY_OF_MONTH, calendarUTC.get(java.util.Calendar.DAY_OF_MONTH))
-        localCalendar.set(java.util.Calendar.HOUR_OF_DAY, _startHour.value ?: 0)
-        localCalendar.set(java.util.Calendar.MINUTE, _startMinute.value ?: 0)
-        localCalendar.set(java.util.Calendar.SECOND, 0)
-        localCalendar.set(java.util.Calendar.MILLISECOND, 0)
-
-        val requestedStart = localCalendar.timeInMillis
-        val requestedEnd = requestedStart + (durationMinutes.value * 60 * 1000L)
-
-        // Traemos todas las misiones
-        val allMissions = missionDao.getAllMissions().first()
-
-        return allMissions.filter {
-            // FILTRO: Que estén activas o pendientes, Y QUE NO SEA LA MISIÓN QUE ESTAMOS EDITANDO
-            (it.status == "pending" || it.status == "active") && (it.uuid != currentEditingMissionId)
-        }.any { mission ->
-            val existingStart = mission.executionDate
-            val existingEnd = existingStart + (mission.durationMinutes * 60 * 1000L)
-
-            // Fórmula de colisión
-            (requestedStart < existingEnd) && (requestedEnd > existingStart)
+        // Si escoge una rutina, la fecha única muere
+        if (current.isNotEmpty()) {
+            _executionDate.value = null
         }
     }
 
-    private var isSaving = false
-    fun saveMissionToDatabase(blockTypeChosen: String, onComplete: () -> Unit) {
+    fun clearRepeatDays() {
+        _selectedRepeatDays.value = emptySet()
+    }
 
+    // --- VALIDADORES ---
+
+    fun isFormValid(): Boolean {
+        // Es válido si tiene nombre, hora, y (Fecha Única O Días de Repetición)
+        val hasDateOrRepeat = _executionDate.value != null || _selectedRepeatDays.value.isNotEmpty()
+        return missionName.isNotBlank() && _startHour.value != null && hasDateOrRepeat
+    }
+
+    fun isTimeValid(): Boolean {
+        // Las rutinas repetitivas son atemporales, nacen en el futuro solas.
+        if (_selectedRepeatDays.value.isNotEmpty()) return true
+        val finalMs = calculateFinalTimestamp()
+        return finalMs > System.currentTimeMillis()
+    }
+
+    fun calculateFinalTimestamp(): Long {
+        val utcDate = executionDate.value ?: System.currentTimeMillis()
+        val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        calendarUTC.timeInMillis = utcDate
+
+        val localCalendar = java.util.Calendar.getInstance()
+        localCalendar.set(java.util.Calendar.YEAR, calendarUTC.get(java.util.Calendar.YEAR))
+        localCalendar.set(java.util.Calendar.MONTH, calendarUTC.get(java.util.Calendar.MONTH))
+        localCalendar.set(java.util.Calendar.DAY_OF_MONTH, calendarUTC.get(java.util.Calendar.DAY_OF_MONTH))
+        localCalendar.set(java.util.Calendar.HOUR_OF_DAY, _startHour.value ?: 0)
+        localCalendar.set(java.util.Calendar.MINUTE, _startMinute.value ?: 0)
+        localCalendar.set(java.util.Calendar.SECOND, 0)
+        localCalendar.set(java.util.Calendar.MILLISECOND, 0)
+
+        return localCalendar.timeInMillis
+    }
+
+    // --- EL RADAR DE COLISIONES ---
+    suspend fun radarCheck(requestedStartMs: Long, durationMin: Int): String? {
+        val requestedEndMs = requestedStartMs + (durationMin * 60 * 1000L)
+
+        // 1. Revisar Misiones Físicas
+        val collidingMissions = missionDao.getCollidingMissions(requestedStartMs, requestedEndMs)
+        val filteredMissions = collidingMissions.filter { it.uuid != currentEditingMissionId }
+
+        if (filteredMissions.isNotEmpty()) {
+            return "la misión '${filteredMissions.first().name}'"
+        }
+
+        // 2. Revisar Rutinas (Plantillas)
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = requestedStartMs }
+        var dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK)
+        dayOfWeek = if (dayOfWeek == java.util.Calendar.SUNDAY) 7 else dayOfWeek - 1
+
+        val requestedStartMin = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+        val requestedEndMin = requestedStartMin + durationMin
+
+        val templates = missionDao.getActiveTemplates()
+        for (template in templates) {
+            if (template.daysOfWeek.contains(dayOfWeek)) {
+                val tempStart = template.startTimeMin
+                val tempEnd = tempStart + template.durationMinutes
+                if (requestedStartMin < tempEnd && requestedEndMin > tempStart) {
+                    return "tu rutina '${template.name}'"
+                }
+            }
+        }
+        return null
+    }
+
+    // --- EL GUARDADO FINAL (En BlockZoneFragment) ---
+    private var isSaving = false
+
+    fun saveMissionToDatabase(blockTypeChosen: String, onComplete: () -> Unit) {
         if (isSaving) return
         isSaving = true
 
         viewModelScope.launch(Dispatchers.IO) {
-
             val ownerUuid = userPreferences.userToken.first()
 
-            // Unimos el Día (del calendario UTC) con la Hora local
-            val utcDate = executionDate.value ?: System.currentTimeMillis()
-            val calendarUTC = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
-            calendarUTC.timeInMillis = utcDate
+            // ¿ES UNA RUTINA O UNA MISIÓN ÚNICA?
+            if (_selectedRepeatDays.value.isNotEmpty()) {
 
-            val localCalendar = java.util.Calendar.getInstance()
-            localCalendar.set(java.util.Calendar.YEAR, calendarUTC.get(java.util.Calendar.YEAR))
-            localCalendar.set(java.util.Calendar.MONTH, calendarUTC.get(java.util.Calendar.MONTH))
-            localCalendar.set(java.util.Calendar.DAY_OF_MONTH, calendarUTC.get(java.util.Calendar.DAY_OF_MONTH))
-            localCalendar.set(java.util.Calendar.HOUR_OF_DAY, _startHour.value ?: 0)
-            localCalendar.set(java.util.Calendar.MINUTE, _startMinute.value ?: 0)
-            localCalendar.set(java.util.Calendar.SECOND, 0)
-            localCalendar.set(java.util.Calendar.MILLISECOND, 0)
+                val startMin = (_startHour.value ?: 0) * 60 + (_startMinute.value ?: 0)
 
-            val finalTimestamp = localCalendar.timeInMillis
+                val newTemplate = MissionTemplateEntity(
+                    userUuid = ownerUuid,
+                    name = missionName,
+                    description = missionDescription,
+                    durationMinutes = durationMinutes.value,
+                    daysOfWeek = _selectedRepeatDays.value.toList(),
+                    startTimeMin = startMin,
+                    assignmentType = assignmentType.value,
+                    blockType = blockTypeChosen,
+                    potentialXp = currentTicket?.totalXP ?: 0
+                )
 
-            val newMission = MissionEntity(
-                uuid = currentEditingMissionId ?: UUID.randomUUID().toString(),
-                userUuid = ownerUuid,
-                name = missionName,
-                description = missionDescription,
-                durationMinutes = durationMinutes.value,
-                executionDate = finalTimestamp,
-                assignmentType = assignmentType.value,
-                blockType = blockTypeChosen,
-                status = "pending",
-                potentialXp = currentTicket?.totalXP ?: 0,
-                multiplierApplied = currentTicket?.multiplier ?: 1.0
-            )
+                // Guardamos la plantilla base
+                missionDao.insertTemplate(newTemplate)
 
-            // BUSCAMOS EL JSON DEL BLOQUEO PERSONALIZADO EN LA BD
-            var jsonBlockList = "[]"
-            if (blockTypeChosen != "Dios" && blockTypeChosen != "Humano" && blockTypeChosen != "Adicto") {
-                val profiles = allCustomBlocks.first()
-                val profile = profiles.find { it.name == blockTypeChosen }
-                if (profile != null) {
-                    jsonBlockList = profile.blockedAppsJson
+                // Disparamos la generación de clones físicos para los próximos 7 días
+                cloneManager.generateClonesForNext7Days()
+
+            } else {
+
+                val finalTimestamp = calculateFinalTimestamp()
+
+                val newMission = MissionEntity(
+                    uuid = currentEditingMissionId ?: UUID.randomUUID().toString(),
+                    userUuid = ownerUuid,
+                    name = missionName,
+                    description = missionDescription,
+                    durationMinutes = durationMinutes.value,
+                    executionDate = finalTimestamp,
+                    assignmentType = assignmentType.value,
+                    blockType = blockTypeChosen,
+                    status = "pending",
+                    potentialXp = currentTicket?.totalXP ?: 0,
+                    multiplierApplied = currentTicket?.multiplier ?: 1.0,
+                    isManualOverride = isManualOverride // <-- Aplicamos la decisión del usuario
+                )
+
+                // ALARM MANAGER PARA MISIÓN ÚNICA
+                var jsonBlockList = "[]"
+                if (blockTypeChosen != "Dios" && blockTypeChosen != "Humano" && blockTypeChosen != "Adicto") {
+                    val profile = allCustomBlocks.first().find { it.name == blockTypeChosen }
+                    if (profile != null) jsonBlockList = profile.blockedAppsJson
                 }
-            }
 
-            val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(appContext, MissionTriggerReceiver::class.java).apply {
+                    putExtra("MISSION_NAME", missionName)
+                    putExtra("DURATION_MINUTES", durationMinutes.value)
+                    putExtra("BLOCK_TYPE", blockTypeChosen)
+                    putExtra("BLOCK_LIST_JSON", jsonBlockList)
+                    addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                }
 
+                if (oldExecutionDate != 0L && oldExecutionDate != finalTimestamp) {
+                    val oldIntent = Intent(appContext, MissionTriggerReceiver::class.java)
+                    val oldPendingIntent = PendingIntent.getBroadcast(
+                        appContext, (oldExecutionDate / 1000).toInt(), oldIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    alarmManager.cancel(oldPendingIntent)
+                }
 
-            val intent = Intent(appContext, MissionTriggerReceiver::class.java).apply {
-                putExtra("MISSION_NAME", missionName)
-                putExtra("DURATION_MINUTES", durationMinutes.value)
-                putExtra("BLOCK_TYPE", blockTypeChosen) // Pasamos el tipo
-                putExtra("BLOCK_LIST_JSON", jsonBlockList) // Pasamos las apps
-                addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-            }
-
-            if (oldExecutionDate != 0L && oldExecutionDate != finalTimestamp) {
-                val oldIntent = Intent(appContext, MissionTriggerReceiver::class.java)
-                val oldPendingIntent = PendingIntent.getBroadcast(
-                    appContext, (oldExecutionDate / 1000).toInt(), oldIntent,
+                val pendingIntent = PendingIntent.getBroadcast(
+                    appContext, (finalTimestamp / 1000).toInt(), intent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                alarmManager.cancel(oldPendingIntent)
-            }
 
-            val pendingIntent = PendingIntent.getBroadcast(
-                appContext,
-                (finalTimestamp / 1000).toInt(),
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+                try {
+                    alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(finalTimestamp, null), pendingIntent)
+                } catch (e: SecurityException) { }
 
-            try {
-                val alarmClockInfo = AlarmManager.AlarmClockInfo(finalTimestamp, null)
-                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-            } catch (e: SecurityException) { }
-
-            if (currentEditingMissionId != null) {
-                missionDao.updateMission(newMission)
-            } else {
-                missionDao.insertMission(newMission)
+                if (currentEditingMissionId != null) missionDao.updateMission(newMission)
+                else missionDao.insertMission(newMission)
             }
 
             withContext(Dispatchers.Main) {
@@ -236,6 +253,8 @@ class CreateMissionViewModel @Inject constructor(
             }
         }
     }
+
+
 
 
     fun loadMissionForEditing(missionId: String) {
@@ -304,5 +323,19 @@ class CreateMissionViewModel @Inject constructor(
         currentTicket = ticket // Lo guardamos en la mochila
         return ticket
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }

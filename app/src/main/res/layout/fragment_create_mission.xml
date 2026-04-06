@@ -156,6 +156,7 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="@color/white">
@@ -192,7 +193,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginBottom="24dp">
+                        android:layout_marginBottom="16dp">
 
                         <TextView
                             android:id="@+id/btnDatePicker"
@@ -202,7 +203,7 @@
                             android:layout_marginEnd="8dp"
                             android:background="@drawable/bg_dashed_border"
                             android:gravity="center"
-                            android:text="Día"
+                            android:text="Día único"
                             android:fontFamily="@font/poppins_bold"
                             android:textColor="#888888"
                             android:textSize="12sp"/>
@@ -222,6 +223,73 @@
                     </LinearLayout>
 
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="16dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_sync"
+                            app:tint="?attr/doSkinButton"
+                            android:layout_marginEnd="8dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Repetición (Opcional)"
+                            android:fontFamily="@font/anton_regular"
+                            android:textColor="#333333"
+                            android:textSize="20sp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="7"
+                        android:clipChildren="false"
+                        android:clipToPadding="false"
+                        android:padding="4dp"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView android:id="@+id/btnDay1" android:layout_weight="1" android:layout_width="0dp" android:layout_marginHorizontal="2dp" android:text="L" style="@style/MissionChipStyle"/>
+                        <TextView android:id="@+id/btnDay2" android:layout_weight="1" android:layout_width="0dp" android:layout_marginHorizontal="2dp" android:text="M" style="@style/MissionChipStyle"/>
+                        <TextView android:id="@+id/btnDay3" android:layout_weight="1" android:layout_width="0dp" android:layout_marginHorizontal="2dp" android:text="M" style="@style/MissionChipStyle"/>
+                        <TextView android:id="@+id/btnDay4" android:layout_weight="1" android:layout_width="0dp" android:layout_marginHorizontal="2dp" android:text="J" style="@style/MissionChipStyle"/>
+                        <TextView android:id="@+id/btnDay5" android:layout_weight="1" android:layout_width="0dp" android:layout_marginHorizontal="2dp" android:text="V" style="@style/MissionChipStyle"/>
+                        <TextView android:id="@+id/btnDay6" android:layout_weight="1" android:layout_width="0dp" android:layout_marginHorizontal="2dp" android:text="S" style="@style/MissionChipStyle"/>
+                        <TextView android:id="@+id/btnDay7" android:layout_weight="1" android:layout_width="0dp" android:layout_marginHorizontal="2dp" android:text="D" style="@style/MissionChipStyle"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Si seleccionas días, esto se convertirá en una rutina y el Día Único se ignorará."
+                        android:fontFamily="@font/poppins_regular"
+                        android:textColor="#AAAAAA"
+                        android:textSize="10sp"
+                        android:gravity="center"
+                        android:layout_marginBottom="4dp"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/white">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"

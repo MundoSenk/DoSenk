@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import host.senk.dosenk.data.local.entity.MissionEntity
+import host.senk.dosenk.data.local.entity.MissionTemplateEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -14,6 +15,11 @@ interface MissionDao {
     // Guardar una nueva misión sádica
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMission(mission: MissionEntity): Long
+
+
+    // Guardar una nueva PLANTILLA (La Rutina repetitiva)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTemplate(template: MissionTemplateEntity): Long
 
     // Actualizar estado ( pasar de pending a active)
     @Update
@@ -58,4 +64,23 @@ interface MissionDao {
 
     @Query("UPDATE missions SET isReclaimed = 1 WHERE uuid = :uuid")
     suspend fun markAsReclaimed(uuid: String)
+
+
+    @Query("""
+        SELECT * FROM missions 
+        WHERE status IN ('pending', 'active') 
+        AND executionDate < :requestedEndMs 
+        AND (executionDate + (durationMinutes * 60000)) > :requestedStartMs
+    """)
+    suspend fun getCollidingMissions(requestedStartMs: Long, requestedEndMs: Long): List<MissionEntity>
+
+    // Trae todas las plantillas activas
+    @Query("SELECT * FROM mission_templates WHERE isActive = 1")
+    suspend fun getActiveTemplates(): List<MissionTemplateEntity>
+
+
+
+
+
+
 }

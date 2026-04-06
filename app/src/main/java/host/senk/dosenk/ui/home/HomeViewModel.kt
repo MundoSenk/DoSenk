@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+import host.senk.dosenk.domain.MissionCloneManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -41,6 +41,7 @@ class HomeViewModel @Inject constructor(
     private val missionDao: MissionDao,
     private val blockProfileDao: BlockProfileDao,
     private val repository: AuthRepository,
+    private val cloneManager: MissionCloneManager,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -69,8 +70,16 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadUserRank()
-        checkCurrentMissions()
+
+        viewModelScope.launch {
+            cloneManager.generateClonesForNext7Days()
+
+            checkCurrentMissions()
+        }
+
         checkAndUpdateDailyStreak()
+
+
     }
 
     private fun loadUserRank() {
